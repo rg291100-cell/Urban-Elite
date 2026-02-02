@@ -42,8 +42,13 @@ const HomeScreen = () => {
         fetchData();
     }, []);
 
-    const renderServiceItem = ({ item }: { item: { id: string; name: string; image: string } }) => {
-        const IconComponent = CATEGORY_ICONS[item.name] || Zap;
+    const renderServiceItem = ({ item }: { item: { id: string; name: string; image: string; slug?: string } }) => {
+        if (!item || !item.name) return null;
+
+        // Case-insensitive lookup for icons
+        const IconComponent = CATEGORY_ICONS[item.name.toUpperCase()] ||
+            CATEGORY_ICONS[item.name] ||
+            Zap;
 
         return (
             <TouchableOpacity

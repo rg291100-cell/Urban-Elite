@@ -32,6 +32,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        if (error.response) {
+            console.error(`API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+                status: error.response.status,
+                data: error.response.data,
+            });
+        } else if (error.request) {
+            console.error(`API No Response: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.request);
+        } else {
+            console.error('API Setup Error:', error.message);
+        }
+
         if (error.response?.status === 401) {
             // Clear auth data and redirect to login
             await authService.clearAuth();

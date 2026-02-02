@@ -3,11 +3,17 @@ const supabase = require('../config/database');
 // Get Home Data
 const getHomeData = async (req, res) => {
     try {
+        console.log('Home Controller: Fetching home data...');
         const { data: services, error } = await supabase
             .from('service_categories')
             .select('id, name, image, slug');
 
-        if (error) throw error;
+        if (error) {
+            console.error('Home Controller DB Error:', error);
+            throw error;
+        }
+
+        console.log(`Home Controller: Found ${services?.length} services`);
 
         res.json({
             services: services,

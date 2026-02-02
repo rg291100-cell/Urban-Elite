@@ -1,4 +1,5 @@
 const { supabase } = require('../lib/supabase');
+const jwt = require('jsonwebtoken');
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -14,20 +15,17 @@ const authMiddleware = async (req, res, next) => {
 
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-        // Verify token with Supabase
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-
-        if (error || !user) {
-            console.error('Supabase auth error:', error);
-            throw new Error('Invalid token');
-        }
+        // Verify token using JWT_SECRET
+        // This matches the signing logic in authController.js
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
 
         // Attach user info to request
-        req.user = user;
-        req.user.id = user.id; // Ensure ID is accessible
-
-        // Note: Supabase user metadata is in user.user_metadata
-        // req.user.name = user.user_metadata.name;
+        // The token payload contains: { userId: user.id, email: user.email, role: user.role }
+        req.user = {
+            id: decoded.userId,
+            email: decoded.email,
+            role: decoded.role
+        };
 
         next();
     } catch (error) {
