@@ -13,13 +13,15 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
-import { supabase } from '../lib/supabase';
+
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
 interface Props {
     navigation: RegisterScreenNavigationProp;
 }
+
+const API_URL = 'http://localhost:3000'; // Matches mobile/.env
 
 const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [name, setName] = useState('');
@@ -48,31 +50,31 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        name,
-                        phone,
-                    },
+            // Call custom backend API instead of Supabase auth
+            const response = await fetch(`${API_URL}/api/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ name, email, phone, password }),
             });
 
-            if (error) throw error;
+            const data = await response.json();
 
-            if (data.user) {
-                Alert.alert(
-                    'Success',
-                    'Account created successfully! Please login.',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => navigation.navigate('Login'),
-                        },
-                    ]
-                );
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Registration failed');
             }
+
+            Alert.alert(
+                'Success',
+                'Account created successfully! Please login.',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => navigation.navigate('Login'),
+                    },
+                ]
+            );
         } catch (error: any) {
             console.error('Registration error:', error);
             Alert.alert(

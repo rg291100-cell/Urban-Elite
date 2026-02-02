@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
-import { supabase } from '../lib/supabase';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -20,11 +19,12 @@ interface Props {
     navigation: LoginScreenNavigationProp;
 }
 
+const API_URL = 'http://localhost:3000'; // Matches mobile/.env
+
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please enter both email and password');
@@ -33,20 +33,31 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
+            // Call custom backend API instead of Supabase auth
+            const response = await fetch(`${API_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
             });
 
-            if (error) throw error;
+            const data = await response.json();
 
-            if (data.session) {
-                // Navigate to home screen
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'MainTabs' }],
-                });
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Login failed');
             }
+
+            // Store token and user data using authService
+            const { authService } = await import('../services/authService');
+            await authService.setToken(data.token);
+            await authService.setUser(data.user);
+
+            // Navigate to home screen
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+            });
         } catch (error: any) {
             console.error('Login error:', error);
             Alert.alert(

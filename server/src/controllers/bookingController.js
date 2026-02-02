@@ -13,18 +13,12 @@ exports.createBooking = async (req, res) => {
             price
         } = req.body;
 
+        console.log('Booking Request Received:', { serviceName, date, timeSlot, userId: req.user?.id });
+
         // Get authenticated user ID from middleware
         const userId = req.user.id; // supabase auth uses 'id'
 
-        // Simulate professional assignment
-        const professionals = [
-            { id: 'prof-1', name: 'Rajesh Kumar' },
-            { id: 'prof-2', name: 'Amit Sharma' },
-            { id: 'prof-3', name: 'Priya Patel' }
-        ];
-        const assignedProfessional = professionals[Math.floor(Math.random() * professionals.length)];
-
-        // Insert into Supabase
+        // Insert into Supabase (professional will be assigned later)
         const { data: booking, error } = await supabase
             .from('bookings')
             .insert({
@@ -37,25 +31,29 @@ exports.createBooking = async (req, res) => {
                 instructions: instructions || '',
                 status: 'confirmed',
                 price,
-                professional_id: assignedProfessional.id,
-                professional_name: assignedProfessional.name,
+                professional_id: null, // Will be assigned by admin/system later
+                professional_name: null,
                 estimated_time: '12m',
                 user_id: userId
             })
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Booking DB Insert Error:', error);
+            throw error;
+        }
 
         res.status(201).json({
             success: true,
             bookingId: booking.id,
             status: booking.status,
-            professional: {
+            professional: booking.professional_id ? {
                 id: booking.professional_id,
                 name: booking.professional_name
-            },
-            estimatedArrival: booking.estimated_time
+            } : null,
+            estimatedArrival: booking.estimated_time,
+            message: 'Booking confirmed! A professional will be assigned shortly.'
         });
     } catch (error) {
         console.error('Error creating booking:', error);

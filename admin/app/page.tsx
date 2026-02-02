@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useEffect, useState } from 'react';
 import { adminAPI } from '@/lib/api';
 import { DashboardStats } from '@/types';
@@ -41,36 +43,42 @@ export default function DashboardPage() {
       value: stats?.totalUsers || 0,
       icon: Users,
       color: 'bg-blue-500',
+      href: '/users'
     },
     {
       title: 'Total Bookings',
       value: stats?.totalBookings || 0,
       icon: Calendar,
       color: 'bg-green-500',
+      href: '/bookings'
     },
     {
       title: 'Professionals',
       value: stats?.totalProfessionals || 0,
       icon: UserCog,
       color: 'bg-purple-500',
+      href: '/professionals'
     },
     {
       title: 'Total Revenue',
       value: stats?.totalRevenue ? (stats.totalRevenue.toString().includes('₹') ? stats.totalRevenue : `₹${stats.totalRevenue}`) : '₹0',
       icon: TrendingUp,
       color: 'bg-orange-500',
+      href: '/revenue'
     },
     {
       title: 'Upcoming',
       value: stats?.upcomingBookings || 0,
       icon: Clock,
       color: 'bg-yellow-500',
+      href: '/bookings?status=Upcoming'
     },
     {
       title: 'Completed',
       value: stats?.completedBookings || 0,
       icon: CheckCircle,
       color: 'bg-teal-500',
+      href: '/bookings?status=Completed'
     },
   ];
 
@@ -87,17 +95,19 @@ export default function DashboardPage() {
           {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.title} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">{stat.title}</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                  </div>
-                  <div className={`${stat.color} p-3 rounded-lg shadow-sm`}>
-                    <Icon className="w-6 h-6 text-white" />
+              <Link key={stat.title} href={stat.href} className="block">
+                <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer h-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-600 text-sm font-medium">{stat.title}</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                    </div>
+                    <div className={`${stat.color} p-3 rounded-lg shadow-sm`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
