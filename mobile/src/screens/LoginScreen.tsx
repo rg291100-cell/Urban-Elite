@@ -13,13 +13,13 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 
+import { API_URL } from '@env';
+
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 interface Props {
     navigation: LoginScreenNavigationProp;
 }
-
-const API_URL = 'http://localhost:3000'; // Matches mobile/.env
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('');

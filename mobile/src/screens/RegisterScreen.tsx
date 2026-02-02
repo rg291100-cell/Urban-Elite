@@ -15,13 +15,13 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 
 
+import { API_URL } from '@env';
+
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
 interface Props {
     navigation: RegisterScreenNavigationProp;
 }
-
-const API_URL = 'http://localhost:3000'; // Matches mobile/.env
 
 const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [name, setName] = useState('');
