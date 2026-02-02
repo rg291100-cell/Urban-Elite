@@ -1,0 +1,41 @@
+export type RootStackParamList = {
+    Login: undefined;
+    Register: undefined;
+    MainTabs: undefined;
+    Notifications: undefined;
+    InstaHelp: undefined;
+    WomensSalon: undefined;
+    MensSalon: undefined;
+    Cleaning: undefined;
+    Electrician: undefined;
+    NativeWaterPurifier: undefined;
+    Painting: undefined;
+    ACRepair: undefined;
+    Revamp: undefined;
+    NativeSmartHome: undefined;
+    ServiceListing: { slug: string; name: string };
+    ServiceDetail: { item: any };
+    BookingOverview: { item: any };
+    BookingSchedule: { item: any };
+    BookingLocation: { item: any; date: string; slot: string };
+    BookingInstructions: { item: any; date: string; slot: string; location: any };
+    BookingReview: { item: any; date: string; slot: string; location: any; instructions: string };
+    BookingTracking: { bookingId: string; item: any; date: string; slot: string; location: any };
+    PersonalInformation: undefined;
+    SavedAddresses: undefined;
+    PaymentMethods: undefined;
+    PushNotifications: undefined;
+    SupportHelp: undefined;
+    Topup: undefined;
+    WalletHistory: undefined;
+    Chat: { bookingId: string; professionalName: string; professionalImage?: string };
+    SOS: { bookingId: string; professionalName?: string };
+};
+
+export type TabParamList = {
+    Explore: undefined;
+    Bookings: undefined;
+    Wallet: undefined;
+    Profile: undefined;
+    Ads: undefined;
+};

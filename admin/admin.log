@@ -1,0 +1,23 @@
+nohup: ignoring input
+
+> admin@0.1.0 dev
+> next dev -p 3001
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /home/rishabh/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /home/rishabh/urban-elite-app/admin/package-lock.json
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.1.47:3001
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 1649ms
+ GET / 200 in 385ms (compile: 131ms, render: 254ms)
+ GET /services 200 in 45ms (compile: 22ms, render: 24ms)
+ GET /professionals 200 in 52ms (compile: 27ms, render: 26ms)
+ GET /services 200 in 15ms (compile: 1826µs, render: 13ms)
