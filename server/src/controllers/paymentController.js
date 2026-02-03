@@ -16,7 +16,7 @@ const supabase = require('../config/database');
 const createOrder = async (req, res) => {
     try {
         const { orderAmount, orderCurrency, customerId, customerPhone, customerName, customerEmail } = req.body;
-        const userId = req.user.userId; // authMiddleware adds this
+        const userId = req.user?.id; // authMiddleware adds this as req.user.id
 
         const orderId = `ORDER_${Date.now()}`;
         const requestData = {

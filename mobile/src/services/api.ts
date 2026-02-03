@@ -4,9 +4,8 @@ import { authService } from './authService';
 
 import { API_URL } from '@env';
 
-// Using 127.0.0.1 directly to avoid IPv6 resolution issues with ADB Reverse
-// Hardcoding for emulator testing to ensure it hits local server
-const BASE_URL = 'http://10.0.2.2:3000'; // API_URL;
+// Use API_URL from .env for production, fallback to localhost for development
+const BASE_URL = API_URL || 'http://10.0.2.2:3000';
 
 const api = axios.create({
     baseURL: BASE_URL,
