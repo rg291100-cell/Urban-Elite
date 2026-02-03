@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
+import { userAPI } from '../services/api';
 
 type BookingLocationRouteProp = RouteProp<RootStackParamList, 'BookingLocation'>;
 
@@ -18,15 +19,33 @@ const BookingLocationScreen = () => {
     const { item, date, slot } = route.params;
     const insets = useSafeAreaInsets();
 
-    const [selectedLocation, setSelectedLocation] = useState<Location>({
-        type: 'Home',
-        address: 'Flat 402, Elite Tower, Powai, Mumbai'
-    });
+    const [locations, setLocations] = useState<any[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    const locations: Location[] = [
-        { type: 'Home', address: 'Flat 402, Elite Tower, Powai, Mumbai' },
-        { type: 'Work', address: 'Tech Hub B-Side, MIDC, Mumbai' }
-    ];
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchAddresses();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    const fetchAddresses = async () => {
+        try {
+            const response = await userAPI.getAddresses();
+            setLocations(response.data);
+
+            // Auto-select default or first address
+            const defaultAddr = response.data.find((a: any) => a.isDefault);
+            if (defaultAddr) setSelectedLocation(defaultAddr);
+            else if (response.data.length > 0 && !selectedLocation) setSelectedLocation(response.data[0]);
+
+        } catch (error) {
+            console.error('Failed to load addresses', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -54,39 +73,56 @@ const BookingLocationScreen = () => {
                 </View>
 
                 {/* Location Options */}
-                {locations.map((location, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={[
-                            styles.locationCard,
-                            selectedLocation.type === location.type && styles.selectedCard
-                        ]}
-                        onPress={() => setSelectedLocation(location)}
-                    >
-                        <View style={[
-                            styles.iconContainer,
-                            selectedLocation.type === location.type && styles.selectedIcon
-                        ]}>
-                            <Text style={styles.iconText}>
-                                {location.type === 'Home' ? '🏠' : '💼'}
-                            </Text>
-                        </View>
-                        <View style={styles.locationInfo}>
-                            <Text style={[
-                                styles.locationType,
-                                selectedLocation.type === location.type && styles.selectedText
+                {loading ? (
+                    <Text style={{ textAlign: 'center', color: '#718096' }}>Loading addresses...</Text>
+                ) : locations.length === 0 ? (
+                    <View style={{ alignItems: 'center', marginVertical: 20 }}>
+                        <Text style={{ color: '#718096', marginBottom: 10 }}>No saved addresses found.</Text>
+                    </View>
+                ) : (
+                    locations.map((location, index) => (
+                        <TouchableOpacity
+                            key={location.id || index}
+                            style={[
+                                styles.locationCard,
+                                selectedLocation?.id === location.id && styles.selectedCard
+                            ]}
+                            onPress={() => setSelectedLocation(location)}
+                        >
+                            <View style={[
+                                styles.iconContainer,
+                                selectedLocation?.id === location.id && styles.selectedIcon
                             ]}>
-                                {location.type}
-                            </Text>
-                            <Text style={[
-                                styles.locationAddress,
-                                selectedLocation.type === location.type && styles.selectedAddressText
-                            ]}>
-                                {location.address}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                ))}
+                                <Text style={styles.iconText}>
+                                    {location.type === 'Home' ? '🏠' : location.type === 'Work' ? '💼' : '📍'}
+                                </Text>
+                            </View>
+                            <View style={styles.locationInfo}>
+                                <Text style={[
+                                    styles.locationType,
+                                    selectedLocation?.id === location.id && styles.selectedText
+                                ]}>
+                                    {location.type} {location.isDefault && '(Default)'}
+                                </Text>
+                                <Text style={[
+                                    styles.locationAddress,
+                                    selectedLocation?.id === location.id && styles.selectedAddressText
+                                ]}>
+                                    {location.address}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))
+                )}
+
+                {/* Add New Address Button */}
+                <TouchableOpacity
+                    style={styles.addNewButton}
+                    onPress={() => navigation.navigate('AddAddress')}
+                >
+                    <Text style={styles.addNewText}>+ Add New Address</Text>
+                </TouchableOpacity>
+
             </ScrollView>
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
@@ -94,7 +130,8 @@ const BookingLocationScreen = () => {
                     <Text style={styles.backButtonText}>Back</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={styles.continueButton}
+                    style={[styles.continueButton, !selectedLocation && { opacity: 0.5 }]}
+                    disabled={!selectedLocation}
                     onPress={() => navigation.navigate('BookingInstructions', {
                         item,
                         date,
@@ -162,7 +199,23 @@ const styles = StyleSheet.create({
     backButton: { paddingVertical: 15, paddingHorizontal: 30, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', width: '30%', alignItems: 'center' },
     backButtonText: { fontWeight: 'bold', color: '#4A5568' },
     continueButton: { backgroundColor: Theme.colors.brandOrange, paddingVertical: 15, borderRadius: 20, width: '65%', alignItems: 'center', shadowColor: Theme.colors.brandOrange, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5 },
-    continueButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 }
+    continueButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+
+    addNewButton: {
+        borderWidth: 1,
+        borderColor: Theme.colors.brandOrange,
+        borderStyle: 'dashed',
+        borderRadius: 15,
+        padding: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10
+    },
+    addNewText: {
+        color: Theme.colors.brandOrange,
+        fontWeight: 'bold',
+        fontSize: 16
+    }
 });
 
 export default BookingLocationScreen;

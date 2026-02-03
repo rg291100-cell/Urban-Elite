@@ -30,13 +30,21 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes'); // Keep existing userRoutes
+const vendorRoutes = require('./routes/vendorRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const offersRoutes = require('./routes/offersRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/user', userRoutes); // Keep existing userRoutes
-app.use('/api', homeRoutes); // Handles /api/home and /api/services
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/home', homeRoutes); // Handles /api/home and /api/services
+app.use('/api/chat', chatRoutes);
+app.use('/api/offers', offersRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);

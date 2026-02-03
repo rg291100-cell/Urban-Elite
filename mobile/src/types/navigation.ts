@@ -23,13 +23,22 @@ export type RootStackParamList = {
     BookingTracking: { bookingId: string; item: any; date: string; slot: string; location: any };
     PersonalInformation: undefined;
     SavedAddresses: undefined;
+    AddAddress: undefined;
     PaymentMethods: undefined;
+    AddPaymentMethod: undefined;
     PushNotifications: undefined;
     SupportHelp: undefined;
     Topup: undefined;
     WalletHistory: undefined;
     Chat: { bookingId: string; professionalName: string; professionalImage?: string };
     SOS: { bookingId: string; professionalName?: string };
+    VendorTabs: undefined;
+    VendorCreateOffer: undefined;
+    BookingDetails: { bookingId: string };
+    VendorPersonalInformation: undefined;
+    VendorNotificationSettings: undefined;
+    VendorSupportHelp: undefined;
+    VendorQuestionnaire: undefined;
 };
 
 export type TabParamList = {

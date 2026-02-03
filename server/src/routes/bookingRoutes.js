@@ -7,6 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/', authMiddleware, bookingController.createBooking);
 router.get('/:id', authMiddleware, bookingController.getBooking);
 router.get('/:id/tracking', authMiddleware, bookingController.getBookingTracking);
+router.post('/:id/cancel', authMiddleware, bookingController.cancelBooking);
 router.get('/user/all', authMiddleware, bookingController.getUserBookings);
 
 module.exports = router;

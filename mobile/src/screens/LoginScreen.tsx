@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
-
-import { API_URL } from '@env';
+import { authAPI } from '../services/api';
+import { authService } from '../services/authService';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -25,6 +25,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<'USER' | 'VENDOR'>('USER');
+
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please enter both email and password');
@@ -33,33 +35,43 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            // Call custom backend API instead of Supabase auth
-            const response = await fetch(`${API_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            // Use authAPI to ensure we use the correct backend URL (local for emulator)
+            // This prevents using stale .env variables that might point to production
+            const response = await authAPI.login(email, password);
+            const data = response.data;
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
+            if (!data.success) {
                 throw new Error(data.error || 'Login failed');
             }
 
             // Store token and user data using authService
-            const { authService } = await import('../services/authService');
             await authService.setToken(data.token);
             await authService.setUser(data.user);
 
-            // Navigate to home screen
+            // Navigate based on role
+            const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
             navigation.reset({
                 index: 0,
-                routes: [{ name: 'MainTabs' }],
+                routes: [{ name: targetScreen as any }],
             });
         } catch (error: any) {
             console.error('Login error:', error);
+
+            // Handle specific API errors
+            const errorData = error.response?.data;
+            if (errorData) {
+                if (errorData.approvalStatus === 'PENDING') {
+                    Alert.alert('Approval Pending', 'Your account is pending approval from admin. Please wait for approval.');
+                    return;
+                }
+                if (errorData.approvalStatus === 'REJECTED') {
+                    Alert.alert('Account Rejected', 'Your account has been rejected. Please contact support for more information.');
+                    return;
+                }
+                Alert.alert('Login Failed', errorData.error || 'Invalid credentials');
+                return;
+            }
+
             Alert.alert(
                 'Login Failed',
                 error.message || 'An error occurred. Please try again.'
@@ -79,6 +91,28 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.subtitle}>Sign in to continue</Text>
 
                 <View style={styles.form}>
+                    {/* Role Selector */}
+                    <View style={styles.roleSelector}>
+                        <TouchableOpacity
+                            style={[styles.roleButton, selectedRole === 'USER' && styles.roleButtonActive]}
+                            onPress={() => setSelectedRole('USER')}
+                            disabled={loading}
+                        >
+                            <Text style={[styles.roleButtonText, selectedRole === 'USER' && styles.roleButtonTextActive]}>
+                                User
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleButton, selectedRole === 'VENDOR' && styles.roleButtonActive]}
+                            onPress={() => setSelectedRole('VENDOR')}
+                            disabled={loading}
+                        >
+                            <Text style={[styles.roleButtonText, selectedRole === 'VENDOR' && styles.roleButtonTextActive]}>
+                                Vendor
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
                     <TextInput
                         style={styles.input}
                         placeholder="Email"
@@ -109,7 +143,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.buttonText}>Sign In</Text>
+                            <Text style={styles.buttonText}>Sign In as {selectedRole === 'USER' ? 'User' : 'Vendor'}</Text>
                         )}
                     </TouchableOpacity>
 
@@ -158,6 +192,30 @@ const styles = StyleSheet.create({
     },
     form: {
         width: '100%',
+    },
+    roleSelector: {
+        flexDirection: 'row',
+        marginBottom: 20,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        padding: 4,
+    },
+    roleButton: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+        borderRadius: 10,
+    },
+    roleButtonActive: {
+        backgroundColor: '#FF6B6B',
+    },
+    roleButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#666',
+    },
+    roleButtonTextActive: {
+        color: '#fff',
     },
     input: {
         backgroundColor: '#f5f5f5',

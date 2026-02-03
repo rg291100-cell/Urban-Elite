@@ -1,27 +1,109 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Check, Smartphone, CreditCard } from 'lucide-react-native';
+import { useNavigation, NavigationProp, useIsFocused } from '@react-navigation/native';
+import { ArrowLeft, Check, Smartphone, CreditCard, Plus } from 'lucide-react-native';
 import { Theme } from '../theme';
 import { userAPI } from '../services/api';
+import { RootStackParamList } from '../types/navigation';
+import { CFPaymentGatewayService } from 'react-native-cashfree-pg-sdk';
+import { CFSession, CFEnvironment, CFWebCheckoutPayment, CFThemeBuilder } from 'cashfree-pg-api-contract';
+import { paymentAPI } from '../services/api';
 
 const TopupScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const [amount, setAmount] = useState('');
-    const [selectedMethod, setSelectedMethod] = useState('upi');
+    const [selectedMethod, setSelectedMethod] = useState<any>(null);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [fetchingMethods, setFetchingMethods] = useState(true);
+
+    const currentOrderId = React.useRef<string | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadPaymentMethods();
+        });
+        return () => {
+            unsubscribe();
+            // Cleanup callback on unmount
+            CFPaymentGatewayService.setCallback({
+                onVerify: async () => { },
+                onError: () => { }
+            });
+        };
+    }, [navigation]);
+
+    const loadPaymentMethods = async () => {
+        try {
+            const response = await userAPI.getPaymentMethods();
+            setPaymentMethods(response.data);
+            // Auto-select first method or default
+            const defaultMethod = response.data.find((m: any) => m.isDefault);
+            if (defaultMethod) setSelectedMethod(defaultMethod);
+            else if (response.data.length > 0) setSelectedMethod(response.data[0]);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setFetchingMethods(false);
+        }
+    };
 
     const handleTopUp = async () => {
-        if (!amount) return;
+        if (!amount) {
+            Alert.alert('Error', 'Please enter an amount');
+            return;
+        }
+
         setLoading(true);
         try {
-            await userAPI.topupWallet(amount);
-            Alert.alert('Success', `₹${amount} added to wallet successfully!`, [
-                { text: 'OK', onPress: () => navigation.goBack() }
-            ]);
+            // 1. Create Order on Backend
+            const orderResponse = await paymentAPI.createOrder({
+                orderAmount: amount,
+                orderCurrency: 'INR',
+                customerId: 'USER_ID_HERE', // In real app, get from auth service
+                customerPhone: '9999999999',
+                customerName: 'Urban Elite User',
+                customerEmail: 'user@example.com'
+            });
+
+            const { payment_session_id, order_id } = orderResponse.data;
+            currentOrderId.current = order_id;
+
+            // 2. Initiate Cashfree SDK
+            CFPaymentGatewayService.setCallback({
+                onVerify: async (orderID: string) => {
+                    // Guard: Only process if order ID matches current request
+                    if (orderID !== currentOrderId.current) {
+                        console.log('Ignoring callback for old/mismatched order:', orderID);
+                        return;
+                    }
+
+                    // 3. Verify Payment on Backend
+                    try {
+                        await paymentAPI.verifyPayment({ orderId: orderID, type: 'TOPUP' });
+                        // 4. Update Wallet (Topup)
+                        await userAPI.topupWallet(amount); // Removed method ID logic for now as it's a direct gateway payment
+                        Alert.alert('Success', `₹${amount} added to wallet successfully!`, [
+                            { text: 'OK', onPress: () => navigation.goBack() }
+                        ]);
+                    } catch (error) {
+                        Alert.alert('Error', 'Payment verification failed');
+                    }
+                },
+                onError: (error: any, orderID: string) => {
+                    if (orderID !== currentOrderId.current) return;
+                    Alert.alert('Error', error.message || 'Payment failed');
+                }
+            });
+
+            const session = new CFSession(payment_session_id, order_id, CFEnvironment.SANDBOX);
+            // Use WebCheckout for better Sandbox compatibility
+            CFPaymentGatewayService.doWebPayment(session);
+
         } catch (error) {
-            Alert.alert('Error', 'Failed to topup wallet');
+            console.error(error);
+            Alert.alert('Error', 'Failed to initiate payment');
         } finally {
             setLoading(false);
         }
@@ -69,55 +151,70 @@ const TopupScreen = () => {
 
                 <Text style={[styles.label, { marginTop: 30 }]}>Select Payment Method</Text>
 
-                <TouchableOpacity
-                    style={[styles.paymentOption, selectedMethod === 'upi' && styles.selectedOption]}
-                    onPress={() => setSelectedMethod('upi')}
-                >
-                    <View style={styles.optionLeft}>
-                        <View style={styles.iconBox}>
-                            <Smartphone size={20} color={Theme.colors.brandOrange} />
-                        </View>
-                        <View>
-                            <Text style={styles.optionTitle}>UPI</Text>
-                            <Text style={styles.optionSubtitle}>Google Pay, PhonePe, Paytm</Text>
-                        </View>
+                {fetchingMethods ? (
+                    <ActivityIndicator color={Theme.colors.brandOrange} style={{ marginVertical: 20 }} />
+                ) : paymentMethods.length === 0 ? (
+                    <View style={{ alignItems: 'center', marginVertical: 20 }}>
+                        <Text style={{ color: '#94A3B8', marginBottom: 15 }}>No payment methods saved</Text>
                     </View>
-                    {selectedMethod === 'upi' && (
-                        <View style={styles.checkCircle}>
-                            <View style={styles.innerCircle} />
-                        </View>
-                    )}
-                </TouchableOpacity>
+                ) : (
+                    paymentMethods.map((method) => (
+                        <TouchableOpacity
+                            key={method.id}
+                            style={[styles.paymentOption, selectedMethod?.id === method.id && styles.selectedOption]}
+                            onPress={() => setSelectedMethod(method)}
+                        >
+                            <View style={styles.optionLeft}>
+                                <View style={styles.iconBox}>
+                                    {method.type === 'card' ? (
+                                        <CreditCard size={20} color={Theme.colors.brandOrange} />
+                                    ) : (
+                                        <Smartphone size={20} color={Theme.colors.brandOrange} />
+                                    )}
+                                </View>
+                                <View>
+                                    <Text style={styles.optionTitle}>{method.label}</Text>
+                                    <Text style={styles.optionSubtitle}>
+                                        {method.type === 'card' ? `**** ${method.detail}` : method.detail}
+                                    </Text>
+                                </View>
+                            </View>
+                            {selectedMethod?.id === method.id && (
+                                <View style={styles.checkCircle}>
+                                    <View style={styles.innerCircle} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    ))
+                )}
 
+                {/* Add New Payment Method */}
                 <TouchableOpacity
-                    style={[styles.paymentOption, selectedMethod === 'card' && styles.selectedOption]}
-                    onPress={() => setSelectedMethod('card')}
+                    style={styles.addNewButton}
+                    onPress={() => navigation.navigate('AddPaymentMethod')}
                 >
-                    <View style={styles.optionLeft}>
-                        <View style={styles.iconBox}>
-                            <CreditCard size={20} color={Theme.colors.brandOrange} />
-                        </View>
-                        <View>
-                            <Text style={styles.optionTitle}>Debit / Credit Card</Text>
-                            <Text style={styles.optionSubtitle}>Visa, Mastercard, Rupay</Text>
-                        </View>
-                    </View>
-                    {selectedMethod === 'card' && (
-                        <View style={styles.checkCircle}>
-                            <View style={styles.innerCircle} />
-                        </View>
-                    )}
+                    <Plus size={20} color={Theme.colors.brandOrange} />
+                    <Text style={styles.addNewText}>Add New Payment Method</Text>
                 </TouchableOpacity>
 
             </ScrollView>
 
             <View style={styles.footer}>
+                <View style={{ marginBottom: 10, padding: 10, backgroundColor: '#FFF5F5', borderRadius: 8, borderWidth: 1, borderColor: '#FEB2B2' }}>
+                    <Text style={{ color: '#C53030', fontSize: 12, fontWeight: 'bold' }}>SANDBOX MODE ACTIVE</Text>
+                    <Text style={{ color: '#2D3748', fontSize: 10, marginTop: 4 }}>Use Test UPI: <Text style={{ fontWeight: 'bold' }}>testsuccess@gocashfree</Text></Text>
+                    <Text style={{ color: '#2D3748', fontSize: 10 }}>Use Test Card: <Text style={{ fontWeight: 'bold' }}>Any valid format (e.g. 4111 1111 1111 1111)</Text></Text>
+                </View>
                 <TouchableOpacity
-                    style={[styles.payButton, !amount && styles.disabledButton]}
+                    style={[styles.payButton, (!amount || !selectedMethod) && styles.disabledButton]}
                     onPress={handleTopUp}
-                    disabled={!amount}
+                    disabled={!amount || !selectedMethod || loading}
                 >
-                    <Text style={styles.payButtonText}>PROCEED TO PAY {amount ? `₹${amount}` : ''}</Text>
+                    {loading ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text style={styles.payButtonText}>PROCEED TO PAY {amount ? `₹${amount}` : ''}</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -150,6 +247,20 @@ const styles = StyleSheet.create({
 
     checkCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: Theme.colors.brandOrange, alignItems: 'center', justifyContent: 'center' },
     innerCircle: { width: 10, height: 10, borderRadius: 5, backgroundColor: Theme.colors.brandOrange },
+
+    addNewButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 15,
+        borderRadius: 15,
+        marginTop: 10,
+        borderWidth: 2,
+        borderColor: Theme.colors.brandOrange,
+        borderStyle: 'dashed',
+        backgroundColor: '#FFF7ED'
+    },
+    addNewText: { color: Theme.colors.brandOrange, fontSize: 16, fontWeight: 'bold', marginLeft: 8 },
 
     footer: { padding: 20, borderTopWidth: 1, borderTopColor: '#F0F0F0', backgroundColor: 'white' },
     payButton: { backgroundColor: Theme.colors.brandOrange, paddingVertical: 18, borderRadius: 16, alignItems: 'center' },

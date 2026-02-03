@@ -5,7 +5,8 @@ import { authService } from './authService';
 import { API_URL } from '@env';
 
 // Using 127.0.0.1 directly to avoid IPv6 resolution issues with ADB Reverse
-const BASE_URL = API_URL;
+// Hardcoding for emulator testing to ensure it hits local server
+const BASE_URL = 'http://10.0.2.2:3000'; // API_URL;
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -47,29 +48,32 @@ api.interceptors.response.use(
             // Clear auth data and redirect to login
             await authService.clearAuth();
         }
+
+        // If User Profile is not found (404), likely means token belongs to a user that doesn't exist in this DB (e.g. switching envs)
+        if (error.response?.status === 404 && error.config?.url?.includes('/api/user/profile')) {
+            console.log('User profile not found, clearing auth...');
+            await authService.clearAuth();
+            // Force reload/navigation to login might happen via state change listener or next app launch
+        }
         return Promise.reject(error);
     }
 );
 
 export const authAPI = {
     login: (email: string, password: string) => api.post('/api/auth/login', { email, password }),
-    register: (data: { name: string; email: string; phone?: string; password: string }) =>
-        api.post('/api/auth/register', data),
+    register: (data: any) => api.post('/api/auth/register', data),
     getCurrentUser: () => api.get('/api/auth/me'),
 };
 
 export const homeAPI = {
     getHomeData: () => api.get('/api/home'),
-    getServiceDetails: (type: string) => api.get(`/api/services/${type}`),
-    getServiceDetail: (id: string) => api.get(`/api/service/${id}`),
+    getServiceDetails: (type: string) => api.get(`/api/home/services/${type}`),
+    getServiceDetail: (id: string) => api.get(`/api/home/service/${id}`),
 };
 
 export const userAPI = {
     getProfile: () => api.get('/api/user/profile'),
     updateProfile: (data: any) => api.put('/api/user/profile', data),
-
-    getWallet: () => api.get('/api/user/wallet'),
-    topupWallet: (amount: string) => api.post('/api/user/wallet/topup', { amount }),
 
     getBookings: () => api.get('/api/user/bookings'),
 
@@ -80,6 +84,11 @@ export const userAPI = {
     getPaymentMethods: () => api.get('/api/user/payment-methods'),
     addPaymentMethod: (data: any) => api.post('/api/user/payment-methods', data),
     deletePaymentMethod: (id: string) => api.delete(`/api/user/payment-methods/${id}`),
+
+    getWallet: () => api.get('/api/user/wallet'),
+    topupWallet: (amount: string, paymentMethodId?: string) =>
+        api.post('/api/user/wallet/topup', { amount, paymentMethodId }),
+    getWalletTransactions: () => api.get('/api/user/wallet/transactions'),
 
     getNotificationSettings: () => api.get('/api/user/notifications/settings'),
     updateNotificationSettings: (data: any) => api.put('/api/user/notifications/settings', data),
@@ -97,6 +106,38 @@ export const bookingAPI = {
     }) => api.post('/api/bookings', data),
     getBooking: (id: string) => api.get(`/api/bookings/${id}`),
     getBookingTracking: (id: string) => api.get(`/api/bookings/${id}/tracking`),
+    cancelBooking: (id: string) => api.post(`/api/bookings/${id}/cancel`, {}),
+}
+
+// Service Categories
+export const serviceAPI = {
+    getCategories: () => api.get('/api/home/services/categories'),
+};
+
+export const vendorAPI = {
+    getDashboard: () => api.get('/api/vendor/dashboard'),
+    getRevenue: () => api.get('/api/vendor/revenue'),
+    getBookings: (status?: string) => api.get('/api/vendor/bookings', { params: { status } }),
+    updateBookingStatus: (bookingId: string, status: string) =>
+        api.put(`/api/vendor/bookings/${bookingId}/status`, { status }),
+    getServices: () => api.get('/api/vendor/services'),
+    updateServices: (services: any) => api.put('/api/vendor/services', { services }),
+};
+
+export const chatAPI = {
+    getMessages: (bookingId: string) => api.get(`/api/chat/${bookingId}`),
+    sendMessage: (bookingId: string, content: string) => api.post(`/api/chat/${bookingId}`, { content }),
+};
+
+export const offersAPI = {
+    getOffers: () => api.get('/api/offers'),
+    createOffer: (data: any) => api.post('/api/offers', data),
+    getVendorOffers: () => api.get('/api/offers/vendor'),
+};
+
+export const paymentAPI = {
+    createOrder: (data: any) => api.post('/api/payments/create-order', data),
+    verifyPayment: (data: any) => api.post('/api/payments/verify-payment', data),
 };
 
 export default api;

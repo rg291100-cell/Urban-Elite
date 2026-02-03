@@ -1,0 +1,1 @@
+require('dotenv').config(); const supabase = require('./src/config/database'); async function checkUser() { const { data } = await supabase.from('users').select('*').eq('email', 'test567@gmail.com'); console.log(JSON.stringify(data, null, 2)); } checkUser();

@@ -17,7 +17,10 @@ const authMiddleware = async (req, res, next) => {
 
         // Verify token using JWT_SECRET
         // This matches the signing logic in authController.js
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+        const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+        console.log('DEBUG: Middleware Verify Secret:', secret.substring(0, 5) + '...');
+        console.log('DEBUG: Middleware Token:', token.substring(0, 5) + '...' + token.substring(token.length - 5));
+        const decoded = jwt.verify(token, secret);
 
         // Attach user info to request
         // The token payload contains: { userId: user.id, email: user.email, role: user.role }

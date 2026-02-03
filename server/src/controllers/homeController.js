@@ -26,6 +26,25 @@ const getHomeData = async (req, res) => {
     }
 };
 
+// Get Service Categories (for Vendor Registration)
+const getServiceCategories = async (req, res) => {
+    try {
+        const { data: categories, error } = await supabase
+            .from('service_categories')
+            .select('*');
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            categories: categories
+        });
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch categories' });
+    }
+};
+
 // Get Service Details
 const getServiceDetails = async (req, res) => {
     const { type } = req.params;
@@ -115,4 +134,4 @@ const getServiceDetailById = async (req, res) => {
     }
 };
 
-module.exports = { getHomeData, getServiceDetails, getServiceDetailById };
+module.exports = { getHomeData, getServiceDetails, getServiceDetailById, getServiceCategories };

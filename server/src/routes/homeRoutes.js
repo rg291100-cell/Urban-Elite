@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getHomeData, getServiceDetails, getServiceDetailById } = require('../controllers/homeController');
+const { getHomeData, getServiceDetails, getServiceDetailById, getServiceCategories } = require('../controllers/homeController');
 
-router.get('/home', getHomeData);
+router.get('/', getHomeData);
+router.get('/services/categories', getServiceCategories);
 router.get('/services/:type', getServiceDetails);
 router.get('/service/:id', getServiceDetailById);
 

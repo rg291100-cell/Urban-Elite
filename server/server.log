@@ -1,50 +1,28 @@
 nohup: ignoring input
-
-> urban-elite-app@1.0.0 start
-> node src/index.js
-
-[dotenv@17.2.3] injecting env (5) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.3] injecting env (6) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
 Server running on http://0.0.0.0:3000
 Access from network: http://192.168.1.47:3000
-[2026-02-02T06:54:33.467Z] GET / 200 - 4ms - IP: 127.0.0.1
-[2026-02-02T06:54:33.686Z] GET /favicon.ico 404 - 1ms - IP: 127.0.0.1
-[2026-02-02T06:54:36.418Z] GET /home 200 - 524ms - IP: 127.0.0.1
-[2026-02-02T06:56:35.697Z] GET /bookings 304 - 846ms - IP: 127.0.0.1
-[2026-02-02T06:56:36.993Z] GET /wallet 404 - 257ms - IP: 127.0.0.1
-Supabase error: {
-  code: 'PGRST116',
-  details: 'The result contains 0 rows',
+[2026-02-02T18:17:08.137Z] GET /dashboard 304 - 1197ms - IP: 127.0.0.1
+[2026-02-02T18:17:09.827Z] GET /users?page=1&limit=10&search= 200 - 552ms - IP: 127.0.0.1
+[2026-02-02T18:17:10.492Z] GET /users?page=1&limit=10&search= 304 - 663ms - IP: 127.0.0.1
+[2026-02-02T18:17:13.413Z] GET /vendors/pending 304 - 138ms - IP: 127.0.0.1
+[2026-02-02T18:17:13.564Z] GET /vendors/pending 304 - 151ms - IP: 127.0.0.1
+[2026-02-02T18:17:15.753Z] GET /users?page=1&limit=10&search= 304 - 571ms - IP: 127.0.0.1
+[2026-02-02T18:17:16.317Z] GET /users?page=1&limit=10&search= 304 - 564ms - IP: 127.0.0.1
+[2026-02-02T18:17:17.496Z] GET /vendors/pending 304 - 136ms - IP: 127.0.0.1
+[2026-02-02T18:17:17.649Z] GET /vendors/pending 304 - 153ms - IP: 127.0.0.1
+[2026-02-02T18:17:18.572Z] GET /bookings?page=1&limit=10&search= 304 - 229ms - IP: 127.0.0.1
+[2026-02-02T18:17:18.775Z] GET /bookings?page=1&limit=10&search= 304 - 203ms - IP: 127.0.0.1
+[2026-02-02T18:17:19.512Z] GET /services/categories 304 - 111ms - IP: 127.0.0.1
+[2026-02-02T18:17:19.698Z] GET /services/categories 304 - 185ms - IP: 127.0.0.1
+[2026-02-02T18:17:22.066Z] GET /dashboard 304 - 1012ms - IP: 127.0.0.1
+[2026-02-02T18:17:23.212Z] GET /dashboard 304 - 1146ms - IP: 127.0.0.1
+DEBUG: Middleware Verify Secret: local...
+DEBUG: Middleware Token: eyJhb...CdUhU
+{
+  code: '42703',
+  details: null,
   hint: null,
-  message: 'Cannot coerce the result to a single JSON object'
+  message: 'column transactions.created_at does not exist'
 }
-[2026-02-02T06:56:40.553Z] GET /profile 404 - 388ms - IP: 127.0.0.1
-[2026-02-02T06:59:50.772Z] GET /dashboard 200 - 6481ms - IP: 127.0.0.1
-[2026-02-02T06:59:52.663Z] GET /services/categories 200 - 225ms - IP: 127.0.0.1
-[2026-02-02T06:59:52.866Z] GET /services/categories 304 - 202ms - IP: 127.0.0.1
-[2026-02-02T07:00:08.351Z] PUT /services/categories/1bc3972f-a031-44b4-8da9-e833b945fee4 200 - 150ms - IP: 127.0.0.1
-[2026-02-02T07:00:08.483Z] GET /services/categories 200 - 128ms - IP: 127.0.0.1
-[2026-02-02T07:00:36.802Z] PUT /services/categories/1bc3972f-a031-44b4-8da9-e833b945fee4 200 - 339ms - IP: 127.0.0.1
-[2026-02-02T07:00:36.965Z] GET /services/categories 200 - 158ms - IP: 127.0.0.1
-[2026-02-02T07:00:59.352Z] GET /professionals 200 - 160ms - IP: 127.0.0.1
-[2026-02-02T07:00:59.529Z] GET /professionals 304 - 176ms - IP: 127.0.0.1
-[2026-02-02T07:01:22.196Z] POST /professionals 201 - 437ms - IP: 127.0.0.1
-[2026-02-02T07:01:22.366Z] GET /professionals 200 - 161ms - IP: 127.0.0.1
-[2026-02-02T07:01:27.127Z] DELETE /professionals/ae8d10a0-87fb-40c4-a996-e08ebccb41d9 200 - 196ms - IP: 127.0.0.1
-[2026-02-02T07:01:27.279Z] GET /professionals 200 - 148ms - IP: 127.0.0.1
-[2026-02-02T07:01:56.028Z] POST /professionals 201 - 145ms - IP: 127.0.0.1
-[2026-02-02T07:01:56.159Z] GET /professionals 200 - 128ms - IP: 127.0.0.1
-[2026-02-02T07:02:06.332Z] DELETE /professionals/92d29df4-1a54-4537-a1a3-9bbabeca33dd 200 - 165ms - IP: 127.0.0.1
-[2026-02-02T07:02:06.503Z] GET /professionals 200 - 154ms - IP: 127.0.0.1
-[2026-02-02T07:02:11.743Z] GET /services/categories 304 - 146ms - IP: 127.0.0.1
-[2026-02-02T07:02:11.878Z] GET /services/categories 304 - 134ms - IP: 127.0.0.1
-[2026-02-02T07:02:39.682Z] POST /services/categories 201 - 167ms - IP: 127.0.0.1
-[2026-02-02T07:02:39.887Z] GET /services/categories 200 - 202ms - IP: 127.0.0.1
-[2026-02-02T07:05:04.162Z] GET /home 200 - 737ms - IP: 127.0.0.1
-[2026-02-02T07:06:04.194Z] POST /services/categories 201 - 170ms - IP: 127.0.0.1
-[2026-02-02T07:06:04.386Z] GET /services/categories 200 - 189ms - IP: 127.0.0.1
-[2026-02-02T07:09:27.400Z] GET /home 200 - 549ms - IP: 127.0.0.1
-[2026-02-02T07:09:29.201Z] GET /home 304 - 145ms - IP: 127.0.0.1
-[2026-02-02T07:09:50.416Z] POST /services/categories 201 - 142ms - IP: 127.0.0.1
-[2026-02-02T07:09:50.568Z] GET /services/categories 200 - 142ms - IP: 127.0.0.1
-[2026-02-02T07:10:18.921Z] GET /bookings 304 - 558ms - IP: 127.0.0.1
-[2026-02-02T07:10:40.133Z] GET /home 200 - 138ms - IP: 127.0.0.1
+[2026-02-02T18:17:29.727Z] GET /wallet/transactions 500 - 133ms - IP: 127.0.0.1

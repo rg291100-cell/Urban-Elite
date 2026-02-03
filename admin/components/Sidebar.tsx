@@ -6,17 +6,19 @@ import {
     LayoutDashboard,
     Users,
     Calendar,
-    UserCog,
     Layers,
-    LogOut
+    LogOut,
+    UserCheck,
+    CreditCard
 } from 'lucide-react';
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Users', href: '/users', icon: Users },
+    { name: 'Vendors', href: '/vendors', icon: UserCheck },
     { name: 'Bookings', href: '/bookings', icon: Calendar },
     { name: 'Services', href: '/services', icon: Layers },
-    { name: 'Professionals', href: '/professionals', icon: UserCog },
+    { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
 ];
 
 export default function Sidebar() {

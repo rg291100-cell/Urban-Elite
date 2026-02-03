@@ -2,18 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { ArrowLeft, CreditCard, Plus, Trash2 } from 'lucide-react-native';
 import { Theme } from '../theme';
 import { userAPI } from '../services/api';
+import { RootStackParamList } from '../types/navigation';
 
 const PaymentMethodsScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const [methods, setMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadMethods();
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadMethods();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const loadMethods = async () => {
         try {
@@ -27,19 +32,7 @@ const PaymentMethodsScreen = () => {
     };
 
     const handleAdd = () => {
-        Alert.alert('Add Payment Method', 'Adding demo card...', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Add', onPress: async () => {
-                    try {
-                        await userAPI.addPaymentMethod({ type: 'card', label: 'Visa Demo', detail: '4242' });
-                        loadMethods();
-                    } catch (error) {
-                        Alert.alert('Error', 'Failed to add method');
-                    }
-                }
-            }
-        ]);
+        navigation.navigate('AddPaymentMethod');
     };
 
     const handleDelete = (id: string) => {
@@ -118,7 +111,7 @@ const PaymentMethodsScreen = () => {
                 ))}
 
                 {/* Add New Button */}
-                <TouchableOpacity style={styles.addNewButton}>
+                <TouchableOpacity style={styles.addNewButton} onPress={handleAdd}>
                     <Plus size={20} color={Theme.colors.brandOrange} />
                     <Text style={styles.addNewText}>Add New Card</Text>
                 </TouchableOpacity>

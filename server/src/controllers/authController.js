@@ -8,7 +8,13 @@ const JWT_EXPIRES_IN = '7d';
 // Register new user
 exports.register = async (req, res) => {
     try {
-        const { name, email, phone, password } = req.body;
+        const {
+            name, email, phone, password, role,
+            serviceCategory, businessName, businessAddress, experienceYears
+        } = req.body;
+
+        console.log('Registration Request Body:', req.body); // DEBUG
+        console.log('Role received:', role); // DEBUG
 
         // Validate required fields
         if (!name || !email || !password) {
@@ -16,6 +22,19 @@ exports.register = async (req, res) => {
                 success: false,
                 error: 'Name, email, and password are required'
             });
+        }
+
+        // Validate role
+        const userRole = role && (role === 'VENDOR' || role === 'USER') ? role : 'USER';
+
+        // Validate vendor-specific fields
+        if (userRole === 'VENDOR') {
+            if (!serviceCategory || !businessName || !businessAddress) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Service category, business name, and business address are required for vendors'
+                });
+            }
         }
 
         // Check if user already exists
@@ -35,26 +54,55 @@ exports.register = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Prepare user data
+        const userData = {
+            name,
+            email,
+            phone: phone || null,
+            password: hashedPassword,
+            role: userRole,
+            is_premium: false,
+            approval_status: userRole === 'VENDOR' ? 'PENDING' : 'APPROVED'
+        };
+
+        // Add vendor-specific fields if vendor
+        if (userRole === 'VENDOR') {
+            userData.service_category = serviceCategory;
+            userData.business_name = businessName;
+            userData.business_address = businessAddress;
+            userData.experience_years = experienceYears ? parseInt(experienceYears) : null;
+        }
+
         // Create user
         const { data: user, error } = await supabase
             .from('users')
-            .insert({
-                name,
-                email,
-                phone: phone || null,
-                password: hashedPassword,
-                role: 'USER',
-                is_premium: false
-            })
+            .insert(userData)
             .select()
             .single();
 
         if (error) throw error;
 
-        // Generate JWT token with role
+        // For vendors, don't generate token - they need approval first
+        if (userRole === 'VENDOR') {
+            return res.status(201).json({
+                success: true,
+                message: 'Vendor registration successful! Your account is pending admin approval.',
+                requiresApproval: true,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    approvalStatus: user.approval_status
+                }
+            });
+        }
+
+        // For regular users, generate token and allow immediate login
+        const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
+            secret,
             { expiresIn: JWT_EXPIRES_IN }
         );
 
@@ -117,10 +165,31 @@ exports.login = async (req, res) => {
             });
         }
 
+        // Check approval status for vendors
+        if (user.role === 'VENDOR') {
+            if (user.approval_status === 'PENDING') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Your account is pending approval from admin. Please wait for approval.',
+                    approvalStatus: 'PENDING'
+                });
+            }
+            if (user.approval_status === 'REJECTED') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Your account has been rejected. Please contact support for more information.',
+                    approvalStatus: 'REJECTED'
+                });
+            }
+        }
+
         // Generate JWT token with role
+        // Use runtime process.env check to ensure consistency with middleware
+        const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+        console.log('DEBUG: Login Signing Secret:', secret.substring(0, 5) + '...');
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
+            secret,
             { expiresIn: JWT_EXPIRES_IN }
         );
 
@@ -134,7 +203,9 @@ exports.login = async (req, res) => {
                 email: user.email,
                 phone: user.phone,
                 role: user.role,
-                walletBalance: '₹0'
+                isPremium: user.is_premium,
+                walletBalance: user.wallet_balance || '₹0',
+                approvalStatus: user.approval_status
             }
         });
     } catch (error) {

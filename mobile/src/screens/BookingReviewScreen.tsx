@@ -4,7 +4,9 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
-import { bookingAPI } from '../services/api';
+import { bookingAPI, paymentAPI } from '../services/api';
+import { CFPaymentGatewayService } from 'react-native-cashfree-pg-sdk';
+import { CFSession as CFSessionContract, CFEnvironment as CFEnvironmentContract, CFWebCheckoutPayment as CFWebCheckoutPaymentContract, CFThemeBuilder as CFThemeBuilderContract } from 'cashfree-pg-api-contract';
 
 type BookingReviewRouteProp = RouteProp<RootStackParamList, 'BookingReview'>;
 
@@ -14,9 +16,83 @@ const BookingReviewScreen = () => {
     const { item, date, slot, location, instructions } = route.params;
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState<boolean>(false);
+    const currentOrderId = React.useRef<string | null>(null);
+
+    // Cleanup callback on unmount
+    React.useEffect(() => {
+        return () => {
+            CFPaymentGatewayService.setCallback({
+                onVerify: async () => { },
+                onError: () => { }
+            });
+        };
+    }, []);
 
     const handleConfirm = async () => {
         setLoading(true);
+        try {
+            // Parse price (remove ₹ and commas)
+            const priceValue = parseFloat(item.price.replace(/[₹,]/g, ''));
+
+            // 1. Create Order
+            const orderResponse = await paymentAPI.createOrder({
+                orderAmount: priceValue,
+                orderCurrency: 'INR',
+                customerId: 'USER_123', // Hardcoded for now / should come from auth
+                customerPhone: '9999999999',
+                customerName: 'Urban Elite User',
+                customerEmail: 'user@example.com'
+            });
+
+            const { payment_session_id, order_id } = orderResponse.data;
+            currentOrderId.current = order_id;
+
+            // 2. Initiate Payment
+            CFPaymentGatewayService.setCallback({
+                onVerify: async (orderID: string) => {
+                    if (orderID !== currentOrderId.current) {
+                        console.log('BookingReview: Ignoring callback for old/mismatched order:', orderID);
+                        return;
+                    }
+                    try {
+                        console.log('Verifying payment for order:', orderID);
+                        await paymentAPI.verifyPayment({ orderId: orderID });
+
+                        // 3. Create Booking on Success
+                        await createBooking();
+
+                    } catch (error) {
+                        console.error('Payment verification failed', error);
+                        Alert.alert('Error', 'Payment verification failed. Please contact support.');
+                        setLoading(false);
+                    }
+                },
+                onError: (error: any, orderID: string) => {
+                    if (orderID !== currentOrderId.current) return;
+                    console.error('Payment failed', error);
+                    Alert.alert('Error', error.message || 'Payment failed');
+                    setLoading(false);
+                }
+            });
+
+            // Note: Using the classes from the contract package as per previous fix
+            // But the SDK export might be mixed. Using 'any' casting if needed or proper imports.
+            // Based on TopupScreen fix, we imported classes from 'cashfree-pg-api-contract'.
+
+
+            // Note: Using Web Checkout instead of Drop Checkout because Drop Checkout was throwing
+            // "mode not enabled" errors for test credentials. Web Checkout is more robust for Sandbox.
+            const session = new CFSessionContract(payment_session_id, order_id, CFEnvironmentContract.SANDBOX);
+            CFPaymentGatewayService.doWebPayment(session);
+
+        } catch (error) {
+            console.error('Payment initiation error:', error);
+            Alert.alert('Error', 'Failed to initiate payment. Please try again.');
+            setLoading(false);
+        }
+    };
+
+    const createBooking = async () => {
         try {
             const response = await bookingAPI.createBooking({
                 serviceId: item.id,
@@ -37,8 +113,8 @@ const BookingReviewScreen = () => {
                 location
             });
         } catch (error) {
-            console.error('Booking error:', error);
-            Alert.alert('Error', 'Failed to confirm booking. Please try again.');
+            console.error('Booking creation error after payment:', error);
+            Alert.alert('Error', 'Payment successful but booking failed. Please contact support.');
         } finally {
             setLoading(false);
         }
@@ -99,13 +175,16 @@ const BookingReviewScreen = () => {
                         <Text style={styles.noteIconText}>ℹ️</Text>
                     </View>
                     <Text style={styles.noteText}>
-                        <Text style={styles.noteBold}>Note:</Text> To ensure service satisfaction, your payment will be collected{' '}
-                        <Text style={styles.noteUnderline}>only after the professional completes the job</Text>.
+                        <Text style={styles.noteBold}>Note:</Text> Full payment of <Text style={styles.noteBold}>{item.price}</Text> is required to confirm your booking.
                     </Text>
                 </View>
             </ScrollView>
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+                <View style={{ position: 'absolute', top: -70, left: 20, right: 20, padding: 10, backgroundColor: '#FFF5F5', borderRadius: 8, borderWidth: 1, borderColor: '#FEB2B2', zIndex: 10 }}>
+                    <Text style={{ color: '#C53030', fontSize: 12, fontWeight: 'bold' }}>SANDBOX MODE</Text>
+                    <Text style={{ color: '#2D3748', fontSize: 10 }}>Test UPI: <Text style={{ fontWeight: 'bold' }}>testsuccess@gocashfree</Text></Text>
+                </View>
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}

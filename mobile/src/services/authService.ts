@@ -52,6 +52,12 @@ export const authService = {
         return token !== null;
     },
 
+    // Get user role
+    async getUserRole(): Promise<string | null> {
+        const user = await this.getUser();
+        return user?.role || null;
+    },
+
     // Logout
     async clearAuth(): Promise<void> {
         try {

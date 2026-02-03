@@ -1,35 +1,66 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SectionList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SectionList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight } from 'lucide-react-native';
 import { Theme } from '../theme';
+import { userAPI } from '../services/api';
 
 const WalletHistoryScreen = () => {
     const navigation = useNavigation();
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const HISTORY_DATA = [
-        {
-            title: 'Today',
-            data: [
-                { id: '1', title: 'Deep Home Cleaning', type: 'debit', amount: '₹1999', time: '10:30 AM', status: 'Success' },
-                { id: '2', title: 'Wallet Top-up', type: 'credit', amount: '₹2000', time: '09:00 AM', status: 'Success' },
-            ]
-        },
-        {
-            title: 'Yesterday',
-            data: [
-                { id: '3', title: 'AC Service Booking', type: 'debit', amount: '₹599', time: '04:15 PM', status: 'Success' },
-            ]
-        },
-        {
-            title: '28 May 2024',
-            data: [
-                { id: '4', title: 'Refund - Cancellation', type: 'credit', amount: '₹150', time: '02:00 PM', status: 'Success' },
-                { id: '5', title: 'Electrician Visit', type: 'debit', amount: '₹350', time: '11:00 AM', status: 'Success' },
-            ]
+    useEffect(() => {
+        loadTransactions();
+    }, []);
+
+    const loadTransactions = async () => {
+        try {
+            const response = await userAPI.getWalletTransactions();
+            setTransactions(response.data || []);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    // Group transactions by date
+    const groupTransactionsByDate = () => {
+        const grouped: any = {};
+
+        transactions.forEach((tx) => {
+            const date = new Date(tx.date || tx.created_at);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let dateLabel;
+            if (date.toDateString() === today.toDateString()) {
+                dateLabel = 'Today';
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                dateLabel = 'Yesterday';
+            } else {
+                dateLabel = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+
+            if (!grouped[dateLabel]) {
+                grouped[dateLabel] = [];
+            }
+            grouped[dateLabel].push(tx);
+        });
+
+        return Object.keys(grouped).map(title => ({
+            title,
+            data: grouped[title]
+        }));
+    };
+
+    const formatTime = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    };
 
     const renderItem = ({ item }: { item: any }) => (
         <View style={styles.transactionCard}>
@@ -42,14 +73,18 @@ const WalletHistoryScreen = () => {
             </View>
             <View style={styles.details}>
                 <Text style={styles.txTitle}>{item.title}</Text>
-                <Text style={styles.txTime}>{item.time} • {item.status}</Text>
+                <Text style={styles.txTime}>
+                    {formatTime(item.date || item.created_at)} • {item.tag || 'Transaction'}
+                </Text>
                 {item.type === 'debit' && <Text style={styles.debitLabel}>Paid for service</Text>}
             </View>
             <Text style={[styles.amount, { color: item.type === 'credit' ? '#48BB78' : '#1A202C' }]}>
-                {item.type === 'credit' ? '+' : '-'}{item.amount}
+                {item.type === 'credit' ? '+' : '-'}₹{Math.abs(item.amount)}
             </Text>
         </View>
     );
+
+    const sections = groupTransactionsByDate();
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -61,17 +96,32 @@ const WalletHistoryScreen = () => {
                 <View style={{ width: 40 }} />
             </View>
 
-            <SectionList
-                sections={HISTORY_DATA}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                renderSectionHeader={({ section: { title } }) => (
-                    <Text style={styles.sectionHeader}>{title}</Text>
-                )}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-                stickySectionHeadersEnabled={false}
-            />
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={Theme.colors.brandOrange} />
+                </View>
+            ) : transactions.length === 0 ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+                    <Text style={{ fontSize: 16, color: '#94A3B8', textAlign: 'center' }}>
+                        No transactions yet
+                    </Text>
+                    <Text style={{ fontSize: 14, color: '#CBD5E0', textAlign: 'center', marginTop: 10 }}>
+                        Your wallet transactions will appear here
+                    </Text>
+                </View>
+            ) : (
+                <SectionList
+                    sections={sections}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    renderSectionHeader={({ section: { title } }) => (
+                        <Text style={styles.sectionHeader}>{title}</Text>
+                    )}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    stickySectionHeadersEnabled={false}
+                />
+            )}
         </SafeAreaView>
     );
 };

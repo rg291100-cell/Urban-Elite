@@ -29,7 +29,7 @@ exports.createBooking = async (req, res) => {
                 location_type: location.type,
                 location_address: location.address,
                 instructions: instructions || '',
-                status: 'confirmed',
+                status: 'PENDING',
                 price,
                 professional_id: null, // Will be assigned by admin/system later
                 professional_name: null,
@@ -182,5 +182,44 @@ exports.getUserBookings = async (req, res) => {
             success: false,
             error: 'Failed to fetch bookings'
         });
+    }
+};
+
+// Cancel Booking
+exports.cancelBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        // Verify ownership (optional but recommended)
+        const { data: booking, error: fetchError } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !booking) {
+            console.error('Cancel Error: Booking not found', id);
+            return res.status(404).json({ success: false, error: 'Booking not found' });
+        }
+
+        if (booking.user_id !== req.user.id) {
+            console.error('Cancel Error: Unauthorized', { userId: req.user.id, bookingUser: booking.user_id });
+            return res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+
+        // Update status
+        const { error } = await supabase
+            .from('bookings')
+            .update({ status: 'CANCELLED', instructions: booking.instructions + (reason ? ` [Cancel Reason: ${reason}]` : '') })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        console.log('Booking Cancelled:', id);
+        res.json({ success: true, message: 'Booking cancelled successfully' });
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        res.status(500).json({ success: false, error: 'Failed to cancel booking' });
     }
 };

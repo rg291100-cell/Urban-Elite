@@ -1,9 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Phone, Mail, MessageCircle, ChevronRight, HelpCircle } from 'lucide-react-native';
 import { Theme } from '../theme';
+
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
 
 const SupportHelpScreen = () => {
     const navigation = useNavigation();
@@ -55,23 +61,55 @@ const SupportHelpScreen = () => {
 
                 <Text style={[styles.sectionTitle, { marginTop: 30 }]}>Frequently Asked Questions</Text>
 
-                <View style={styles.faqList}>
-                    {[
-                        'How do I reschedule a booking?',
-                        'What is the cancellation policy?',
-                        'How do I update my profile?',
-                        'Payment methods handled?',
-                        'Service warranty policy'
-                    ].map((question, index) => (
-                        <TouchableOpacity key={index} style={styles.faqItem}>
-                            <Text style={styles.faqText}>{question}</Text>
-                            <ChevronRight size={20} color="#CBD5E0" />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                <FAQSection />
 
             </ScrollView>
         </SafeAreaView>
+    );
+};
+
+const FAQSection = () => {
+    const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
+
+    const toggleExpand = (index: number) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpandedIndex(expandedIndex === index ? null : index);
+    };
+
+    const faqs = [
+        { q: 'How do I reschedule a booking?', a: 'You can reschedule your booking by navigating to the "Bookings" tab, selecting your upcoming booking, and tapping the "Reschedule" button.' },
+        { q: 'What is the cancellation policy?', a: 'Cancellations made at least 24 hours before the scheduled service time are potentially fully refundable. Late cancellations may incur a fee as per our terms.' },
+        { q: 'How do I update my profile?', a: 'Go to the Profile tab and tap on the "Edit Profile" option to update your name, email, or saved addresses.' },
+        { q: 'Payment methods handled?', a: 'We accept all major credit/debit cards, UPI, and Wallet payments. All transactions are secured via Cashfree.' },
+        { q: 'Service warranty policy', a: 'We provide a 7-day service warranty. If you face any issues related to the service provided, please contact us immediately.' }
+    ];
+
+    return (
+        <View style={styles.faqList}>
+            {faqs.map((item, index) => {
+                const isExpanded = expandedIndex === index;
+                return (
+                    <View key={index} style={styles.faqWrapper}>
+                        <TouchableOpacity
+                            style={styles.faqHeader}
+                            onPress={() => toggleExpand(index)}
+                        >
+                            <Text style={styles.faqQuestion}>{item.q}</Text>
+                            <ChevronRight
+                                size={20}
+                                color="#CBD5E0"
+                                style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
+                            />
+                        </TouchableOpacity>
+                        {isExpanded && (
+                            <View style={styles.faqBody}>
+                                <Text style={styles.faqAnswer}>{item.a}</Text>
+                            </View>
+                        )}
+                    </View>
+                );
+            })}
+        </View>
     );
 };
 
@@ -96,8 +134,11 @@ const styles = StyleSheet.create({
     contactLabel: { fontSize: 14, fontWeight: '600', color: Theme.colors.textDark },
 
     faqList: { backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#F0F0F0', overflow: 'hidden' },
-    faqItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-    faqText: { fontSize: 15, color: Theme.colors.textDark, fontWeight: '500' }
+    faqWrapper: { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+    faqHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
+    faqQuestion: { fontSize: 15, color: Theme.colors.textDark, fontWeight: '500', flex: 1, marginRight: 10 },
+    faqBody: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 0 },
+    faqAnswer: { fontSize: 14, color: '#64748B', lineHeight: 20 }
 });
 
 export default SupportHelpScreen;

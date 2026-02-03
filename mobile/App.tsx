@@ -25,7 +25,9 @@ import BookingReviewScreen from './src/screens/BookingReviewScreen';
 import BookingTrackingScreen from './src/screens/BookingTrackingScreen';
 import PersonalInformationScreen from './src/screens/PersonalInformationScreen';
 import SavedAddressesScreen from './src/screens/SavedAddressesScreen';
+import AddAddressScreen from './src/screens/AddAddressScreen';
 import PaymentMethodsScreen from './src/screens/PaymentMethodsScreen';
+import AddPaymentMethodScreen from './src/screens/AddPaymentMethodScreen';
 import PushNotificationsScreen from './src/screens/PushNotificationsScreen';
 import SupportHelpScreen from './src/screens/SupportHelpScreen';
 import TopupScreen from './src/screens/TopupScreen';
@@ -33,13 +35,17 @@ import WalletHistoryScreen from './src/screens/WalletHistoryScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SOSScreen from './src/screens/SOSScreen';
 import ServiceListingScreen from './src/screens/ServiceListingScreen';
+import BookingDetailsScreen from './src/screens/BookingDetailsScreen';
 import TabNavigator from './src/navigation/TabNavigator';
+import VendorTabNavigator from './src/navigation/VendorTabNavigator';
+import VendorCreateOfferScreen from './src/screens/vendor/VendorCreateOfferScreen';
 import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
 
 export const RootNavigator = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -47,6 +53,10 @@ export const RootNavigator = () => {
 
   const checkAuth = async () => {
     const authenticated = await authService.isAuthenticated();
+    if (authenticated) {
+      const role = await authService.getUserRole();
+      setUserRole(role);
+    }
     setIsAuthenticated(authenticated);
   };
 
@@ -59,9 +69,15 @@ export const RootNavigator = () => {
     );
   }
 
+  // Determine initial route based on authentication and role
+  const getInitialRoute = () => {
+    if (!isAuthenticated) return 'Login';
+    return userRole === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
+  };
+
   return (
     <Stack.Navigator
-      initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
+      initialRouteName={getInitialRoute()}
       screenOptions={{
         headerShown: false,
         cardStyle: { backgroundColor: '#FFFFFF' }
@@ -70,6 +86,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="VendorTabs" component={VendorTabNavigator} />
       <Stack.Screen
         name="Notifications"
         component={NotificationScreen}
@@ -94,14 +111,23 @@ export const RootNavigator = () => {
       <Stack.Screen name="BookingTracking" component={BookingTrackingScreen} />
       <Stack.Screen name="PersonalInformation" component={PersonalInformationScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
+      <Stack.Screen name="AddAddress" component={AddAddressScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
+      <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} />
       <Stack.Screen name="PushNotifications" component={PushNotificationsScreen} />
       <Stack.Screen name="SupportHelp" component={SupportHelpScreen} />
       <Stack.Screen name="Topup" component={TopupScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="SOS" component={SOSScreen} />
       <Stack.Screen name="ServiceListing" component={ServiceListingScreen} />
+      <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />
+      <Stack.Screen name="VendorCreateOffer" component={VendorCreateOfferScreen} />
+      <Stack.Screen name="VendorPersonalInformation" component={require('./src/screens/vendor/VendorPersonalInformationScreen').default} />
+      <Stack.Screen name="VendorNotificationSettings" component={require('./src/screens/vendor/VendorNotificationSettingsScreen').default} />
+      <Stack.Screen name="VendorSupportHelp" component={require('./src/screens/vendor/VendorSupportHelpScreen').default} />
+      <Stack.Screen name="VendorQuestionnaire" component={require('./src/screens/vendor/VendorQuestionnaireScreen').default} />
     </Stack.Navigator>
   );
 };

@@ -1,0 +1,1 @@
+require('dotenv').config(); const supabase = require('./src/config/database'); async function deleteUser() { const { error } = await supabase.from('users').delete().eq('email', 'test567@gmail.com'); if (error) console.error(error); else console.log('User deleted'); } deleteUser();

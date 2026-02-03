@@ -53,18 +53,18 @@ export default function DashboardPage() {
       href: '/bookings'
     },
     {
-      title: 'Professionals',
+      title: 'Vendors',
       value: stats?.totalProfessionals || 0,
       icon: UserCog,
       color: 'bg-purple-500',
-      href: '/professionals'
+      href: '/vendors'
     },
     {
       title: 'Total Revenue',
       value: stats?.totalRevenue ? (stats.totalRevenue.toString().includes('₹') ? stats.totalRevenue : `₹${stats.totalRevenue}`) : '₹0',
       icon: TrendingUp,
       color: 'bg-orange-500',
-      href: '/revenue'
+      href: '/dashboard/payments'
     },
     {
       title: 'Upcoming',

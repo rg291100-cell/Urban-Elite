@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const {
     getUserProfile, updateProfile,
-    getUserWallet, topupWallet,
+    getUserWallet, topupWallet, getWalletTransactions,
     getUserBookings,
     getAddresses, addAddress, deleteAddress,
     getPaymentMethods, addPaymentMethod, deletePaymentMethod,
@@ -20,6 +20,7 @@ router.put('/profile', updateProfile);
 // Wallet
 router.get('/wallet', getUserWallet);
 router.post('/wallet/topup', topupWallet);
+router.get('/wallet/transactions', getWalletTransactions);
 
 // Bookings
 router.get('/bookings', getUserBookings);

@@ -16,7 +16,7 @@ exports.getDashboardStats = async (req, res) => {
         // Recent bookings
         const { data: recentBookings } = await supabase
             .from('bookings')
-            .select('*, users(name, email)') // Join user
+            .select('*, users!bookings_user_id_fkey(name, email)') // Join user explicitly using FK
             .order('created_at', { ascending: false })
             .limit(10);
 
@@ -75,7 +75,7 @@ exports.getAllUsers = async (req, res) => {
 
         let query = supabase
             .from('users')
-            .select('*, bookings(count)', { count: 'exact' }) // _count implementation
+            .select('*', { count: 'exact' })
             .eq('role', 'USER')
             .order('name', { ascending: true })
             .range(from, to);
@@ -88,13 +88,25 @@ exports.getAllUsers = async (req, res) => {
 
         if (error) throw error;
 
+        // Fetch booking counts for each user separately
+        const usersWithCounts = await Promise.all(
+            (users || []).map(async (user) => {
+                const { count: bookingCount } = await supabase
+                    .from('bookings')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', user.id);
+
+                return {
+                    ...user,
+                    isPremium: user.is_premium,
+                    _count: { bookings: bookingCount || 0 }
+                };
+            })
+        );
+
         res.json({
             success: true,
-            users: users.map(u => ({
-                ...u,
-                isPremium: u.is_premium,
-                _count: { bookings: u.bookings ? u.bookings[0].count : 0 } // Fix count mapping
-            })),
+            users: usersWithCounts,
             pagination: {
                 total: total || 0,
                 page: parseInt(page),
@@ -192,7 +204,7 @@ exports.getAllBookings = async (req, res) => {
 
         let query = supabase
             .from('bookings')
-            .select('*, users(name, email, phone)', { count: 'exact' })
+            .select('*, users!bookings_user_id_fkey(name, email, phone)', { count: 'exact' })
             .order('created_at', { ascending: false })
             .range(from, to);
 
@@ -611,6 +623,235 @@ exports.deleteServiceItem = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to delete service item'
+        });
+    }
+};
+
+// Get all pending vendors
+exports.getPendingVendors = async (req, res) => {
+    try {
+        const { data: vendors, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'VENDOR')
+            .eq('approval_status', 'PENDING')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            vendors: vendors.map(v => {
+                delete v.password;
+                return {
+                    ...v,
+                    serviceCategory: v.service_category,
+                    businessName: v.business_name,
+                    businessAddress: v.business_address,
+                    experienceYears: v.experience_years,
+                    approvalStatus: v.approval_status
+                };
+            })
+        });
+    } catch (error) {
+        console.error('Error fetching pending vendors:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch pending vendors'
+        });
+    }
+};
+
+// Get all vendors with optional status filter
+exports.getAllVendors = async (req, res) => {
+    try {
+        const { status, page = 1, limit = 10 } = req.query;
+        const from = (parseInt(page) - 1) * parseInt(limit);
+        const to = from + parseInt(limit) - 1;
+
+        let query = supabase
+            .from('users')
+            .select('*', { count: 'exact' })
+            .eq('role', 'VENDOR')
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
+        if (status) {
+            query = query.eq('approval_status', status.toUpperCase());
+        }
+
+        const { data: vendors, count: total, error } = await query;
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            vendors: vendors.map(v => {
+                delete v.password;
+                return {
+                    ...v,
+                    serviceCategory: v.service_category,
+                    businessName: v.business_name,
+                    businessAddress: v.business_address,
+                    experienceYears: v.experience_years,
+                    approvalStatus: v.approval_status,
+                    approvedAt: v.approved_at,
+                    approvedBy: v.approved_by
+                };
+            }),
+            pagination: {
+                total: total || 0,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil((total || 0) / parseInt(limit))
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching vendors:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch vendors'
+        });
+    }
+};
+
+// Approve vendor
+exports.approveVendor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminId = req.user.id; // From auth middleware
+
+        const { data: vendor, error } = await supabase
+            .from('users')
+            .update({
+                approval_status: 'APPROVED',
+                approved_at: new Date().toISOString(),
+                approved_by: adminId
+            })
+            .eq('id', id)
+            .eq('role', 'VENDOR')
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        if (!vendor) {
+            return res.status(404).json({
+                success: false,
+                error: 'Vendor not found'
+            });
+        }
+
+        delete vendor.password;
+
+        res.json({
+            success: true,
+            message: 'Vendor approved successfully',
+            vendor: {
+                ...vendor,
+                approvalStatus: vendor.approval_status
+            }
+        });
+    } catch (error) {
+        console.error('Error approving vendor:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to approve vendor'
+        });
+    }
+};
+
+// Reject vendor
+exports.rejectVendor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminId = req.user.id; // From auth middleware
+
+        const { data: vendor, error } = await supabase
+            .from('users')
+            .update({
+                approval_status: 'REJECTED',
+                approved_at: new Date().toISOString(),
+                approved_by: adminId
+            })
+            .eq('id', id)
+            .eq('role', 'VENDOR')
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        if (!vendor) {
+            return res.status(404).json({
+                success: false,
+                error: 'Vendor not found'
+            });
+        }
+
+        delete vendor.password;
+
+        res.json({
+            success: true,
+            message: 'Vendor rejected successfully',
+            vendor: {
+                ...vendor,
+                approvalStatus: vendor.approval_status
+            }
+        });
+    } catch (error) {
+        console.error('Error rejecting vendor:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reject vendor'
+        });
+    }
+};
+
+
+// Get all payments/transactions
+exports.getAllPayments = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, search } = req.query;
+        const from = (parseInt(page) - 1) * parseInt(limit);
+        const to = from + parseInt(limit) - 1;
+
+        let query = supabase
+            .from('transactions')
+            .select('*, users!user_id(name, email)', { count: 'exact' })
+            .order('date', { ascending: false })
+            .range(from, to);
+
+        if (search) {
+            query = query.or(`title.ilike.%${search}%,tag.ilike.%${search}%`);
+        }
+
+        const { data: payments, count: total, error } = await query;
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            payments: (payments || []).map(p => ({
+                id: p.id,
+                amount: p.amount,
+                status: 'Success',
+                date: p.date,
+                customer: p.users?.name || 'Unknown',
+                method: p.title || 'Payment',
+                transactionId: p.payment_method_id || `TXN-${p.id.substring(0, 8)}`
+            })),
+            pagination: {
+                total: total || 0,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil((total || 0) / parseInt(limit))
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching payments:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch payments'
         });
     }
 };

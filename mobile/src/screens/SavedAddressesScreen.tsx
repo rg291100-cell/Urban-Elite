@@ -2,19 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { ArrowLeft, Home, Briefcase, MapPin, Plus, Trash2, Edit2 } from 'lucide-react-native';
 import { Theme } from '../theme';
 import { userAPI } from '../services/api';
+import { RootStackParamList } from '../types/navigation';
 
 const SavedAddressesScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     const [addresses, setAddresses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadAddresses();
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadAddresses();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const loadAddresses = async () => {
         try {
@@ -28,21 +33,8 @@ const SavedAddressesScreen = () => {
     };
 
     const handleAddAddress = () => {
-        // Simple prompt for demo, ideally a modal or new screen
-        // For now, we'll just simulate adding a mock address via API to verify integration
-        Alert.alert('Add Address', 'Adding a demo address...', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Add', onPress: async () => {
-                    try {
-                        await userAPI.addAddress({ type: 'Other', address: 'New Demo Address, Bangalore', isDefault: false });
-                        loadAddresses();
-                    } catch (error) {
-                        Alert.alert('Error', 'Failed to add address');
-                    }
-                }
-            }
-        ]);
+        // Navigate to input screen
+        navigation.navigate('AddAddress');
     };
 
     const handleDelete = (id: string) => {

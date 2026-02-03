@@ -37,4 +37,13 @@ router.post('/services/categories/:categoryId/items', adminController.createServ
 router.put('/services/items/:id', adminController.updateServiceItem);
 router.delete('/services/items/:id', adminController.deleteServiceItem);
 
+// Vendor Management Routes
+router.get('/vendors/pending', adminController.getPendingVendors);
+router.get('/vendors', adminController.getAllVendors);
+router.put('/vendors/:id/approve', adminController.approveVendor);
+router.put('/vendors/:id/reject', adminController.rejectVendor);
+
+// Payment Management
+router.get('/payments', adminController.getAllPayments);
+
 module.exports = router;

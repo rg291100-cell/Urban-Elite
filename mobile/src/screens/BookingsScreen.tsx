@@ -93,7 +93,10 @@ const BookingsScreen = () => {
             </View>
             <View style={styles.bookingFooter}>
                 <Text style={styles.bookingPrice}>{item.price}</Text>
-                <TouchableOpacity style={styles.viewDetailsBtn}>
+                <TouchableOpacity
+                    style={styles.viewDetailsBtn}
+                    onPress={() => navigation.navigate('BookingDetails', { bookingId: item.id })}
+                >
                     <Text style={styles.viewDetailsText}>View Details</Text>
                 </TouchableOpacity>
             </View>

@@ -65,6 +65,15 @@ export const adminAPI = {
     createServiceItem: (categoryId: string, data: any) => api.post(`/admin/services/categories/${categoryId}/items`, data),
     updateServiceItem: (id: string, data: any) => api.put(`/admin/services/items/${id}`, data),
     deleteServiceItem: (id: string) => api.delete(`/admin/services/items/${id}`),
+
+    // Vendors
+    getPendingVendors: () => api.get('/admin/vendors/pending'),
+    getAllVendors: (params?: { status?: string }) => api.get('/admin/vendors', { params }),
+    approveVendor: (id: string) => api.put(`/admin/vendors/${id}/approve`),
+    rejectVendor: (id: string) => api.put(`/admin/vendors/${id}/reject`),
+
+    // Payments
+    getPayments: () => api.get('/admin/payments'),
 };
 
 export default api;
