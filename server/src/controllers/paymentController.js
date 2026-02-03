@@ -15,8 +15,16 @@ const supabase = require('../config/database');
 
 const createOrder = async (req, res) => {
     try {
+        console.log('=== CREATE ORDER DEBUG ===');
+        console.log('req.user:', req.user);
+        console.log('req.body:', req.body);
+
         const { orderAmount, orderCurrency, customerId, customerPhone, customerName, customerEmail } = req.body;
         const userId = req.user?.id; // authMiddleware adds this as req.user.id
+
+        console.log('Extracted userId:', userId);
+        console.log('CASHFREE_APP_ID:', CASHFREE_APP_ID ? 'SET' : 'NOT SET');
+        console.log('CASHFREE_SECRET_KEY:', CASHFREE_SECRET_KEY ? 'SET' : 'NOT SET');
 
         const orderId = `ORDER_${Date.now()}`;
         const requestData = {
@@ -24,15 +32,14 @@ const createOrder = async (req, res) => {
             order_currency: orderCurrency || "INR",
             order_id: orderId,
             customer_details: {
-                customer_id: userId || customerId || "GUEST_USER",
-                customer_phone: customerPhone || "9999999999",
-                customer_name: customerName || "Urban Elite User",
-                customer_email: customerEmail || "user@example.com"
-            },
-            order_meta: {
-                return_url: `http://localhost:3000/api/payments/verify?order_id=${orderId}`
+                customer_id: String(userId || customerId || `GUEST_${Date.now()}`),
+                customer_phone: String(customerPhone || "9999999999"),
+                customer_name: String(customerName || "Urban Elite User"),
+                customer_email: String(customerEmail || "user@example.com")
             }
         };
+
+        console.log('Request to Cashfree:', JSON.stringify(requestData, null, 2));
 
         const response = await axios.post(`${BASE_URL}/orders`, requestData, {
             headers: {
@@ -43,10 +50,13 @@ const createOrder = async (req, res) => {
             }
         });
 
+        console.log('Cashfree Response:', response.data);
         res.json(response.data);
 
     } catch (error) {
-        console.error("Error creating order:", error.response ? error.response.data : error.message);
+        console.error("=== ERROR CREATING ORDER ===");
+        console.error("Error details:", error.response ? error.response.data : error.message);
+        console.error("Error stack:", error.stack);
         res.status(500).json({
             message: "Failed to create order",
             error: error.response ? error.response.data : error.message
