@@ -35,6 +35,7 @@ import WalletHistoryScreen from './src/screens/WalletHistoryScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SOSScreen from './src/screens/SOSScreen';
 import ServiceListingScreen from './src/screens/ServiceListingScreen';
+import VendorSelectionScreen from './src/screens/VendorSelectionScreen';
 import BookingDetailsScreen from './src/screens/BookingDetailsScreen';
 import TabNavigator from './src/navigation/TabNavigator';
 import VendorTabNavigator from './src/navigation/VendorTabNavigator';
@@ -120,6 +121,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="SOS" component={SOSScreen} />
       <Stack.Screen name="ServiceListing" component={ServiceListingScreen} />
+      <Stack.Screen name="VendorSelection" component={VendorSelectionScreen} />
       <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
 
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />

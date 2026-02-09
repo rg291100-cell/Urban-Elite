@@ -15,7 +15,8 @@ export type RootStackParamList = {
     NativeSmartHome: undefined;
     ServiceListing: { slug: string; name: string };
     ServiceDetail: { item: any };
-    BookingOverview: { item: any };
+    VendorSelection: { item: any };
+    BookingOverview: { item: any; vendor?: any };
     BookingSchedule: { item: any };
     BookingLocation: { item: any; date: string; slot: string };
     BookingInstructions: { item: any; date: string; slot: string; location: any };

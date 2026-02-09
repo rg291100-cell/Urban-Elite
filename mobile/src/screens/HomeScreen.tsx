@@ -59,11 +59,7 @@ const HomeScreen = () => {
                 }}
             >
                 <View style={styles.iconContainer}>
-                    {item.image ? (
-                        <Image source={{ uri: item.image }} style={styles.serviceIcon} />
-                    ) : (
-                        <IconComponent size={32} color={Theme.colors.brandOrange} strokeWidth={1.5} />
-                    )}
+                    <IconComponent size={32} color={Theme.colors.brandOrange} strokeWidth={1.5} />
                 </View>
                 <Text style={styles.serviceText}>{item.name}</Text>
             </TouchableOpacity>
@@ -109,53 +105,9 @@ const HomeScreen = () => {
 
     const renderFooter = () => (
         <View style={styles.footerContainer}>
-            {/* Premium Upgrade Banner */}
-            <TouchableOpacity style={styles.banner} onPress={() => navigation.navigate('NativeSmartHome')}>
-                <View style={styles.bannerContent}>
-                    <Text style={styles.bannerTag}>PREMIUM UPGRADE</Text>
-                    <Text style={styles.bannerTitle}>Native Smart</Text>
-                    <Text style={styles.bannerSubtitle}>Home Hub</Text>
-                    <View style={styles.upgradeButton}>
-                        <Text style={styles.upgradeButtonText}>Upgrade Now</Text>
-                    </View>
-                </View>
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png' }}
-                    style={styles.bannerImage}
-                />
-            </TouchableOpacity>
-
             {/* Bottom Offer Cards */}
-            <View style={styles.offersRow}>
-                {/* AC Card */}
-                <TouchableOpacity
-                    style={[styles.offerCard, { backgroundColor: '#E2E8F0', marginRight: 10 }]}
-                    onPress={() => navigation.navigate('ACRepair')}
-                >
-                    <View style={styles.offerTextContainer}>
-                        <Text style={styles.offerTitle}>Elite AC{'\n'}Servicing</Text>
-                        <Text style={styles.offerSub}>STARTING FROM</Text>
-                        <Text style={styles.offerPrice}>₹599</Text>
-                    </View>
-                </TouchableOpacity>
+            {/* REMOVED: Native Smart Home, AC Servicing, Bridal Artistry banners as per requirement */}
 
-                {/* Bridal Card */}
-                <TouchableOpacity
-                    style={[styles.offerCard, { marginLeft: 10, padding: 0 }]}
-                    onPress={() => navigation.navigate('WomensSalon')}
-                >
-                    <ImageBackground
-                        source={{ uri: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' }}
-                        style={{ width: '100%', height: '100%', justifyContent: 'flex-end' }}
-                        imageStyle={{ borderRadius: 15 }}
-                    >
-                        <View style={styles.overlay}>
-                            <Text style={[styles.offerTitle, { color: 'white' }]}>Bridal{'\n'}Artistry</Text>
-                            <Text style={[styles.offerSub, { color: '#FFD700' }]}>BOOK CONSULTATION</Text>
-                        </View>
-                    </ImageBackground>
-                </TouchableOpacity>
-            </View>
             {/* Spacer for bottom tab bar */}
             <View style={{ height: 80 }} />
         </View>

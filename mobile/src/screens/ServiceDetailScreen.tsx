@@ -171,9 +171,9 @@ const ServiceDetailScreen = () => {
             <View style={[styles.bottomContainer, { paddingBottom: insets.bottom + 20 }]}>
                 <TouchableOpacity
                     style={styles.bookButton}
-                    onPress={() => navigation.navigate('BookingOverview', { item: serviceDetail })}
+                    onPress={() => navigation.navigate('VendorSelection', { item: serviceDetail })}
                 >
-                    <Text style={styles.bookButtonText}>Book Service</Text>
+                    <Text style={styles.bookButtonText}>Select Professional</Text>
                 </TouchableOpacity>
             </View>
 
