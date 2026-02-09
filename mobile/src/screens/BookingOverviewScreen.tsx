@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, fontFamily: 'monospace' },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
     subTitle: { fontSize: 14, color: '#A0AEC0', marginTop: 10, fontWeight: '600' },
 
     cardContainer: { borderRadius: 30, overflow: 'hidden', height: 200, marginBottom: 25, elevation: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, backgroundColor: '#FFF' },

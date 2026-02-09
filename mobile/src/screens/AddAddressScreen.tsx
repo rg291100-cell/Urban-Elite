@@ -30,9 +30,15 @@ const AddAddressScreen = () => {
             Alert.alert('Success', 'Address added successfully', [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Failed to save address');
+        } catch (error: any) {
+            console.error('Failed to save address', error);
+            if (error.response?.status === 401) {
+                Alert.alert('Session Expired', 'Please log in again to save your address.', [
+                    { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' as any }] }) }
+                ]);
+            } else {
+                Alert.alert('Error', 'Failed to save address. Please try again.');
+            }
         } finally {
             setLoading(false);
         }

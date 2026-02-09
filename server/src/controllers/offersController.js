@@ -48,7 +48,8 @@ exports.createOffer = async (req, res) => {
             vendor_id: role === 'VENDOR' ? userId : null, // Admin offers have null vendor_id (or could be specific)
             valid_until: validUntil,
             image_url: imageUrl,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            type: req.body.type || 'PROMOTION' // PROMOTION or JOB
         };
 
         const { data: offer, error } = await supabase

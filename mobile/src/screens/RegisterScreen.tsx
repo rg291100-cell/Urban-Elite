@@ -17,6 +17,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 import { API_URL } from '@env';
 import { serviceAPI, authAPI } from '../services/api';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
+import { Camera, Image as ImageIcon, FileText, CheckCircle2, Upload, X } from 'lucide-react-native';
+import { storageService } from '../services/storage';
+import { Theme } from '../theme';
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -44,6 +49,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [businessName, setBusinessName] = useState('');
     const [businessAddress, setBusinessAddress] = useState('');
     const [experienceYears, setExperienceYears] = useState('');
+    const [aadhaarUrl, setAadhaarUrl] = useState('');
+    const [panUrl, setPanUrl] = useState('');
+    const [isUploadingAadhaar, setIsUploadingAadhaar] = useState(false);
+    const [isUploadingPan, setIsUploadingPan] = useState(false);
+    const [showAadhaarOptions, setShowAadhaarOptions] = useState(false);
+    const [showPanOptions, setShowPanOptions] = useState(false);
 
     // Service categories from API
     const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -97,8 +108,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
         // Validate vendor-specific fields
         if (selectedRole === 'VENDOR') {
-            if (!serviceCategory || !businessName || !businessAddress) {
-                Alert.alert('Error', 'Please fill in all vendor details (service category, business name, and address)');
+            if (!serviceCategory || !businessName || !businessAddress || !aadhaarUrl || !panUrl) {
+                Alert.alert('Error', 'Please fill in all vendor details including KYC (Aadhaar & PAN)');
                 return;
             }
         }
@@ -109,7 +120,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             // This prevents stale .env variables (pointing to production) from causing issues
             const response = await authAPI.register({
                 name, email, phone, password, role: selectedRole,
-                serviceCategory, businessName, businessAddress, experienceYears
+                serviceCategory, businessName, businessAddress, experienceYears,
+                aadhaarUrl, panUrl
             });
 
             const data = response.data;
@@ -147,6 +159,116 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         setServiceCategory(category.name);
         setShowDropdown(false);
     };
+
+    const handleFileUpload = async (type: 'aadhaar' | 'pan', source: 'camera' | 'library' | 'pdf') => {
+        try {
+            let fileData: any = null;
+
+            if (source === 'pdf') {
+                const results = await pick({
+                    type: [types.pdf],
+                });
+                fileData = results[0];
+            } else {
+                const options: any = {
+                    mediaType: 'photo',
+                    includeBase64: true,
+                    quality: 0.7,
+                };
+
+                const result = source === 'camera'
+                    ? await launchCamera(options)
+                    : await launchImageLibrary(options);
+
+                if (result.didCancel) return;
+                if (result.assets && result.assets.length > 0) {
+                    fileData = {
+                        uri: result.assets[0].uri,
+                        base64: result.assets[0].base64,
+                        type: result.assets[0].type,
+                        name: result.assets[0].fileName,
+                    };
+                }
+            }
+
+            if (!fileData) return;
+
+            if (type === 'aadhaar') {
+                setIsUploadingAadhaar(true);
+                setShowAadhaarOptions(false);
+            } else {
+                setIsUploadingPan(true);
+                setShowPanOptions(false);
+            }
+
+            // If PDF, we need to convert to base64 or use another method. 
+            // For simplicity in this demo, let's stick to images if possible, 
+            // or use a base64 reader if PDF is picked.
+            let base64 = fileData.base64;
+            if (source === 'pdf') {
+                // In a real app, you'd use react-native-fs to read the file as base64
+                // For now, let's assume images for the best visual experience
+                Alert.alert('Info', 'PDF support requires additional setup. Please upload an image for now.');
+                setIsUploadingAadhaar(false);
+                setIsUploadingPan(false);
+                return;
+            }
+
+            const fileName = `${type}_${Date.now()}_${fileData.name}`;
+            const uploadResult = await storageService.uploadFile(
+                'kyc-documents',
+                `${type}/${fileName}`,
+                base64,
+                fileData.type || 'image/jpeg'
+            );
+
+            if (uploadResult.error) {
+                Alert.alert('Upload Failed', uploadResult.error);
+            } else if (uploadResult.url) {
+                if (type === 'aadhaar') setAadhaarUrl(uploadResult.url);
+                else setPanUrl(uploadResult.url);
+            }
+        } catch (err) {
+            console.error('File pick error:', err);
+            const isCancel = isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED;
+            if (!isCancel) {
+                Alert.alert('Error', 'Failed to pick file');
+            }
+        } finally {
+            setIsUploadingAadhaar(false);
+            setIsUploadingPan(false);
+        }
+    };
+
+    const renderFileSelector = (type: 'aadhaar' | 'pan', label: string, currentUrl: string, isUploading: boolean) => (
+        <View style={styles.fileSelectorContainer}>
+            <Text style={styles.fileLabel}>{label} *</Text>
+            {currentUrl ? (
+                <View style={styles.uploadedContainer}>
+                    <CheckCircle2 size={20} color="#48BB78" />
+                    <Text style={styles.uploadedText} numberOfLines={1}>Document Uploaded</Text>
+                    <TouchableOpacity onPress={() => type === 'aadhaar' ? setAadhaarUrl('') : setPanUrl('')}>
+                        <X size={20} color="#A0AEC0" />
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={styles.uploadButton}
+                    onPress={() => type === 'aadhaar' ? setShowAadhaarOptions(true) : setShowPanOptions(true)}
+                    disabled={isUploading}
+                >
+                    {isUploading ? (
+                        <ActivityIndicator size="small" color="#FF6B6B" />
+                    ) : (
+                        <>
+                            <Upload size={20} color="#FF6B6B" />
+                            <Text style={styles.uploadButtonText}>Attach Document</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            )}
+        </View>
+    );
 
     return (
         <KeyboardAvoidingView
@@ -187,7 +309,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         <TextInput
                             style={styles.input}
                             placeholder="Full Name *"
-                            placeholderTextColor="#999"
+                            placeholderTextColor="#94A3B8"
                             value={name}
                             onChangeText={setName}
                             autoCapitalize="words"
@@ -197,7 +319,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         <TextInput
                             style={styles.input}
                             placeholder="Email *"
-                            placeholderTextColor="#999"
+                            placeholderTextColor="#94A3B8"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -208,7 +330,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         <TextInput
                             style={styles.input}
                             placeholder="Phone (Optional)"
-                            placeholderTextColor="#999"
+                            placeholderTextColor="#94A3B8"
                             value={phone}
                             onChangeText={setPhone}
                             keyboardType="phone-pad"
@@ -220,20 +342,20 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                             <>
                                 {/* Service Category Dropdown */}
                                 <TouchableOpacity
-                                    style={styles.dropdown}
+                                    style={styles.dropdownButton}
                                     onPress={() => setShowDropdown(true)}
                                     disabled={loading || loadingCategories}
                                 >
-                                    <Text style={serviceCategory ? styles.dropdownTextSelected : styles.dropdownText}>
+                                    <Text style={serviceCategory ? styles.dropdownButtonText : styles.dropdownPlaceholder}>
                                         {loadingCategories ? 'Loading categories...' : (serviceCategory || 'Service Category *')}
                                     </Text>
-                                    <Text style={styles.dropdownIcon}>▼</Text>
+                                    <Text style={styles.dropdownButtonText}>▼</Text>
                                 </TouchableOpacity>
 
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Business Name *"
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor="#94A3B8"
                                     value={businessName}
                                     onChangeText={setBusinessName}
                                     autoCapitalize="words"
@@ -243,7 +365,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Business Address *"
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor="#94A3B8"
                                     value={businessAddress}
                                     onChangeText={setBusinessAddress}
                                     editable={!loading}
@@ -252,19 +374,24 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Years of Experience (Optional)"
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor="#94A3B8"
                                     value={experienceYears}
                                     onChangeText={setExperienceYears}
                                     keyboardType="numeric"
                                     editable={!loading}
                                 />
+
+                                <Text style={styles.sectionTitle}>KYC Details (Required)</Text>
+
+                                {renderFileSelector('aadhaar', 'Aadhaar Card', aadhaarUrl, isUploadingAadhaar)}
+                                {renderFileSelector('pan', 'PAN Card', panUrl, isUploadingPan)}
                             </>
                         )}
 
                         <TextInput
                             style={styles.input}
                             placeholder="Password *"
-                            placeholderTextColor="#999"
+                            placeholderTextColor="#94A3B8"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
@@ -275,7 +402,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         <TextInput
                             style={styles.input}
                             placeholder="Confirm Password *"
-                            placeholderTextColor="#999"
+                            placeholderTextColor="#94A3B8"
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             secureTextEntry
@@ -289,7 +416,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator color="#000" />
                             ) : (
                                 <Text style={styles.buttonText}>Register</Text>
                             )}
@@ -297,7 +424,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
                         <View style={styles.loginContainer}>
                             <Text style={styles.loginText}>Already have an account? </Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <TouchableOpacity onPress={() => navigation.navigate('Login' as any)}>
                                 <Text style={styles.loginLink}>Sign In</Text>
                             </TouchableOpacity>
                         </View>
@@ -343,6 +470,70 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                 </TouchableOpacity>
             </Modal>
+
+            {/* File Options Modal */}
+            <Modal
+                visible={showAadhaarOptions || showPanOptions}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => {
+                    setShowAadhaarOptions(false);
+                    setShowPanOptions(false);
+                }}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => {
+                        setShowAadhaarOptions(false);
+                        setShowPanOptions(false);
+                    }}
+                >
+                    <View style={styles.optionsModal}>
+                        <Text style={styles.modalTitle}>Choose {showAadhaarOptions ? 'Aadhaar' : 'PAN'} Source</Text>
+
+                        <TouchableOpacity
+                            style={styles.optionItem}
+                            onPress={() => handleFileUpload(showAadhaarOptions ? 'aadhaar' : 'pan', 'camera')}
+                        >
+                            <View style={[styles.optionIcon, { backgroundColor: '#F0FFF4' }]}>
+                                <Camera size={24} color="#48BB78" />
+                            </View>
+                            <Text style={styles.optionText}>Take a Photo</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.optionItem}
+                            onPress={() => handleFileUpload(showAadhaarOptions ? 'aadhaar' : 'pan', 'library')}
+                        >
+                            <View style={[styles.optionIcon, { backgroundColor: '#EBF8FF' }]}>
+                                <ImageIcon size={24} color="#4299E1" />
+                            </View>
+                            <Text style={styles.optionText}>Choose from Gallery</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.optionItem}
+                            onPress={() => handleFileUpload(showAadhaarOptions ? 'aadhaar' : 'pan', 'pdf')}
+                        >
+                            <View style={[styles.optionIcon, { backgroundColor: '#FFF5F5' }]}>
+                                <FileText size={24} color="#F56565" />
+                            </View>
+                            <Text style={styles.optionText}>Attach PDF Document</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.cancelBtn}
+                            onPress={() => {
+                                setShowAadhaarOptions(false);
+                                setShowPanOptions(false);
+                            }}
+                        >
+                            <Text style={styles.cancelBtnText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </KeyboardAvoidingView>
     );
 };
@@ -350,36 +541,37 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
     },
     scrollContent: {
         flexGrow: 1,
     },
     content: {
         flex: 1,
-        justifyContent: 'center',
         padding: 24,
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#1a1a1a',
+        color: '#0F172A',
         marginBottom: 8,
     },
     subtitle: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 40,
+        fontSize: 14,
+        color: '#64748B',
+        marginBottom: 32,
     },
     form: {
         width: '100%',
     },
     roleSelector: {
         flexDirection: 'row',
-        marginBottom: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F1F5F9',
         borderRadius: 12,
         padding: 4,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
     roleButton: {
         flex: 1,
@@ -388,93 +580,150 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     roleButtonActive: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: '#0F172A',
     },
     roleButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: '#64748B',
     },
     roleButtonTextActive: {
-        color: '#fff',
+        color: '#FFFFFF',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#0F172A',
+        marginTop: 16,
+        marginBottom: 12,
+        marginLeft: 4,
     },
     input: {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F8FAFC',
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         marginBottom: 16,
-        color: '#1a1a1a',
+        color: '#0F172A',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
-    dropdown: {
-        backgroundColor: '#f5f5f5',
-        borderRadius: 12,
-        padding: 16,
-        fontSize: 16,
-        marginBottom: 16,
+    dropdownButton: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-    },
-    dropdownText: {
-        fontSize: 16,
-        color: '#999',
-    },
-    dropdownTextSelected: {
-        fontSize: 16,
-        color: '#1a1a1a',
-    },
-    dropdownIcon: {
-        fontSize: 12,
-        color: '#666',
-    },
-    button: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: '#F8FAFC',
         borderRadius: 12,
         padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    dropdownButtonText: {
+        fontSize: 16,
+        color: '#0F172A',
+    },
+    dropdownPlaceholder: {
+        fontSize: 16,
+        color: '#64748B',
+    },
+    fileSelectorContainer: {
+        marginBottom: 16,
+    },
+    fileLabel: {
+        fontSize: 13,
+        color: '#64748B',
+        marginBottom: 6,
+        marginLeft: 4,
+    },
+    uploadButton: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
+        backgroundColor: '#FDFCF0',
+        borderWidth: 1,
+        borderColor: '#D4AF37',
+        borderStyle: 'dashed',
+        borderRadius: 12,
+        padding: 16,
+        justifyContent: 'center',
+    },
+    uploadButtonText: {
+        marginLeft: 8,
+        fontSize: 15,
+        color: '#D4AF37',
+        fontWeight: '600',
+    },
+    uploadedContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0FFF4',
+        borderWidth: 1,
+        borderColor: '#48BB78',
+        borderRadius: 12,
+        padding: 16,
+    },
+    uploadedText: {
+        flex: 1,
+        marginLeft: 10,
+        fontSize: 15,
+        color: '#48BB78',
+        fontWeight: '500',
+    },
+    button: {
+        backgroundColor: '#D4AF37',
+        borderRadius: 12,
+        padding: 18,
+        alignItems: 'center',
+        marginTop: 24,
+        marginBottom: 8,
     },
     buttonDisabled: {
         opacity: 0.6,
     },
     buttonText: {
-        color: '#fff',
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: 'bold',
+        letterSpacing: 0.5,
     },
     loginContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 24,
+        marginBottom: 40,
     },
     loginText: {
-        color: '#666',
+        color: '#64748B',
         fontSize: 14,
     },
     loginLink: {
-        color: '#FF6B6B',
+        color: '#0F172A',
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: 'bold',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(15, 23, 42, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
     },
     dropdownModal: {
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         width: '100%',
         maxHeight: '70%',
         padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
     },
     dropdownTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1a1a1a',
+        color: '#0F172A',
         marginBottom: 16,
         textAlign: 'center',
     },
@@ -485,28 +734,76 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         paddingHorizontal: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: '#F1F5F9',
     },
     dropdownItemText: {
         fontSize: 16,
-        color: '#1a1a1a',
+        color: '#0F172A',
     },
     checkmark: {
         fontSize: 18,
-        color: '#FF6B6B',
+        color: '#D4AF37',
         fontWeight: 'bold',
     },
     dropdownCancel: {
         marginTop: 16,
         padding: 16,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F1F5F9',
         borderRadius: 12,
         alignItems: 'center',
     },
     dropdownCancelText: {
         fontSize: 16,
-        color: '#666',
+        color: '#0F172A',
         fontWeight: '600',
+    },
+    optionsModal: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        width: '100%',
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#0F172A',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    optionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        marginBottom: 4,
+    },
+    optionIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+        backgroundColor: '#F8FAFC',
+    },
+    optionText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#0F172A',
+    },
+    cancelBtn: {
+        marginTop: 16,
+        padding: 16,
+        alignItems: 'center',
+    },
+    cancelBtnText: {
+        fontSize: 16,
+        color: '#EF4444',
+        fontWeight: '700',
     },
 });
 

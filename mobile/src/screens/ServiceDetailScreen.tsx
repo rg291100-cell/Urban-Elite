@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
@@ -58,6 +59,9 @@ const ServiceDetailScreen = () => {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
             {/* Header */}
             <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft size={24} color={Theme.colors.textDark} />
+                </TouchableOpacity>
                 {/* Search Bar Placeholder */}
                 <View style={styles.searchBar}>
                     <Text style={styles.searchIcon}>🔍</Text>
@@ -80,7 +84,7 @@ const ServiceDetailScreen = () => {
                 >
                     <View style={styles.overlay}>
                         <View style={styles.tagContainer}>
-                            <Text style={styles.tagText}>WOMEN'S SALON & SPA</Text>
+                            <Text style={styles.tagText}>{(serviceDetail.category?.name || 'SERVICE').toUpperCase()}</Text>
                         </View>
                         <Text style={styles.heroTitle}>{serviceDetail.title}</Text>
                     </View>
@@ -104,37 +108,7 @@ const ServiceDetailScreen = () => {
 
                 <View style={styles.divider} />
 
-                {/* Provider Profile Card */}
-                {serviceDetail.provider && (
-                    <View style={styles.providerCard}>
-                        <View style={styles.providerRow}>
-                            <View>
-                                <Image
-                                    source={{ uri: serviceDetail.provider.image || 'https://randomuser.me/api/portraits/men/32.jpg' }}
-                                    style={styles.providerImage}
-                                />
-                                {serviceDetail.provider.verified && (
-                                    <View style={styles.verifiedBadge}>
-                                        <Text style={styles.checkMark}>✓</Text>
-                                    </View>
-                                )}
-                            </View>
-                            <View style={styles.providerInfo}>
-                                <Text style={styles.providerName}>{serviceDetail.provider.name}</Text>
-                                <Text style={styles.providerName}>{serviceDetail.provider.surname}</Text>
-                                <View style={styles.providerMeta}>
-                                    <Text style={styles.star}>★</Text>
-                                    <Text style={styles.ratingText}>{serviceDetail.provider.rating}</Text>
-                                    <Text style={styles.metaDot}>•</Text>
-                                    <Text style={styles.serviceCount}>{serviceDetail.provider.services}</Text>
-                                </View>
-                            </View>
-                            <TouchableOpacity style={styles.profileButton}>
-                                <Text style={styles.profileButtonText}>PROFILE</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
+
 
                 {/* Elite Specifications */}
                 <View style={styles.section}>
@@ -187,6 +161,7 @@ const styles = StyleSheet.create({
     searchIcon: { marginRight: 10, fontSize: 16 },
     searchText: { color: '#A0AEC0', flex: 1, fontSize: 14 },
     filterIcon: { fontSize: 16 },
+    backButton: { marginRight: 15, padding: 5 },
     notificationButton: { padding: 10, backgroundColor: '#F7FAFC', borderRadius: 15 },
     bellIcon: { fontSize: 18 },
     badge: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, backgroundColor: Theme.colors.brandOrange, borderRadius: 4, borderWidth: 1, borderColor: '#FFF' },
@@ -226,7 +201,7 @@ const styles = StyleSheet.create({
 
     // Section
     section: { paddingHorizontal: 20, marginBottom: 25 },
-    sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A202C', marginBottom: 15, fontFamily: 'monospace' },
+    sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A202C', marginBottom: 15,  },
     descriptionText: { fontSize: 16, lineHeight: 24, color: '#4A5568', fontWeight: '500' },
 
     // Features

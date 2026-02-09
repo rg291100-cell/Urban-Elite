@@ -96,7 +96,7 @@ const getServiceDetailById = async (req, res) => {
     try {
         const { data: service, error } = await supabase
             .from('service_items')
-            .select('*')
+            .select('*, service_categories(name, slug)')
             .eq('id', id)
             .single();
 
@@ -104,20 +104,21 @@ const getServiceDetailById = async (req, res) => {
             return res.status(404).json({ message: 'Service not found' });
         }
 
-        // Augment with detailed data (Mock for now as DB schema doesn't have these fields)
+        // Augment with detailed data
         const augmentedService = {
             ...service,
-            titleFull: service.title_full || service.title, // Map snake to camel if needed
+            category: service.service_categories,
+            titleFull: service.title_full || service.title,
             isImage: service.is_image,
             provider: {
-                name: 'Rajesh',
-                surname: 'Kumar',
-                image: 'https://randomuser.me/api/portraits/men/32.jpg',
+                name: 'Expert',
+                surname: 'Professional',
+                image: 'https://img.freepik.com/free-photo/portrait-handsome-young-man-with-crossed-arms_23-2148464103.jpg',
                 rating: '4.9',
                 services: '1,240 SERVICES',
                 verified: true
             },
-            specifications: "Styling by senior artists. Our professional service includes deep cleaning, safety checks, and performance optimization using state-of-the-art tools and equipment.",
+            specifications: service.description || `Professional ${service.title} service. Our certified experts ensure top-quality results using premium tools and safe practices. Guaranteed satisfaction with post-service support.`,
             features: [
                 'Certified Professional',
                 'Insurance Covered',

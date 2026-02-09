@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     cardIcon: { fontSize: 24 },
     textContainer: { flex: 1, paddingRight: 10 },
     cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A1025', marginBottom: 5 },
-    cardDescription: { fontSize: 14, color: '#718096', lineHeight: 22, fontFamily: 'monospace' }, // Using monospace for that technical feel in screenshot
+    cardDescription: { fontSize: 14, color: '#718096', lineHeight: 22,  }, // Using monospace for that technical feel in screenshot
     dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Theme.colors.brandOrange, marginTop: 5 },
 
     cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingLeft: 65 }, // Indent to align with text

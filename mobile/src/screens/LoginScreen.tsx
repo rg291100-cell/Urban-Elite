@@ -14,6 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 import { authAPI } from '../services/api';
 import { authService } from '../services/authService';
+import { Theme } from '../theme';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -136,6 +137,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     />
 
                     <TouchableOpacity
+                        style={styles.forgotPasswordContainer}
+                        onPress={() => navigation.navigate('ForgotPassword' as any, { email })}
+                    >
+                        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                         style={[styles.button, loading && styles.buttonDisabled]}
                         onPress={handleLogin}
                         disabled={loading}
@@ -149,8 +157,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
                     <View style={styles.registerContainer}>
                         <Text style={styles.registerText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                            <Text style={styles.registerLink}>Sign Up</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Register' as any)}>
+                            <Text style={styles.linkText}>Sign Up</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -172,33 +180,35 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: Theme.colors.background,
     },
     content: {
         flex: 1,
-        justifyContent: 'center',
         padding: 24,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#1a1a1a',
+        color: '#0F172A',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
-        marginBottom: 40,
+        color: '#64748B',
+        marginBottom: 32,
     },
     form: {
         width: '100%',
     },
     roleSelector: {
         flexDirection: 'row',
-        marginBottom: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F1F5F9',
         borderRadius: 12,
         padding: 4,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
     roleButton: {
         flex: 1,
@@ -207,38 +217,46 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     roleButtonActive: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: '#0F172A',
     },
     roleButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: '#64748B',
     },
     roleButtonTextActive: {
-        color: '#fff',
+        color: '#FFFFFF',
     },
     input: {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F8FAFC',
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         marginBottom: 16,
-        color: '#1a1a1a',
+        color: '#0F172A',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
     button: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: Theme.colors.buttonPeach,
         borderRadius: 12,
-        padding: 16,
+        padding: 18,
         alignItems: 'center',
         marginTop: 8,
+        shadowColor: Theme.colors.buttonPeach,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 5,
     },
     buttonDisabled: {
         opacity: 0.6,
     },
     buttonText: {
-        color: '#fff',
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: 'bold',
+        letterSpacing: 0.5,
     },
     registerContainer: {
         flexDirection: 'row',
@@ -246,22 +264,36 @@ const styles = StyleSheet.create({
         marginTop: 24,
     },
     registerText: {
-        color: '#666',
+        color: '#64748B',
         fontSize: 14,
     },
-    registerLink: {
-        color: '#FF6B6B',
+    linkText: {
+        color: '#0F172A',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+    forgotPasswordContainer: {
+        alignItems: 'flex-end',
+        marginBottom: 24,
+    },
+    forgotPasswordText: {
+        color: '#D4AF37',
         fontSize: 14,
         fontWeight: '600',
     },
     testButton: {
-        marginTop: 16,
-        padding: 12,
+        marginTop: 24,
+        paddingVertical: 12,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        borderRadius: 12,
+        backgroundColor: '#FFFFFF',
     },
     testButtonText: {
-        color: '#999',
+        color: '#64748B',
         fontSize: 14,
+        fontWeight: 'bold',
     },
 });
 

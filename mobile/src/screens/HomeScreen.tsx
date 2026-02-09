@@ -8,19 +8,24 @@ import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { homeAPI } from '../services/api';
 
-import { Zap, Scissors, User, Sparkles, Plug, Droplets, PaintRoller, Wind, Hammer, Search, Bell } from 'lucide-react-native';
+import { Zap, Scissors, User, Sparkles, Plug, Droplets, PaintRoller, Wind, Hammer, Search, Bell, Clock, Cpu, Wrench } from 'lucide-react-native';
 
 const CATEGORY_ICONS: { [key: string]: any } = {
-    'INSTA HELP': Zap,
+    'INSTA HELP': Clock,
     "WOMEN'S SALON": Scissors,
     "MEN'S SALON": User,
+    "MEN'S SALON & MASSAGE": User,
     'CLEANING': Sparkles,
-    'ELECTRICIAN': Plug,
-    'PURIFIERS': Droplets,
+    'ELECTRICIAN': Zap,
+    'ELECTRICIAN & MORE': Plug,
+    'PLUMBING': Wrench,
+    'NATIVE WATER PURIFIER': Droplets,
     'PAINTING': PaintRoller,
     'AC REPAIR': Wind,
+    'AC & APPLIANCE REPAIR': Wind,
+    'CARPENTRY': Hammer,
     'REVAMP': Hammer,
-    'NATIVE SMART HOME': Zap,
+    'NATIVE SMART HOME': Cpu,
 };
 
 const HomeScreen = () => {
@@ -141,24 +146,24 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Theme.colors.background },
     header: { paddingHorizontal: 20, paddingTop: 10, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     logoContainer: { flexDirection: 'row', alignItems: 'center' },
-    logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.brandOrange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-    logoIconText: { fontSize: 24, color: 'white' },
-    headerTitle: { fontSize: 22, fontWeight: 'bold' },
-    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900' },
-    titleElite: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic' },
+    logoIcon: { width: 40, height: 40, backgroundColor: '#0F172A', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+    logoIconText: { fontSize: 24, color: '#D4AF37' },
+    headerTitle: { fontSize: 22, fontWeight: Theme.typography.weights.bold },
+    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900', letterSpacing: -0.5 },
+    titleElite: { color: Theme.colors.buttonPeach, fontWeight: '900', fontStyle: 'italic', letterSpacing: -0.5 },
     searchContainer: { paddingHorizontal: 20, marginBottom: 20 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.searchBg, borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12 },
-    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: Theme.colors.textDark },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: '#0F172A' },
     gridContainer: { paddingHorizontal: 10, paddingBottom: 20 },
     gridItem: { flex: 1, alignItems: 'center', marginBottom: 25, marginHorizontal: 5 },
-    iconContainer: { width: 80, height: 80, backgroundColor: Theme.colors.inputBg, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+    iconContainer: { width: 80, height: 80, backgroundColor: '#FFFFFF', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
     serviceIcon: { width: 40, height: 40, resizeMode: 'contain' },
-    serviceText: { fontSize: 11, fontWeight: '700', color: Theme.colors.textDark, textAlign: 'center' },
+    serviceText: { fontSize: 11, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
 
     // Header Inputs
-    notificationButton: { width: 40, height: 40, backgroundColor: Theme.colors.searchBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    notificationIcon: { width: 20, height: 20, tintColor: Theme.colors.textLight },
-    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.brandOrange, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
+    notificationButton: { width: 40, height: 40, backgroundColor: '#F1F5F9', borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+    notificationIcon: { width: 20, height: 20, tintColor: '#0F172A' },
+    notificationBadge: { width: 8, height: 8, backgroundColor: '#D4AF37', borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
 
     // Footer / Banner Styles
     footerContainer: { paddingHorizontal: 20, marginTop: 10 },

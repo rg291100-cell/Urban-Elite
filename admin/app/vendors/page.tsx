@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '@/lib/api';
 import DashboardLayout from '@/components/DashboardLayout';
-import { CheckCircle, XCircle, Clock, Building2, Briefcase, MapPin, Star, Phone, Mail, UserCheck } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Building2, Briefcase, MapPin, Star, Phone, Mail, UserCheck, Plus } from 'lucide-react';
 
 interface Vendor {
     id: string;
@@ -14,6 +14,8 @@ interface Vendor {
     business_name: string;
     business_address: string;
     experience_years: number | null;
+    aadhaar_url: string | null;
+    pan_url: string | null;
     approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
     created_at: string;
 }
@@ -23,9 +25,71 @@ export default function VendorsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
+    // Specialization State
+    const [isSpecModalOpen, setIsSpecModalOpen] = useState(false);
+    const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCatId, setSelectedCatId] = useState('');
+    const [categoryItems, setCategoryItems] = useState<any[]>([]);
+    const [selectedServiceId, setSelectedServiceId] = useState('');
+    const [specPrice, setSpecPrice] = useState('');
+
     useEffect(() => {
         fetchVendors();
     }, [filter]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const res = await adminAPI.getServiceCategories();
+                if (res.data.success) setCategories(res.data.categories);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+        loadCategories();
+    }, []);
+
+    useEffect(() => {
+        const loadItems = async () => {
+            if (!selectedCatId) {
+                setCategoryItems([]);
+                return;
+            }
+            try {
+                const res = await adminAPI.getServiceItems(selectedCatId);
+                if (res.data.success) setCategoryItems(res.data.items);
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            }
+        };
+        loadItems();
+    }, [selectedCatId]);
+
+    const openSpecializationModal = (vendor: Vendor) => {
+        setSelectedVendor(vendor);
+        setIsSpecModalOpen(true);
+        setSelectedCatId('');
+        setSelectedServiceId('');
+        setSpecPrice('');
+    };
+
+    const handleAddSpecialization = async () => {
+        if (!selectedVendor || !selectedServiceId) return;
+
+        try {
+            await adminAPI.assignServiceToVendor({
+                vendorId: selectedVendor.id,
+                serviceItemId: selectedServiceId,
+                customPrice: specPrice
+            });
+            alert('Specialization added successfully!');
+            setIsSpecModalOpen(false);
+        } catch (error) {
+            console.error('Error adding specialization:', error);
+            alert('Failed to add specialization');
+        }
+    };
 
     const fetchVendors = async () => {
         setLoading(true);
@@ -239,6 +303,44 @@ export default function VendorsPage() {
                                     </div>
                                 </div>
 
+                                {/* KYC Documents Section */}
+                                <div className="mb-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50/50">
+                                    <p className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-1">
+                                        <UserCheck className="w-3 h-3 text-blue-500" />
+                                        KYC Verification Documents
+                                    </p>
+                                    <div className="flex flex-wrap gap-4">
+                                        <div className="flex-1 min-w-[200px]">
+                                            <p className="text-xs text-gray-400 mb-1">Aadhaar Card</p>
+                                            {vendor.aadhaar_url ? (
+                                                <a
+                                                    href={vendor.aadhaar_url}
+                                                    target="_blank"
+                                                    className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 bg-white p-2 rounded border border-blue-100 transition-colors"
+                                                >
+                                                    View Aadhaar Card ↗
+                                                </a>
+                                            ) : (
+                                                <p className="text-sm text-gray-400 italic bg-white p-2 rounded border border-gray-100">Not provided</p>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-[200px]">
+                                            <p className="text-xs text-gray-400 mb-1">PAN Card</p>
+                                            {vendor.pan_url ? (
+                                                <a
+                                                    href={vendor.pan_url}
+                                                    target="_blank"
+                                                    className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 bg-white p-2 rounded border border-blue-100 transition-colors"
+                                                >
+                                                    View PAN Card ↗
+                                                </a>
+                                            ) : (
+                                                <p className="text-sm text-gray-400 italic bg-white p-2 rounded border border-gray-100">Not provided</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center justify-between text-xs text-gray-500 mb-4 pb-4 border-b border-gray-200">
                                     <span>Registered: {new Date(vendor.created_at).toLocaleString()}</span>
                                     <span className="text-gray-400">ID: {vendor.id.slice(0, 8)}...</span>
@@ -265,10 +367,19 @@ export default function VendorsPage() {
                                 )}
 
                                 {vendor.approval_status === 'APPROVED' && (
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                                        <p className="text-sm text-green-800">
-                                            ✅ This vendor is approved and can login to provide services
-                                        </p>
+                                    <div className="space-y-3">
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                                            <p className="text-sm text-green-800">
+                                                ✅ This vendor is approved and can login to provide services
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => openSpecializationModal(vendor)}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors bg-white font-medium"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Manage Specializations
+                                        </button>
                                     </div>
                                 )}
 
@@ -283,6 +394,85 @@ export default function VendorsPage() {
                         ))
                     )}
                 </div>
+
+                {/* Specialization Modal */}
+                {isSpecModalOpen && selectedVendor && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    Manage Specializations
+                                </h2>
+                                <button onClick={() => setIsSpecModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <XCircle className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <p className="text-sm text-gray-500 mb-4">
+                                Assign specific service items to <strong>{selectedVendor.name}</strong>
+                            </p>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Service Category</label>
+                                    <select
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        value={selectedCatId}
+                                        onChange={(e) => setSelectedCatId(e.target.value)}
+                                    >
+                                        <option value="">-- Choose Category --</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {selectedCatId && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Sub-Service (Specialization)</label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                            value={selectedServiceId}
+                                            onChange={(e) => setSelectedServiceId(e.target.value)}
+                                        >
+                                            <option value="">-- Choose Service --</option>
+                                            {categoryItems.map(item => (
+                                                <option key={item.id} value={item.id}>{item.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Custom Price for Vendor (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. ₹599"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        value={specPrice}
+                                        onChange={(e) => setSpecPrice(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setIsSpecModalOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium border border-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddSpecialization}
+                                    disabled={!selectedServiceId}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                                >
+                                    Add Specialization
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );

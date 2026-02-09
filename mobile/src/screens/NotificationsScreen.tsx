@@ -94,11 +94,11 @@ const styles = StyleSheet.create({
     iconContainer: { width: 50, height: 50, borderRadius: 15, backgroundColor: '#FFFBEB', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
     icon: { fontSize: 24 },
     content: { flex: 1, paddingRight: 10 },
-    title: { fontSize: 16, fontWeight: 'bold', color: '#1A202C', fontFamily: 'monospace', marginBottom: 5 },
-    message: { fontSize: 14, color: '#718096', lineHeight: 22, fontWeight: '500', fontFamily: 'monospace' },
+    title: { fontSize: 16, fontWeight: 'bold', color: '#1A202C', , marginBottom: 5 },
+    message: { fontSize: 14, color: '#718096', lineHeight: 22, fontWeight: '500',  },
     
     cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 65 }, // Indent to align with text
-    time: { fontSize: 10, color: '#A0AEC0', fontWeight: 'bold', fontFamily: 'monospace' },
+    time: { fontSize: 10, color: '#A0AEC0', fontWeight: 'bold',  },
     action: { fontSize: 10, color: Theme.colors.brandOrange, fontWeight: '900', letterSpacing: 1 },
 
     // Footer

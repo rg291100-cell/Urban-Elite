@@ -71,23 +71,23 @@ const VendorHomeScreen = () => {
                 {/* Welcome Section */}
                 <View style={styles.welcomeSection}>
                     <Text style={styles.welcomeText}>Vendor Dashboard</Text>
-                    <Text style={styles.welcomeSubtext}>Manage your services and bookings</Text>
+                    <Text style={styles.welcomeSubtext}>Manage your professional bookings</Text>
                 </View>
 
                 {/* Stats Cards */}
                 <View style={styles.statsContainer}>
                     <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: '#FFF7ED' }]}>
-                            <View style={[styles.statIconContainer, { backgroundColor: Theme.colors.brandOrange }]}>
-                                <Calendar size={20} color="#FFF" />
+                        <View style={[styles.statCard, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F1F5F9' }]}>
+                            <View style={[styles.statIconContainer, { backgroundColor: '#F1F5F9' }]}>
+                                <Calendar size={20} color="#0F172A" />
                             </View>
                             <Text style={styles.statValue}>{stats.todayBookings || 0}</Text>
                             <Text style={styles.statLabel}>Today's Bookings</Text>
                         </View>
 
-                        <View style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
-                            <View style={[styles.statIconContainer, { backgroundColor: '#F59E0B' }]}>
-                                <Clock size={20} color="#FFF" />
+                        <View style={[styles.statCard, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F1F5F9' }]}>
+                            <View style={[styles.statIconContainer, { backgroundColor: '#FDFCF0' }]}>
+                                <Clock size={20} color="#D4AF37" />
                             </View>
                             <Text style={styles.statValue}>{stats.pendingRequests || 0}</Text>
                             <Text style={styles.statLabel}>Pending Requests</Text>
@@ -95,20 +95,12 @@ const VendorHomeScreen = () => {
                     </View>
 
                     <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: '#DBEAFE' }]}>
-                            <View style={[styles.statIconContainer, { backgroundColor: '#3B82F6' }]}>
-                                <DollarSign size={20} color="#FFF" />
+                        <View style={[styles.statCard, { backgroundColor: '#0F172A', flex: 1 }]}>
+                            <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                                <DollarSign size={20} color="#D4AF37" />
                             </View>
-                            <Text style={styles.statValue}>{stats.totalRevenue || '₹0'}</Text>
-                            <Text style={styles.statLabel}>Total Revenue</Text>
-                        </View>
-
-                        <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
-                            <View style={[styles.statIconContainer, { backgroundColor: '#10B981' }]}>
-                                <Briefcase size={20} color="#FFF" />
-                            </View>
-                            <Text style={styles.statValue}>{stats.activeServices || 0}</Text>
-                            <Text style={styles.statLabel}>Active Services</Text>
+                            <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{stats.totalRevenue || '₹0'}</Text>
+                            <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total Revenue</Text>
                         </View>
                     </View>
                 </View>
@@ -146,16 +138,16 @@ const VendorHomeScreen = () => {
 const getStatusColor = (status: string) => {
     switch (status) {
         case 'PENDING':
-            return '#FEF3C7';
+            return '#F1F5F9'; // Light gray
         case 'ACCEPTED':
         case 'ACTIVE':
-            return '#DBEAFE';
+            return '#E0F2FE'; // Light blue
         case 'COMPLETED':
-            return '#D1FAE5';
+            return '#F0FDF4'; // Light green
         case 'CANCELLED':
-            return '#FEE2E2';
+            return '#FEF2F2'; // Light red
         default:
-            return '#F3F4F6';
+            return '#F8FAFC';
     }
 };
 
@@ -165,22 +157,22 @@ const styles = StyleSheet.create({
     logoContainer: { flexDirection: 'row', alignItems: 'center' },
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.brandOrange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24, color: 'white' },
-    headerTitle: { fontSize: 22, fontWeight: 'bold' },
-    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900' },
-    titleElite: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic' },
+    headerTitle: { fontSize: 22, fontWeight: Theme.typography.weights.bold },
+    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900', letterSpacing: -0.5 },
+    titleElite: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic', letterSpacing: -0.5 },
     notificationButton: { width: 40, height: 40, backgroundColor: Theme.colors.searchBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.brandOrange, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
 
     welcomeSection: { paddingHorizontal: 20, marginBottom: 25 },
-    welcomeText: { fontSize: 28, fontWeight: 'bold', color: Theme.colors.textDark },
-    welcomeSubtext: { fontSize: 14, color: Theme.colors.textLight, marginTop: 5 },
+    welcomeText: { fontSize: 28, fontWeight: Theme.typography.weights.bold, color: Theme.colors.textDark, letterSpacing: -0.8 },
+    welcomeSubtext: { fontSize: 14, color: Theme.colors.textLight, marginTop: 5, fontWeight: Theme.typography.weights.medium },
 
     statsContainer: { paddingHorizontal: 20, marginBottom: 30 },
     statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
     statCard: { flex: 1, padding: 20, borderRadius: 15, marginHorizontal: 5 },
     statIconContainer: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-    statValue: { fontSize: 24, fontWeight: 'bold', color: Theme.colors.textDark, marginBottom: 5 },
-    statLabel: { fontSize: 12, color: Theme.colors.textLight, fontWeight: '600' },
+    statValue: { fontSize: 24, fontWeight: Theme.typography.weights.bold, color: Theme.colors.textDark, marginBottom: 5, letterSpacing: -0.5 },
+    statLabel: { fontSize: 12, color: Theme.colors.textLight, fontWeight: Theme.typography.weights.medium },
 
     section: { paddingHorizontal: 20, marginBottom: 20 },
     sectionTitle: { fontSize: 20, fontWeight: 'bold', color: Theme.colors.textDark, marginBottom: 15 },

@@ -1,16 +1,36 @@
 export const Theme = {
     colors: {
-        brandOrange: '#FF6B00', // For the italic logo
-        buttonPeach: '#FFCCAB', // The soft "Send OTP" button
-        background: '#FFFFFF',
+        brandOrange: '#0F172A', // Deep Navy (Primary Branding)
+        buttonPeach: '#D4AF37', // Gold (Action/Accent)
+        background: '#FFFFFF',  // Pure White
         inputBg: '#F8FAFC',
-        textDark: '#2D3748',
-        textLight: '#718096',
+        textDark: '#0F172A',    // Deep Navy Text
+        textLight: '#64748B',   // Muted Slate
         border: '#E2E8F0',
-        searchBg: '#F3F4F6',
+        searchBg: '#F1F5F9',
         cardBg: '#FFFFFF',
-        iconGray: '#A0AEC0',
-        activeTab: '#FF6B00',
-        inactiveTab: '#CBD5E0',
+        iconGray: '#0F172A',
+        activeTab: '#0F172A',
+        inactiveTab: '#94A3B8',
+    },
+    typography: {
+        fontFamily: {
+            bold: 'System',
+            semiBold: 'System',
+            medium: 'System',
+            regular: 'System',
+            mono: 'monospace',
+        },
+        weights: {
+            bold: '700' as const,
+            semiBold: '600' as const,
+            medium: '500' as const,
+            regular: '400' as const,
+        },
+        letterSpacing: {
+            tight: -0.5,
+            normal: 0,
+            wide: 0.5,
+        }
     }
 };

@@ -137,22 +137,30 @@ const updateProfile = async (req, res) => {
 // Address Management
 const getAddresses = async (req, res) => {
     try {
+        console.log('Fetching addresses for user:', req.user?.id);
         const { data: addresses, error } = await supabase
             .from('addresses')
             .select('*')
-            .eq('user_id', req.user.id); // Assuming column name is user_id
+            .eq('user_id', req.user.id);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase getAddresses error:', error);
+            throw error;
+        }
+
+        console.log(`Found ${addresses?.length || 0} addresses`);
         res.json(addresses);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('getAddresses error:', error);
+        res.status(500).json({ message: 'Server Error', details: error.message });
     }
 };
 
 const addAddress = async (req, res) => {
     try {
         const { type, address, isDefault } = req.body;
+        console.log('Adding address for user:', req.user?.id, { type, address, isDefault });
+
         const { data: newAddr, error } = await supabase
             .from('addresses')
             .insert({
@@ -164,11 +172,16 @@ const addAddress = async (req, res) => {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase addAddress error:', error);
+            throw error;
+        }
+
+        console.log('Address added successfully:', newAddr.id);
         res.json(newAddr);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('addAddress error:', error);
+        res.status(500).json({ message: 'Server Error', details: error.message });
     }
 };
 

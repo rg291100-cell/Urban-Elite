@@ -1,6 +1,9 @@
 export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
+    ForgotPassword: { email?: string };
+    VerifyOTP: { email: string };
+    ResetPassword: { email: string; otp: string };
     MainTabs: undefined;
     Notifications: undefined;
     InstaHelp: undefined;

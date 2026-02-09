@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { adminAPI } from '@/lib/api';
 import { Plus, Pencil, Trash2, Search, Loader2, ArrowLeft, X, ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,9 +19,9 @@ interface ServiceItem {
     isImage: boolean;
 }
 
-export default function ServiceItemsPage({ params }: { params: { categoryId: string } }) {
+export default function ServiceItemsPage({ params }: { params: Promise<{ categoryId: string }> }) {
     const router = useRouter();
-    const { categoryId } = params;
+    const { categoryId } = use(params);
 
     // We ideally want the category name too, but we might just fetch it or pass it. 
     // For now let's just fetch items. Maybe fetch category detail?

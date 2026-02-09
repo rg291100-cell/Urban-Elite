@@ -157,10 +157,10 @@ export default function ServicesPage() {
                                                 <div className="flex justify-end gap-2">
                                                     <Link
                                                         href={`/services/${category.id}`}
-                                                        className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                        title="Manage Services"
+                                                        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+                                                        title="Manage Sub-Services"
                                                     >
-                                                        <Search className="h-4 w-4" />
+                                                        <Plus className="h-4 w-4" /> Items
                                                     </Link>
                                                     <button
                                                         onClick={() => openEdit(category)}

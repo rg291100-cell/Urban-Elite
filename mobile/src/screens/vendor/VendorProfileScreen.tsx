@@ -90,11 +90,6 @@ const VendorProfileScreen = () => {
                             <Text style={styles.statValue}>127</Text>
                             <Text style={styles.statLabel}>Completed</Text>
                         </View>
-                        <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>5</Text>
-                            <Text style={styles.statLabel}>Services</Text>
-                        </View>
                     </View>
 
                     {/* Menu Items */}
@@ -143,7 +138,7 @@ const styles = StyleSheet.create({
     avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 2, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
     avatar: { width: 40, height: 40, tintColor: Theme.colors.brandOrange },
     profileInfo: { flex: 1 },
-    userName: { fontSize: 24, fontWeight: 'bold', color: '#1A202C', fontFamily: 'monospace' },
+    userName: { fontSize: 24, fontWeight: 'bold', color: '#1A202C',  },
     userTag: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.brandOrange, letterSpacing: 1, marginTop: 5 },
 
     statsContainer: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 15, padding: 20, marginBottom: 25, borderWidth: 1, borderColor: '#F3F4F6' },
@@ -156,7 +151,7 @@ const styles = StyleSheet.create({
     menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', padding: 15, borderRadius: 20, marginBottom: 15 },
     menuIconBox: { width: 40, height: 40, backgroundColor: '#FFFFFF', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
     menuIcon: { fontSize: 18, color: '#4A5568' },
-    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2D3748', fontFamily: 'monospace' },
+    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2D3748',  },
     chevron: { fontSize: 24, color: '#CBD5E0', fontWeight: 'bold' },
 
     logoutButton: { paddingVertical: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FED7D7', alignItems: 'center', backgroundColor: '#FFF5F5' },

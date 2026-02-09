@@ -81,6 +81,8 @@ export const adminAPI = {
     getAllVendors: (params?: { status?: string }) => api.get('/admin/vendors', { params }),
     approveVendor: (id: string) => api.put(`/admin/vendors/${id}/approve`),
     rejectVendor: (id: string) => api.put(`/admin/vendors/${id}/reject`),
+    assignServiceToVendor: (data: { vendorId: string; serviceItemId: string; customPrice?: string }) =>
+        api.post('/admin/services/assign-vendor', data),
 
     // Payments
     getPayments: () => api.get('/admin/payments'),

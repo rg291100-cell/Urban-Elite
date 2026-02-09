@@ -1,0 +1,3 @@
+ALTER TABLE offers ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'PROMOTION';
+-- Type can be 'PROMOTION' or 'JOB'
+CREATE INDEX IF NOT EXISTS idx_offers_type ON offers(type);

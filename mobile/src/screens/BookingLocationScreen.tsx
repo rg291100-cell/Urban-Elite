@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
@@ -40,8 +40,15 @@ const BookingLocationScreen = () => {
             if (defaultAddr) setSelectedLocation(defaultAddr);
             else if (response.data.length > 0 && !selectedLocation) setSelectedLocation(response.data[0]);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load addresses', error);
+            if (error.response?.status === 401) {
+                Alert.alert('Session Expired', 'Please log in again to continue.', [
+                    { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' as any }] }) }
+                ]);
+            } else {
+                Alert.alert('Error', 'Failed to load addresses. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -159,7 +166,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 40 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, fontFamily: 'monospace' },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
     subTitle: { fontSize: 16, color: '#718096', marginTop: 10, fontWeight: '600', maxWidth: 250 },
 
     locationCard: {

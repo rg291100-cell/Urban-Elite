@@ -62,6 +62,9 @@ export const authAPI = {
     login: (email: string, password: string) => api.post('/api/auth/login', { email, password }),
     register: (data: any) => api.post('/api/auth/register', data),
     getCurrentUser: () => api.get('/api/auth/me'),
+    forgotPassword: (email: string) => api.post('/api/auth/forgot-password', { email }),
+    verifyOTP: (email: string, otp: string) => api.post('/api/auth/verify-otp', { email, otp }),
+    resetPassword: (data: any) => api.post('/api/auth/reset-password', data),
 };
 
 export const homeAPI = {
@@ -102,6 +105,7 @@ export const bookingAPI = {
         location: { type: string; address: string };
         instructions: string;
         price: string;
+        paymentMode?: string;
     }) => api.post('/api/bookings', data),
     getBooking: (id: string) => api.get(`/api/bookings/${id}`),
     getBookingTracking: (id: string) => api.get(`/api/bookings/${id}/tracking`),

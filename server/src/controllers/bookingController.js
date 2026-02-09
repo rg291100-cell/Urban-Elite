@@ -10,10 +10,11 @@ exports.createBooking = async (req, res) => {
             timeSlot,
             location,
             instructions,
-            price
+            price,
+            paymentMode
         } = req.body;
 
-        console.log('Booking Request Received:', { serviceName, date, timeSlot, userId: req.user?.id });
+        console.log('Booking Request Received:', { serviceName, date, timeSlot, userId: req.user?.id, paymentMode });
 
         // Get authenticated user ID from middleware
         const userId = req.user.id; // supabase auth uses 'id'
@@ -31,7 +32,8 @@ exports.createBooking = async (req, res) => {
                 instructions: instructions || '',
                 status: 'PENDING',
                 price,
-                professional_id: null, // Will be assigned by admin/system later
+                payment_mode: paymentMode || 'PREPAID',
+                professional_id: null,
                 professional_name: null,
                 estimated_time: '12m',
                 user_id: userId

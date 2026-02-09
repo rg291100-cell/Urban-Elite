@@ -649,6 +649,8 @@ exports.getPendingVendors = async (req, res) => {
                     businessName: v.business_name,
                     businessAddress: v.business_address,
                     experienceYears: v.experience_years,
+                    aadhaar_url: v.aadhaar_url,
+                    pan_url: v.pan_url,
                     approvalStatus: v.approval_status
                 };
             })
@@ -694,6 +696,8 @@ exports.getAllVendors = async (req, res) => {
                     businessName: v.business_name,
                     businessAddress: v.business_address,
                     experienceYears: v.experience_years,
+                    aadhaar_url: v.aadhaar_url,
+                    pan_url: v.pan_url,
                     approvalStatus: v.approval_status,
                     approvedAt: v.approved_at,
                     approvedBy: v.approved_by
@@ -853,5 +857,25 @@ exports.getAllPayments = async (req, res) => {
             success: false,
             error: 'Failed to fetch payments'
         });
+    }
+};
+// Assign Service to Vendor (Vendor Specialization)
+exports.assignServiceToVendor = async (req, res) => {
+    const { vendorId, serviceItemId, customPrice } = req.body;
+    try {
+        const { data, error } = await supabase
+            .from('vendor_services')
+            .upsert([{
+                vendor_id: vendorId,
+                service_item_id: serviceItemId,
+                custom_price: customPrice
+            }])
+            .select();
+
+        if (error) throw error;
+        res.json({ success: true, message: 'Vendor specialization updated', data });
+    } catch (error) {
+        console.error('Assign Vendor Service Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to assign service to vendor' });
     }
 };

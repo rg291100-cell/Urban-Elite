@@ -37,13 +37,14 @@ const TabNavigator = () => {
                 tabBarActiveTintColor: Theme.colors.activeTab,
                 tabBarInactiveTintColor: Theme.colors.inactiveTab,
                 tabBarStyle: {
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: Theme.colors.background,
                     borderTopWidth: 1,
-                    borderTopColor: '#F3F4F6',
+                    borderTopColor: Theme.colors.border,
                     height: 60 + insets.bottom,
                     paddingBottom: insets.bottom,
                     paddingTop: 5,
                     elevation: 0,
+                    shadowOpacity: 0,
                 },
                 tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name={route.name} focused={focused} />,
             })}

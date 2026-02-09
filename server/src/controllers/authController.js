@@ -10,7 +10,8 @@ exports.register = async (req, res) => {
     try {
         const {
             name, email, phone, password, role,
-            serviceCategory, businessName, businessAddress, experienceYears
+            serviceCategory, businessName, businessAddress, experienceYears,
+            aadhaarUrl, panUrl
         } = req.body;
 
         console.log('Registration Request Body:', req.body); // DEBUG
@@ -71,6 +72,8 @@ exports.register = async (req, res) => {
             userData.business_name = businessName;
             userData.business_address = businessAddress;
             userData.experience_years = experienceYears ? parseInt(experienceYears) : null;
+            userData.aadhaar_url = aadhaarUrl || null;
+            userData.pan_url = panUrl || null;
         }
 
         // Create user
@@ -239,7 +242,7 @@ exports.getCurrentUser = async (req, res) => {
             success: true,
             user: {
                 ...user,
-                walletBalance: '₹0'
+                walletBalance: user.wallet_balance || '₹0'
             }
         });
     } catch (error) {
@@ -247,6 +250,173 @@ exports.getCurrentUser = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch user'
+        });
+    }
+};
+
+// Forgot Password - Send OTP
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        // Check if user exists
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, name')
+            .eq('email', email)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User with this email not found'
+            });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+        // Save OTP to user record
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({
+                reset_otp: otp,
+                reset_otp_expires_at: expiresAt
+            })
+            .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        // SIMULATE SENDING EMAIL
+        console.log(`[EMAIL SIMULATION] Sending OTP ${otp} to ${email}`);
+
+        // In a real application, you would use a service like NodeMailer, SendGrid, or AWS SES
+        // For development, we'll return the success status 
+        // We also return the OTP in the response ONLY for testing/demo convenience
+        res.json({
+            success: true,
+            message: 'OTP sent successfully to your email',
+            otp: process.env.NODE_ENV === 'production' ? undefined : otp // Only return in dev
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process forgot password request'
+        });
+    }
+};
+
+// Verify OTP
+exports.verifyOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email and OTP are required'
+            });
+        }
+
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, reset_otp, reset_otp_expires_at')
+            .eq('email', email)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        if (user.reset_otp !== otp) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid OTP'
+            });
+        }
+
+        if (new Date(user.reset_otp_expires_at) < new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: 'OTP has expired'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'OTP verified successfully'
+        });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to verify OTP'
+        });
+    }
+};
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email, OTP, and new password are required'
+            });
+        }
+
+        // Verify OTP again (security measure)
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, reset_otp, reset_otp_expires_at')
+            .eq('email', email)
+            .single();
+
+        if (error || !user || user.reset_otp !== otp || new Date(user.reset_otp_expires_at) < new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired OTP'
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password and clear OTP
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({
+                password: hashedPassword,
+                reset_otp: null,
+                reset_otp_expires_at: null
+            })
+            .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        res.json({
+            success: true,
+            message: 'Password reset successful. You can now login with your new password.'
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reset password'
         });
     }
 };

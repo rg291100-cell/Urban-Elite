@@ -5,6 +5,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { userAPI } from '../services/api';
+import { authService } from '../services/authService';
 
 const MENU_ITEMS = [
     { id: 'PersonalInformation', title: 'Personal Information', icon: '👤' },
@@ -33,10 +34,11 @@ const ProfileScreen = () => {
         fetchProfile();
     }, []);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await authService.clearAuth();
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Login' }],
+            routes: [{ name: 'Login' as any }],
         });
     };
 
@@ -157,31 +159,31 @@ const styles = StyleSheet.create({
 
     // Search
     searchContainer: { paddingHorizontal: 20, marginBottom: 10 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.searchBg, borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12 },
-    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: Theme.colors.textDark },
-    filterIcon: { width: 20, height: 20, tintColor: Theme.colors.textLight },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: '#0F172A' },
+    filterIcon: { width: 20, height: 20, tintColor: Theme.colors.buttonPeach },
 
     contentContainer: { paddingHorizontal: 20 },
 
     // Profile Header
     profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 30, paddingVertical: 10 },
-    avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 2, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-    avatar: { width: 40, height: 40, tintColor: '#4A5568' },
+    avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
+    avatar: { width: 40, height: 40, tintColor: '#0F172A' },
     profileInfo: { flex: 1 },
-    userName: { fontSize: 24, fontWeight: 'bold', color: '#1A202C', fontFamily: 'monospace' }, // Using monospace to mimic the font in screenshot roughly
-    userTag: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.brandOrange, letterSpacing: 1, marginTop: 5 },
+    userName: { fontSize: 24, fontWeight: 'bold', color: '#0F172A',  },
+    userTag: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.buttonPeach, letterSpacing: 1, marginTop: 5 },
 
     // Menu
     menuContainer: { marginBottom: 40 },
-    menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', padding: 15, borderRadius: 20, marginBottom: 15 },
-    menuIconBox: { width: 40, height: 40, backgroundColor: '#FFFFFF', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    menuIcon: { fontSize: 18, color: '#4A5568' },
-    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2D3748', fontFamily: 'monospace' },
+    menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 20, marginBottom: 15, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+    menuIconBox: { width: 40, height: 40, backgroundColor: '#F8FAFC', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+    menuIcon: { fontSize: 18, color: '#0F172A' },
+    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#0F172A',  },
     chevron: { fontSize: 24, color: '#CBD5E0', fontWeight: 'bold' },
 
     // Logout
-    logoutButton: { paddingVertical: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FED7D7', alignItems: 'center', backgroundColor: '#FFF5F5' },
-    logoutText: { color: '#F56565', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5 },
+    logoutButton: { paddingVertical: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FEE2E2', alignItems: 'center', backgroundColor: '#FFF5F5' },
+    logoutText: { color: '#EF4444', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5 },
 });
 
 export default ProfileScreen;

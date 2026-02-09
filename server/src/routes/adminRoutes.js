@@ -42,6 +42,7 @@ router.get('/vendors/pending', adminController.getPendingVendors);
 router.get('/vendors', adminController.getAllVendors);
 router.put('/vendors/:id/approve', adminController.approveVendor);
 router.put('/vendors/:id/reject', adminController.rejectVendor);
+router.post('/services/assign-vendor', adminController.assignServiceToVendor);
 
 // Payment Management
 router.get('/payments', adminController.getAllPayments);

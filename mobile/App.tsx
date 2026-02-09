@@ -40,6 +40,9 @@ import BookingDetailsScreen from './src/screens/BookingDetailsScreen';
 import TabNavigator from './src/navigation/TabNavigator';
 import VendorTabNavigator from './src/navigation/VendorTabNavigator';
 import VendorCreateOfferScreen from './src/screens/vendor/VendorCreateOfferScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import VerifyOTPScreen from './src/screens/VerifyOTPScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
@@ -86,6 +89,9 @@ export const RootNavigator = () => {
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="MainTabs" component={TabNavigator} />
       <Stack.Screen name="VendorTabs" component={VendorTabNavigator} />
       <Stack.Screen
@@ -134,7 +140,20 @@ export const RootNavigator = () => {
   );
 };
 
+import SplashScreen from './src/screens/SplashScreen';
+
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
