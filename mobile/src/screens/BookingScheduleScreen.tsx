@@ -12,7 +12,7 @@ const BookingScheduleScreen = () => {
     const route = useRoute<BookingScheduleRouteProp>();
 
     // We can use this item to pass to the next step (Payment)
-    const { item } = route.params;
+    const { item } = route.params || {};
 
     const insets = useSafeAreaInsets();
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 40 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, },
     subTitle: { fontSize: 16, color: '#718096', marginTop: 10, fontWeight: '600', maxWidth: 200 },
 
     sectionLabel: { fontSize: 10, fontWeight: 'bold', color: '#A0AEC0', letterSpacing: 1.5, marginBottom: 15, textTransform: 'uppercase' },

@@ -60,9 +60,13 @@ const MOCK_VENDORS = [
 const VendorSelectionScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { item } = route.params;
+    const { item } = route.params || {};
 
     const handleSelectVendor = (vendor: any) => {
+        if (!item) {
+            console.error('No service item found in params');
+            return;
+        }
         // Pass both service item and selected vendor to Booking Overview
         // Update the item to include vendor info if needed, or pass separately
         const bookingItem = {

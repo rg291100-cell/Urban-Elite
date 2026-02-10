@@ -10,7 +10,7 @@ type BookingOverviewRouteProp = RouteProp<RootStackParamList, 'BookingOverview'>
 const BookingOverviewScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingOverviewRouteProp>();
-    const { item } = route.params; // Passed from ServiceDetail
+    const { item } = route.params || {}; // Passed from VendorSelection
     const insets = useSafeAreaInsets();
 
     return (
@@ -36,26 +36,28 @@ const BookingOverviewScreen = () => {
 
                 {/* Service Card */}
                 <View style={styles.cardContainer}>
-                    <Image source={{ uri: item.image }} style={styles.cardImage} />
+                    <Image source={{ uri: item?.image || 'https://via.placeholder.com/400' }} style={styles.cardImage} />
                     <View style={styles.cardOverlay}>
                         <View style={styles.tagContainer}>
-                            <Text style={styles.tagText}>{item.category || "WOMEN'S SALON & SPA"}</Text>
+                            <Text style={styles.tagText}>
+                                {typeof item?.category === 'object' ? item.category.name : (item?.category || "SERVICE")}
+                            </Text>
                         </View>
                     </View>
                 </View>
 
                 <View style={styles.detailsContainer}>
-                    <Text style={styles.serviceTitle}>{item.title}</Text>
-                    <Text style={styles.serviceDesc}>Styling by senior artists.</Text>
+                    <Text style={styles.serviceTitle}>{item?.title || 'Service Details'}</Text>
+                    <Text style={styles.serviceDesc}>{item?.description || 'Styling by senior artists.'}</Text>
 
                     <View style={styles.statsRow}>
                         <View>
                             <Text style={styles.statLabel}>DURATION</Text>
-                            <Text style={styles.statValue}>{item.duration || '1 hour'}</Text>
+                            <Text style={styles.statValue}>{item?.duration || '1 hour'}</Text>
                         </View>
                         <View style={{ marginLeft: 40 }}>
                             <Text style={styles.statLabel}>PRICING</Text>
-                            <Text style={styles.statValuePrice}>{item.price}</Text>
+                            <Text style={styles.statValuePrice}>{item?.price || '₹0'}</Text>
                         </View>
                     </View>
                 </View>
@@ -89,7 +91,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, },
     subTitle: { fontSize: 14, color: '#A0AEC0', marginTop: 10, fontWeight: '600' },
 
     cardContainer: { borderRadius: 30, overflow: 'hidden', height: 200, marginBottom: 25, elevation: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, backgroundColor: '#FFF' },

@@ -11,7 +11,7 @@ type BookingTrackingRouteProp = RouteProp<RootStackParamList, 'BookingTracking'>
 const BookingTrackingScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingTrackingRouteProp>();
-    const { bookingId, item, date, slot, location } = route.params;
+    const { bookingId, item, date, slot, location } = route.params || {};
     const insets = useSafeAreaInsets();
 
     const [professional, setProfessional] = useState({

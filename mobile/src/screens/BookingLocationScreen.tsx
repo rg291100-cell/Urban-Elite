@@ -16,7 +16,7 @@ interface Location {
 const BookingLocationScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingLocationRouteProp>();
-    const { item, date, slot } = route.params;
+    const { item, date, slot } = route.params || {};
     const insets = useSafeAreaInsets();
 
     const [locations, setLocations] = useState<any[]>([]);
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 40 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, },
     subTitle: { fontSize: 16, color: '#718096', marginTop: 10, fontWeight: '600', maxWidth: 250 },
 
     locationCard: {

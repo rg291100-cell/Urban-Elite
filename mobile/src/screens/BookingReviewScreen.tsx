@@ -13,7 +13,7 @@ type BookingReviewRouteProp = RouteProp<RootStackParamList, 'BookingReview'>;
 const BookingReviewScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingReviewRouteProp>();
-    const { item, date, slot, location, instructions } = route.params;
+    const { item, date, slot, location, instructions } = route.params || {};
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState<boolean>(false);
     const currentOrderId = React.useRef<string | null>(null);
@@ -40,7 +40,7 @@ const BookingReviewScreen = () => {
 
         try {
             // Prepaid Flow (Cashfree)
-            const priceValue = parseFloat(item.price.replace(/[₹,]/g, ''));
+            const priceValue = parseFloat(String(item.price).replace(/[₹,]/g, ''));
             const orderResponse = await paymentAPI.createOrder({
                 orderAmount: priceValue,
                 orderCurrency: 'INR',
@@ -139,10 +139,10 @@ const BookingReviewScreen = () => {
                 <View style={styles.miniCard}>
                     <View>
                         <Text style={styles.detailLabel}>SERVICE</Text>
-                        <Text style={styles.detailValue}>{item.title}</Text>
+                        <Text style={styles.detailValue}>{item?.title || 'Service'}</Text>
                         <Text style={styles.detailSub}>{date} @ {slot}</Text>
                     </View>
-                    <Text style={styles.miniPrice}>{item.price}</Text>
+                    <Text style={styles.miniPrice}>{item?.price || '₹0'}</Text>
                 </View>
 
                 {/* Payment Mode Selection */}
@@ -157,7 +157,7 @@ const BookingReviewScreen = () => {
                         <Text style={[styles.optionTitle, paymentMode === 'PREPAID' && styles.selectedOptionText]}>Pay Now</Text>
                         <Text style={[styles.optionDesc, paymentMode === 'PREPAID' && styles.selectedOptionText]}>Secure online payment via Cashfree</Text>
                     </View>
-                    <Text style={styles.optionPrice}>{item.price}</Text>
+                    <Text style={styles.optionPrice}>{item?.price || '₹0'}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -169,7 +169,7 @@ const BookingReviewScreen = () => {
                         <Text style={[styles.optionTitle, paymentMode === 'POSTPAID' && styles.selectedOptionText]}>Pay After Service</Text>
                         <Text style={[styles.optionDesc, paymentMode === 'POSTPAID' && styles.selectedOptionText]}>Pay directly to the professional later</Text>
                     </View>
-                    <Text style={styles.optionPrice}>{item.price}</Text>
+                    <Text style={styles.optionPrice}>{item?.price || '₹0'}</Text>
                 </TouchableOpacity>
 
                 {/* Note */}
@@ -179,7 +179,7 @@ const BookingReviewScreen = () => {
                     </View>
                     <Text style={styles.noteText}>
                         {paymentMode === 'PREPAID' ? (
-                            <Text>Full payment of <Text style={styles.noteBold}>{item.price}</Text> will be charged now to confirm booking.</Text>
+                            <Text>Full payment of <Text style={styles.noteBold}>{item?.price || '₹0'}</Text> will be charged now to confirm booking.</Text>
                         ) : (
                             <Text>No immediate payment required. You can pay after job completion.</Text>
                         )}
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 40 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36,  },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, },
     subTitle: { fontSize: 16, color: '#718096', marginTop: 10, fontWeight: '600' },
 
     detailsContainer: { marginBottom: 30 },
