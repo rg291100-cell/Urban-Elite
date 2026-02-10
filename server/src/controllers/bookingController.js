@@ -32,7 +32,7 @@ exports.createBooking = async (req, res) => {
                 instructions: instructions || '',
                 status: 'PENDING',
                 price,
-                // payment_mode: paymentMode || 'PREPAID', // Temporarily disabled until migration is applied
+                payment_mode: paymentMode || 'PREPAID',
                 professional_id: null,
                 professional_name: null,
                 estimated_time: '12m',
