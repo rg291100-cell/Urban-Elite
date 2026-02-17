@@ -57,6 +57,8 @@ const getSubCategories = async (req, res) => {
             .single();
 
         if (catError || !category) {
+            // Log for debugging
+            console.error(`Category not found for slug: ${slug}`);
             return res.status(404).json({ message: 'Category not found' });
         }
 
@@ -70,7 +72,7 @@ const getSubCategories = async (req, res) => {
 
         res.json({
             category,
-            subcategories
+            subcategories: subcategories || [] // Ensure array even if empty
         });
     } catch (error) {
         console.error('Error fetching subcategories:', error);
