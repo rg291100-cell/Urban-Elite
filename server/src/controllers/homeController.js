@@ -45,50 +45,85 @@ const getServiceCategories = async (req, res) => {
     }
 };
 
-// Get Service Details
-const getServiceDetails = async (req, res) => {
-    const { type } = req.params;
-
+// Get Subcategories (Level 2)
+const getSubCategories = async (req, res) => {
+    const { slug } = req.params;
     try {
-        // Fetch category with nested services and Mock filters
-        // Relation: One Category -> Many service_items
-        // We need to fetch service_items where category_id matches.
-
-        // Step 1: Get Category by Slug
+        // Step 1: Get Category (Level 1)
         const { data: category, error: catError } = await supabase
             .from('service_categories')
             .select('*')
-            .eq('slug', type)
+            .eq('slug', slug)
             .single();
 
         if (catError || !category) {
-            return res.status(404).json({ message: 'Service not found' });
+            return res.status(404).json({ message: 'Category not found' });
         }
 
-        // Step 2: Get Service items for this category
-        const { data: services, error: servError } = await supabase
-            .from('service_items')
+        // Step 2: Get Subcategories
+        const { data: subcategories, error: subError } = await supabase
+            .from('service_subcategories')
             .select('*')
             .eq('category_id', category.id);
 
-        if (servError) throw servError;
+        if (subError) throw subError;
 
-        // Mock filters or fetch from a filters table if it exists
-        // Assuming filters are static or fetched from a separate table if user added it
-        // The previous code implied a 'one-to-many' relation `filters`. Use mock if not found.
-        const filters = ['ALL', 'RECOMMENDED'];
-
-        const response = {
-            filters: filters,
-            services: services
-        };
-        res.json(response);
-
+        res.json({
+            category,
+            subcategories
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching subcategories:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// Get Service Items (Level 3 - Service Options)
+const getServiceListing = async (req, res) => {
+    const { slug } = req.params; // subcategory slug
+
+    try {
+        // Step 1: Get Subcategory
+        const { data: subcategory, error: subError } = await supabase
+            .from('service_subcategories')
+            .select('*, service_categories(name, slug)') // Join with parent category
+            .eq('slug', slug)
+            .single();
+
+        // If subcategory not found, try fetching as Category for backward compatibility 
+        // (In case user clicks a category that HAS NO subcategories yet and services are directly linked? 
+        // No, we are enforcing 3 levels now. Errors here mean data issue.)
+        if (subError || !subcategory) {
+            // Fallback: Check if it's a category slug acting as subcategory (for backward compatibility if needed)
+            return res.status(404).json({ message: 'Subcategory not found' });
+        }
+
+        // Step 2: Get Service Items (Options)
+        const { data: services, error: servError } = await supabase
+            .from('service_items')
+            .select('*')
+            .eq('subcategory_id', subcategory.id);
+
+        if (servError) throw servError;
+
+        // Mock filters
+        const filters = ['ALL', 'RECOMMENDED', 'LOW PRICE'];
+
+        res.json({
+            subcategory,
+            category: subcategory.service_categories,
+            filters,
+            services
+        });
+
+    } catch (error) {
+        console.error('Error fetching service listing:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Deprecated: Old getServiceDetails (kept/renamed if necessary, but we are replacing it)
+// We will replace the export with the new functions.
 
 // Get Service Item Detail (with augmented mock data)
 const getServiceDetailById = async (req, res) => {
@@ -135,4 +170,4 @@ const getServiceDetailById = async (req, res) => {
     }
 };
 
-module.exports = { getHomeData, getServiceDetails, getServiceDetailById, getServiceCategories };
+module.exports = { getHomeData, getSubCategories, getServiceListing, getServiceDetailById, getServiceCategories };

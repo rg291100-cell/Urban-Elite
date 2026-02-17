@@ -9,7 +9,10 @@ import {
     Layers,
     LogOut,
     UserCheck,
-    CreditCard
+    CreditCard,
+    LayoutGrid,
+    GitBranch,
+    ClipboardList
 } from 'lucide-react';
 
 const navigation = [
@@ -17,7 +20,9 @@ const navigation = [
     { name: 'Users', href: '/users', icon: Users },
     { name: 'Vendors', href: '/vendors', icon: UserCheck },
     { name: 'Bookings', href: '/bookings', icon: Calendar },
-    { name: 'Services', href: '/services', icon: Layers },
+    { name: 'Categories', href: '/services/categories', icon: LayoutGrid },
+    { name: 'Sub-Category', href: '/services/subcategories', icon: GitBranch },
+    { name: 'Services', href: '/services/list', icon: ClipboardList },
     { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
 ];
 
@@ -39,14 +44,40 @@ export default function Sidebar() {
 
             <nav className="flex-1 px-4 space-y-2">
                 {navigation.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href || (
+                        pathname.startsWith(item.href) && item.href !== '/' // Simple active check, better logic might be needed
+                    );
+
+                    const isActiveStrict = pathname === item.href;
+                    // Categories should match /services/categories*
+                    // Sub-Cat should match /services/subcategories*
+                    // Services list should match /services/list*
+
+                    // But /services/[id] might conflict if we don't structure URLs well.
+                    // Currently: /services/[categoryId] -> SubCategoriesPage (nested under category)
+                    //           /services/[categoryId]/[subCategoryId] -> ServiceItemsPage (nested)
+
+                    // The requested flow is "Create 3 specific sections... make necessary changes to Admin Panel".
+                    // Maybe we should restructure routing to avoid nesting if they want separate sections?
+                    // Or keep nesting but expose direct entry points.
+
+                    // Let's create:
+                    // /services/categories -> List Categories (with link to view subcats)
+                    // /services/subcategories -> List ALL SubCats (filterable by category)
+                    // /services/list -> List ALL items (filterable by subcat)
+
+                    // Currently /services -> List Categories. Let's move this to /services/categories and redirect /services?
+                    // Or just use /services for Categories.
+
+                    // Let's stick to the user request.
+
                     const Icon = item.icon;
 
                     return (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActiveStrict
                                 ? 'bg-blue-600 text-white'
                                 : 'text-gray-300 hover:bg-gray-800'
                                 }`}

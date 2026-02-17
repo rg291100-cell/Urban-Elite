@@ -60,7 +60,7 @@ const HomeScreen = () => {
                 style={styles.gridItem}
                 onPress={() => {
                     const slug = item.slug || item.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-                    navigation.navigate('ServiceListing', { slug, name: item.name });
+                    navigation.navigate('SubCategory', { slug, name: item.name });
                 }}
             >
                 <View style={styles.iconContainer}>
@@ -77,10 +77,10 @@ const HomeScreen = () => {
             <View style={styles.header}>
                 <View style={styles.logoContainer}>
                     <View style={styles.logoIcon}>
-                        <Text style={styles.logoIconText}>⚡</Text>
+                        <Text style={styles.logoIconText}>🛠️</Text>
                     </View>
                     <Text style={styles.headerTitle}>
-                        <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                        <Text style={styles.titleUrban}>OLFIX</Text>
                     </Text>
                 </View>
 
@@ -104,6 +104,25 @@ const HomeScreen = () => {
                         style={styles.searchInput}
                     />
                 </View>
+            </View>
+
+            {/* Hero/Banner Section - Moved to Header */}
+            <View style={styles.heroBanner}>
+                <View style={styles.heroContent}>
+                    <Text style={styles.heroTitle}>One call</Text>
+                    <Text style={styles.heroSubtitle}>Fixes all</Text>
+                    <TouchableOpacity style={styles.bookNowButton}>
+                        <Text style={styles.bookNowText}>BOOK SERVICE</Text>
+                    </TouchableOpacity>
+                </View>
+                {/* Placeholder for worker image */}
+                <View style={styles.heroImageContainer}>
+                    <User size={80} color="#0F172A" />
+                </View>
+            </View>
+
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Top Services</Text>
             </View>
         </View>
     );
@@ -146,24 +165,24 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Theme.colors.background },
     header: { paddingHorizontal: 20, paddingTop: 10, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     logoContainer: { flexDirection: 'row', alignItems: 'center' },
-    logoIcon: { width: 40, height: 40, backgroundColor: '#0F172A', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-    logoIconText: { fontSize: 24, color: '#D4AF37' },
-    headerTitle: { fontSize: 22, fontWeight: Theme.typography.weights.bold },
-    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900', letterSpacing: -0.5 },
-    titleElite: { color: Theme.colors.buttonPeach, fontWeight: '900', fontStyle: 'italic', letterSpacing: -0.5 },
+    logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.primary, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+    logoIconText: { fontSize: 24 },
+    headerTitle: { fontSize: 24, fontWeight: Theme.typography.weights.bold },
+    titleUrban: { color: Theme.colors.navy, fontWeight: '900', letterSpacing: -0.5 },
+    titleElite: { display: 'none' }, // Hiding Elite as we are now OLFIX
     searchContainer: { paddingHorizontal: 20, marginBottom: 20 },
     searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: '#0F172A' },
+    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: Theme.colors.textDark },
     gridContainer: { paddingHorizontal: 10, paddingBottom: 20 },
     gridItem: { flex: 1, alignItems: 'center', marginBottom: 25, marginHorizontal: 5 },
     iconContainer: { width: 80, height: 80, backgroundColor: '#FFFFFF', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
     serviceIcon: { width: 40, height: 40, resizeMode: 'contain' },
-    serviceText: { fontSize: 11, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
+    serviceText: { fontSize: 11, fontWeight: '700', color: Theme.colors.textDark, textAlign: 'center' },
 
     // Header Inputs
     notificationButton: { width: 40, height: 40, backgroundColor: '#F1F5F9', borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-    notificationIcon: { width: 20, height: 20, tintColor: '#0F172A' },
-    notificationBadge: { width: 8, height: 8, backgroundColor: '#D4AF37', borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
+    notificationIcon: { width: 20, height: 20, tintColor: Theme.colors.iconGray },
+    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.primary, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
 
     // Footer / Banner Styles
     footerContainer: { paddingHorizontal: 20, marginTop: 10 },
@@ -183,7 +202,66 @@ const styles = StyleSheet.create({
     overlay: { backgroundColor: 'rgba(0,0,0,0.3)', flex: 1, justifyContent: 'flex-end', padding: 15 },
     offerTitle: { fontSize: 18, fontWeight: 'bold', color: Theme.colors.textDark, marginBottom: 5 },
     offerSub: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.brandOrange, textTransform: 'uppercase' },
-    offerPrice: { fontSize: 16, fontWeight: '900', color: Theme.colors.brandOrange, marginTop: 5 }
+    offerPrice: { fontSize: 16, fontWeight: '900', color: Theme.colors.brandOrange, marginTop: 5 },
+
+    // Hero Banner Styles
+    heroBanner: {
+        backgroundColor: Theme.colors.primary,
+        marginHorizontal: 20,
+        marginBottom: 20,
+        borderRadius: 20,
+        padding: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        height: 160,
+        overflow: 'hidden',
+    },
+    heroContent: {
+        flex: 1,
+        zIndex: 10,
+    },
+    heroTitle: {
+        fontSize: 24,
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontStyle: 'italic',
+    },
+    heroSubtitle: {
+        fontSize: 32,
+        color: '#FFF',
+        fontWeight: '900',
+        marginBottom: 10,
+    },
+    bookNowButton: {
+        backgroundColor: '#FFF',
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+    },
+    bookNowText: {
+        color: Theme.colors.primary,
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+    heroImageContainer: {
+        position: 'absolute',
+        right: -10,
+        bottom: -10,
+        opacity: 0.9,
+    },
+
+    // Section Headers
+    sectionHeader: {
+        paddingHorizontal: 20,
+        marginBottom: 15,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: Theme.colors.textDark,
+    },
 });
 
 export default HomeScreen;

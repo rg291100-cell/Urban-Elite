@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,10 @@ import { RootStackParamList } from '../types/navigation';
 import { authAPI } from '../services/api';
 import { authService } from '../services/authService';
 import { Theme } from '../theme';
+import {
+    GoogleSignin,
+    statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -27,6 +31,82 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'USER' | 'VENDOR'>('USER');
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com', // From .env
+            offlineAccess: true,
+        });
+    }, []);
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const response = await GoogleSignin.signIn();
+
+            // Check for success or data property depending on library version
+            // For newer versions, response might contain user info directly or in data property
+            const idToken = response.data ? response.data.idToken : (response as any).idToken;
+
+            if (idToken) {
+                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
+                const data = apiResponse.data;
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Google Login failed');
+                }
+
+                await authService.setToken(data.token);
+                await authService.setUser(data.user);
+
+                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: targetScreen as any }],
+                });
+            } else {
+                // If response was cancelled or other status, handle gracefully
+                if (response.type === 'cancelled') {
+                    console.log('Google Sign in cancelled');
+                    return;
+                }
+                throw new Error('No ID token received from Google');
+            }
+        } catch (error: any) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                // user cancelled the login flow
+                console.log('Google Sign in cancelled');
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                // operation (e.g. sign in) is in progress already
+                console.log('Google Sign in in progress');
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                // play services not available or outdated
+                Alert.alert('Error', 'Google Play Services not available');
+            } else {
+                // some other error happened
+                console.error('Google login error:', error);
+
+                // Handle specific API errors
+                const errorData = error.response?.data;
+                if (errorData) {
+                    if (errorData.approvalStatus === 'PENDING') {
+                        Alert.alert('Approval Pending', 'Your account is pending approval from admin.');
+                        return;
+                    }
+                    if (errorData.approvalStatus === 'REJECTED') {
+                        Alert.alert('Account Rejected', 'Your account has been rejected.');
+                        return;
+                    }
+                    Alert.alert('Login Failed', errorData.error || 'Google login failed');
+                    return;
+                }
+
+                Alert.alert('Google Login Failed', error.message || 'An error occurred');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -155,6 +235,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                         )}
                     </TouchableOpacity>
 
+                    <TouchableOpacity
+                        style={[styles.googleButton, loading && styles.buttonDisabled]}
+                        onPress={handleGoogleLogin}
+                        disabled={loading}
+                    >
+                        <Text style={styles.googleButtonText}>Continue with Google</Text>
+                    </TouchableOpacity>
+
                     <View style={styles.registerContainer}>
                         <Text style={styles.registerText}>Don't have an account? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Register' as any)}>
@@ -190,12 +278,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#64748B',
+        color: Theme.colors.textLight,
         marginBottom: 32,
     },
     form: {
@@ -203,7 +291,7 @@ const styles = StyleSheet.create({
     },
     roleSelector: {
         flexDirection: 'row',
-        backgroundColor: '#F1F5F9',
+        backgroundColor: Theme.colors.searchBg,
         borderRadius: 12,
         padding: 4,
         marginBottom: 24,
@@ -217,12 +305,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     roleButtonActive: {
-        backgroundColor: '#0F172A',
+        backgroundColor: Theme.colors.navy,
     },
     roleButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#64748B',
+        color: Theme.colors.textLight,
     },
     roleButtonTextActive: {
         color: '#FFFFFF',
@@ -233,7 +321,7 @@ const styles = StyleSheet.create({
         padding: 16,
         fontSize: 16,
         marginBottom: 16,
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         borderWidth: 1,
         borderColor: '#E2E8F0',
     },
@@ -248,6 +336,23 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 10,
         elevation: 5,
+    },
+    googleButton: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 18,
+        alignItems: 'center',
+        marginTop: 16,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    googleButtonText: {
+        color: Theme.colors.textDark,
+        fontSize: 16,
+        fontWeight: '600',
+        letterSpacing: 0.5,
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -277,7 +382,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     forgotPasswordText: {
-        color: '#D4AF37',
+        color: Theme.colors.primary,
         fontSize: 14,
         fontWeight: '600',
     },

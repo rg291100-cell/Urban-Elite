@@ -60,6 +60,7 @@ api.interceptors.response.use(
 
 export const authAPI = {
     login: (email: string, password: string) => api.post('/api/auth/login', { email, password }),
+    googleLogin: (idToken: string, role: string) => api.post('/api/auth/google-login', { idToken, role }),
     register: (data: any) => api.post('/api/auth/register', data),
     getCurrentUser: () => api.get('/api/auth/me'),
     forgotPassword: (email: string) => api.post('/api/auth/forgot-password', { email }),
@@ -69,7 +70,13 @@ export const authAPI = {
 
 export const homeAPI = {
     getHomeData: () => api.get('/api/home'),
+    // Legacy (may be removed)
     getServiceDetails: (type: string) => api.get(`/api/home/services/${type}`),
+
+    // New Hierarchy
+    getSubCategories: (slug: string) => api.get(`/api/home/subcategories/${slug}`),
+    getServiceListing: (slug: string) => api.get(`/api/home/listing/${slug}`),
+
     getServiceDetail: (id: string) => api.get(`/api/home/service/${id}`),
 };
 

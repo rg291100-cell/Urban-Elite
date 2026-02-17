@@ -32,10 +32,10 @@ const InstaHelpScreen = () => {
         <View style={styles.header}>
             <View style={styles.logoContainer}>
                 <View style={styles.logoIcon}>
-                    <Text style={styles.logoIconText}>⚡</Text>
+                    <Text style={styles.logoIconText}>🛠️</Text>
                 </View>
                 <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                    <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
             </View>
             <TouchableOpacity
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     cardImage: { width: 100, height: 100, borderRadius: 20, marginRight: 20 },
     cardPlaceholder: { width: 100, height: 100, borderRadius: 20, marginRight: 20 },
     cardContent: { flex: 1 },
-    cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A1025', marginBottom: 5,  },
+    cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A1025', marginBottom: 5, },
     cardDuration: { fontSize: 10, fontWeight: 'bold', color: '#A0AEC0', letterSpacing: 1, marginBottom: 10 },
     cardPrice: { fontSize: 20, fontWeight: '900', color: Theme.colors.brandOrange },
 

@@ -34,12 +34,12 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
         <View style={styles.container}>
             <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
                 <View style={styles.iconContainer}>
-                    <Zap size={48} color="white" fill="white" />
+                    <Text style={{ fontSize: 40 }}>🛠️</Text>
                 </View>
                 <Text style={styles.title}>
-                    <Text style={styles.urban}>Urban</Text> <Text style={styles.elite}>Elite</Text>
+                    <Text style={styles.urban}>OLFIX</Text>
                 </Text>
-                <Text style={styles.tagline}>Premium Services, Delivered.</Text>
+                <Text style={styles.tagline}>One call fixes all</Text>
             </Animated.View>
         </View>
     );
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     iconContainer: {
         width: 100,
         height: 100,
-        backgroundColor: Theme.colors.brandOrange,
+        backgroundColor: Theme.colors.primary,
         borderRadius: 30, // Softer rounding
         justifyContent: 'center',
         alignItems: 'center',
@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     urban: {
-        color: '#1A202C', // Dark gray/black
+        color: Theme.colors.navy,
+        letterSpacing: -1,
     },
     elite: {
-        color: Theme.colors.brandOrange,
-        fontStyle: 'italic',
+        display: 'none',
     },
     tagline: {
         fontSize: 16,

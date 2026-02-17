@@ -35,10 +35,10 @@ const WalletScreen = () => {
         <View style={styles.header}>
             <View style={styles.logoContainer}>
                 <View style={styles.logoIcon}>
-                    <Text style={styles.logoIconText}>⚡</Text>
+                    <Text style={styles.logoIconText}>🛠️</Text>
                 </View>
                 <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                    <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
             </View>
             <TouchableOpacity

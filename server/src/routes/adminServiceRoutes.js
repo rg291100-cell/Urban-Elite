@@ -16,12 +16,17 @@ const isAdmin = (req, res, next) => {
 router.use(authMiddleware);
 router.use(isAdmin);
 
-// 1. Create Categories
+// 1. Create Categories (Level 1)
 router.post('/categories', adminServiceController.createCategory);
 
-// 2. Manage Sub-Services (Items)
+// 2. Manage Sub-Categories (Level 2)
+router.post('/subcategories', adminServiceController.createSubCategory);
+router.get('/subcategories/:categoryId', adminServiceController.getSubCategories);
+
+// 3. Manage Sub-Services (Items - Level 3)
 router.post('/items', adminServiceController.createServiceItem);
-router.get('/items/:categoryId', adminServiceController.getServiceItems); // List by category
+router.get('/items/:categoryId', adminServiceController.getServiceItems); // Legacy (by Category)
+router.get('/listing/:subCategoryId', adminServiceController.getServiceListing); // Items by SubCategory
 
 // 3. Vendor Assignment (Can be used by Admin to force assign, or specialized Vendor route)
 // The user asked for "option to add subcategory so specialization of vendor is updated".

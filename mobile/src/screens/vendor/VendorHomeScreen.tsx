@@ -45,10 +45,10 @@ const VendorHomeScreen = () => {
                 <View style={styles.header}>
                     <View style={styles.logoContainer}>
                         <View style={styles.logoIcon}>
-                            <Text style={styles.logoIconText}>⚡</Text>
+                            <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
-                            <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                            <Text style={styles.titleUrban}>OLFIX</Text>
                         </Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -77,17 +77,17 @@ const VendorHomeScreen = () => {
                 {/* Stats Cards */}
                 <View style={styles.statsContainer}>
                     <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F1F5F9' }]}>
-                            <View style={[styles.statIconContainer, { backgroundColor: '#F1F5F9' }]}>
-                                <Calendar size={20} color="#0F172A" />
+                        <View style={[styles.statCard, { backgroundColor: Theme.colors.background, borderWidth: 1, borderColor: Theme.colors.border }]}>
+                            <View style={[styles.statIconContainer, { backgroundColor: Theme.colors.inputBg }]}>
+                                <Calendar size={20} color={Theme.colors.navy} />
                             </View>
                             <Text style={styles.statValue}>{stats.todayBookings || 0}</Text>
                             <Text style={styles.statLabel}>Today's Bookings</Text>
                         </View>
 
-                        <View style={[styles.statCard, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F1F5F9' }]}>
+                        <View style={[styles.statCard, { backgroundColor: Theme.colors.background, borderWidth: 1, borderColor: Theme.colors.border }]}>
                             <View style={[styles.statIconContainer, { backgroundColor: '#FDFCF0' }]}>
-                                <Clock size={20} color="#D4AF37" />
+                                <Clock size={20} color={Theme.colors.primary} />
                             </View>
                             <Text style={styles.statValue}>{stats.pendingRequests || 0}</Text>
                             <Text style={styles.statLabel}>Pending Requests</Text>
@@ -95,9 +95,9 @@ const VendorHomeScreen = () => {
                     </View>
 
                     <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: '#0F172A', flex: 1 }]}>
+                        <View style={[styles.statCard, { backgroundColor: Theme.colors.navy, flex: 1 }]}>
                             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                                <DollarSign size={20} color="#D4AF37" />
+                                <DollarSign size={20} color={Theme.colors.primary} />
                             </View>
                             <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{stats.totalRevenue || '₹0'}</Text>
                             <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total Revenue</Text>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900', letterSpacing: -0.5 },
     titleElite: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic', letterSpacing: -0.5 },
     notificationButton: { width: 40, height: 40, backgroundColor: Theme.colors.searchBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.brandOrange, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
+    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.primary, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
 
     welcomeSection: { paddingHorizontal: 20, marginBottom: 25 },
     welcomeText: { fontSize: 28, fontWeight: Theme.typography.weights.bold, color: Theme.colors.textDark, letterSpacing: -0.8 },
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     section: { paddingHorizontal: 20, marginBottom: 20 },
     sectionTitle: { fontSize: 20, fontWeight: 'bold', color: Theme.colors.textDark, marginBottom: 15 },
 
-    bookingCard: { backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: '#F3F4F6' },
+    bookingCard: { backgroundColor: Theme.colors.background, borderRadius: 15, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: Theme.colors.border },
     bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     bookingService: { fontSize: 16, fontWeight: 'bold', color: Theme.colors.textDark, flex: 1 },
     statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },

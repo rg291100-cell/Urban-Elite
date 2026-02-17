@@ -65,14 +65,20 @@ export const adminAPI = {
     deleteProfessional: (id: string) => api.delete(`/admin/professionals/${id}`),
 
     // Services
+    // Services (Level 1)
     getServiceCategories: () => api.get('/admin/services/categories'),
     createServiceCategory: (data: any) => api.post('/admin/services/categories', data),
     updateServiceCategory: (id: string, data: any) => api.put(`/admin/services/categories/${id}`, data),
     deleteServiceCategory: (id: string) => api.delete(`/admin/services/categories/${id}`),
 
-    // Service Items
-    getServiceItems: (categoryId: string) => api.get(`/admin/services/categories/${categoryId}/items`),
-    createServiceItem: (categoryId: string, data: any) => api.post(`/admin/services/categories/${categoryId}/items`, data),
+    // Sub-Categories (Level 2)
+    getSubCategories: (categoryId: string) => api.get(`/admin/services/subcategories/${categoryId}`),
+    createSubCategory: (data: any) => api.post('/admin/services/subcategories', data),
+
+    // Service Items (Level 3 - Listing)
+    getServiceListing: (subCategoryId: string) => api.get(`/admin/services/listing/${subCategoryId}`),
+    getServiceItems: (categoryId: string) => api.get(`/admin/services/items/${categoryId}`), // Legacy
+    createServiceItem: (data: any) => api.post(`/admin/services/items`, data),
     updateServiceItem: (id: string, data: any) => api.put(`/admin/services/items/${id}`, data),
     deleteServiceItem: (id: string) => api.delete(`/admin/services/items/${id}`),
 

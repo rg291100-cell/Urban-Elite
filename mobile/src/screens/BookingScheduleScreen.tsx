@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     slotButton: { width: '48%', backgroundColor: '#F7FAFC', paddingVertical: 20, borderRadius: 20, alignItems: 'center', marginBottom: 15 },
     slotText: { fontSize: 16, fontWeight: 'bold', color: '#4A5568' },
 
-    selectedButton: { backgroundColor: '#2D3748' }, // Dark selection as per design looks almost black or very dark grey? Or maybe orange?
+    selectedButton: { backgroundColor: Theme.colors.brandOrange },
     // User image shows White text on "Today" but button background is white? Wait.
     // In "Image 2", "Today" is selected? No, it looks like just buttons.
     // Wait, the user image shows "Today" and "Tomorrow" button backgrounds are white/light-grey.

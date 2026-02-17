@@ -39,10 +39,10 @@ const AdsScreen = () => {
         <View style={styles.header}>
             <View style={styles.logoContainer}>
                 <View style={styles.logoIcon}>
-                    <Text style={styles.logoIconText}>⚡</Text>
+                    <Text style={styles.logoIconText}>🛠️</Text>
                 </View>
                 <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                    <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
             </View>
             <TouchableOpacity
@@ -87,7 +87,7 @@ const AdsScreen = () => {
                         />
                         <View style={{ flex: 1 }}>
                             <Text style={styles.jobTitle}>{item.title}</Text>
-                            <Text style={styles.companyName}>{item.vendor?.business_name || 'Urban Elite Partner'}</Text>
+                            <Text style={styles.companyName}>{item.vendor?.business_name || 'Olfix Partner'}</Text>
                         </View>
                         {item.status === 'ACTIVE' && (
                             <View style={styles.activeTag}>
@@ -133,7 +133,7 @@ const AdsScreen = () => {
                 />
                 <View style={styles.offerContent}>
                     <View style={styles.vendorBadge}>
-                        <Text style={styles.vendorName}>{item.vendor?.business_name || 'Urban Elite Official'}</Text>
+                        <Text style={styles.vendorName}>{item.vendor?.business_name || 'Olfix Official'}</Text>
                     </View>
                     <Text style={styles.offerTitle}>{item.title}</Text>
                     <Text style={styles.offerDescription} numberOfLines={2}>{item.description}</Text>

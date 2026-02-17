@@ -46,10 +46,10 @@ const ProfileScreen = () => {
         <View style={styles.header}>
             <View style={styles.logoContainer}>
                 <View style={styles.logoIcon}>
-                    <Text style={styles.logoIconText}>⚡</Text>
+                    <Text style={styles.logoIconText}>🛠️</Text>
                 </View>
                 <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                    <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
             </View>
             <TouchableOpacity
@@ -159,26 +159,26 @@ const styles = StyleSheet.create({
 
     // Search
     searchContainer: { paddingHorizontal: 20, marginBottom: 10 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: '#0F172A' },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBg, borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12, borderWidth: 1, borderColor: Theme.colors.border },
+    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: Theme.colors.textDark },
     filterIcon: { width: 20, height: 20, tintColor: Theme.colors.buttonPeach },
 
     contentContainer: { paddingHorizontal: 20 },
 
     // Profile Header
     profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 30, paddingVertical: 10 },
-    avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-    avatar: { width: 40, height: 40, tintColor: '#0F172A' },
+    avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: Theme.colors.inputBg, justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 1, borderColor: Theme.colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
+    avatar: { width: 40, height: 40, tintColor: Theme.colors.navy },
     profileInfo: { flex: 1 },
-    userName: { fontSize: 24, fontWeight: 'bold', color: '#0F172A',  },
+    userName: { fontSize: 24, fontWeight: 'bold', color: Theme.colors.textDark, },
     userTag: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.buttonPeach, letterSpacing: 1, marginTop: 5 },
 
     // Menu
     menuContainer: { marginBottom: 40 },
-    menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 20, marginBottom: 15, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-    menuIconBox: { width: 40, height: 40, backgroundColor: '#F8FAFC', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    menuIcon: { fontSize: 18, color: '#0F172A' },
-    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#0F172A',  },
+    menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.cardBg, padding: 15, borderRadius: 20, marginBottom: 15, borderWidth: 1, borderColor: Theme.colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+    menuIconBox: { width: 40, height: 40, backgroundColor: Theme.colors.inputBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+    menuIcon: { fontSize: 18, color: Theme.colors.navy },
+    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: Theme.colors.textDark, },
     chevron: { fontSize: 24, color: '#CBD5E0', fontWeight: 'bold' },
 
     // Logout

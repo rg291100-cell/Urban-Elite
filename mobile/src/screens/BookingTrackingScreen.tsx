@@ -27,9 +27,9 @@ const BookingTrackingScreen = () => {
             try {
                 const response = await bookingAPI.getBookingTracking(bookingId);
                 setProfessional({
-                    name: response.data.professional.name,
-                    status: response.data.status,
-                    estimatedTime: response.data.estimatedTime,
+                    name: response.data?.professional?.name || 'Professional',
+                    status: response.data?.status || 'DISPATCHED',
+                    estimatedTime: response.data?.estimatedTime || '12m',
                     image: 'https://randomuser.me/api/portraits/men/32.jpg'
                 });
             } catch (error) {

@@ -1,5 +1,5 @@
 {
-  "name": "urban-elite",
+  "name": "olfix",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-documents/picker": "^12.0.1",
+    "@react-native-google-signin/google-signin": "^16.1.1",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-native/new-app-screen": "0.83.1",
     "@react-navigation/bottom-tabs": "^7.10.1",

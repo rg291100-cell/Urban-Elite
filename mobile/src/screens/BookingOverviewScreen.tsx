@@ -28,7 +28,7 @@ const BookingOverviewScreen = () => {
                         <Text style={styles.stepText}>1</Text>
                     </View>
                     <View>
-                        <Text style={styles.pageTitle}>Elite Service</Text>
+                        <Text style={styles.pageTitle}>Olfix Service</Text>
                         <Text style={styles.pageTitle}>Overview</Text>
                         <Text style={styles.subTitle}>Confirm your selection details</Text>
                     </View>

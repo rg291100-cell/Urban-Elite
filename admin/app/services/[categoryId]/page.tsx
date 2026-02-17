@@ -7,51 +7,39 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 
-interface ServiceItem {
+interface SubCategory {
     id: string;
-    title: string;
-    titleFull: string | null;
-    duration: string;
-    price: string;
-    rating: string;
+    name: string;
+    slug: string;
+    description: string | null;
     image: string | null;
-    color: string | null;
-    isImage: boolean;
+    isActive: boolean;
 }
 
-export default function ServiceItemsPage({ params }: { params: Promise<{ categoryId: string }> }) {
+export default function SubCategoriesPage({ params }: { params: Promise<{ categoryId: string }> }) {
     const router = useRouter();
     const { categoryId } = use(params);
 
-    // We ideally want the category name too, but we might just fetch it or pass it. 
-    // For now let's just fetch items. Maybe fetch category detail?
-    // Let's optimize: We can just use "Service Items" as header or fetch category name via another call if needed.
-
-    const [items, setItems] = useState<ServiceItem[]>([]);
+    const [items, setItems] = useState<SubCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<ServiceItem | null>(null);
     const [formData, setFormData] = useState({
-        title: '',
-        titleFull: '',
-        duration: '',
-        price: '',
-        rating: '4.8',
-        image: '',
-        color: '#F7FAFC',
-        isImage: true
+        name: '',
+        slug: '',
+        description: '',
+        image: ''
     });
 
     const fetchItems = async () => {
         try {
             setLoading(true);
-            const res = await adminAPI.getServiceItems(categoryId);
+            const res = await adminAPI.getSubCategories(categoryId);
             if (res.data.success) {
-                setItems(res.data.items);
+                setItems(res.data.data);
             }
         } catch (error) {
-            console.error('Error fetching service items:', error);
+            console.error('Error fetching subcategories:', error);
         } finally {
             setLoading(false);
         }
@@ -63,68 +51,45 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
 
     const handleSave = async () => {
         try {
-            if (!formData.title || !formData.price) {
-                alert('Title and Price are required');
+            if (!formData.name || !formData.slug) {
+                alert('Name and Slug are required');
                 return;
             }
 
-            if (editingItem) {
-                await adminAPI.updateServiceItem(editingItem.id, formData);
-            } else {
-                await adminAPI.createServiceItem(categoryId, formData);
-            }
+            const dataToSave = {
+                ...formData,
+                categoryId
+            };
+
+            await adminAPI.createSubCategory(dataToSave);
 
             setIsDialogOpen(false);
             resetForm();
             fetchItems();
         } catch (error) {
-            console.error('Error saving item:', error);
-            alert('Failed to save service item');
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this service?')) return;
-        try {
-            await adminAPI.deleteServiceItem(id);
-            fetchItems();
-        } catch (error) {
-            console.error('Error deleting item:', error);
-            alert('Failed to delete service item');
+            console.error('Error saving subcategory:', error);
+            alert('Failed to save subcategory');
         }
     };
 
     const resetForm = () => {
         setFormData({
-            title: '',
-            titleFull: '',
-            duration: '',
-            price: '',
-            rating: '4.8',
-            image: '',
-            color: '#F7FAFC',
-            isImage: true
+            name: '',
+            slug: '',
+            description: '',
+            image: ''
         });
-        setEditingItem(null);
     };
 
-    const openEdit = (item: ServiceItem) => {
-        setEditingItem(item);
-        setFormData({
-            title: item.title,
-            titleFull: item.titleFull || '',
-            duration: item.duration,
-            price: item.price,
-            rating: item.rating,
-            image: item.image || '',
-            color: item.color || '#F7FAFC',
-            isImage: item.isImage
-        });
-        setIsDialogOpen(true);
+    // Auto-generate slug from name
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.value;
+        const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        setFormData({ ...formData, name, slug });
     };
 
     const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(search.toLowerCase())
+        item.name.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -134,15 +99,15 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                     <ArrowLeft className="h-5 w-5 text-gray-600" />
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Service Items</h1>
-                    <p className="text-gray-500 mt-1">Manage individual services within this category.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Sub-Categories</h1>
+                    <p className="text-gray-500 mt-1">Manage sub-categories (e.g., AC Repair, Fridge Repair).</p>
                 </div>
                 <div className="ml-auto">
                     <button
                         onClick={() => { resetForm(); setIsDialogOpen(true); }}
                         className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                        <Plus className="h-4 w-4" /> Add Service
+                        <Plus className="h-4 w-4" /> Add Sub-Category
                     </button>
                 </div>
             </div>
@@ -151,7 +116,7 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <input
-                        placeholder="Search services..."
+                        placeholder="Search sub-categories..."
                         className="pl-9 w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -165,17 +130,16 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                         <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th className="px-6 py-4 font-semibold text-gray-700 w-[100px]">Image</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Title</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Price</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Duration</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Rating</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Name</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Slug</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Description</th>
                                 <th className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="h-32 text-center">
+                                    <td colSpan={5} className="h-32 text-center">
                                         <div className="flex justify-center items-center">
                                             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                                         </div>
@@ -183,39 +147,31 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                                 </tr>
                             ) : filteredItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="h-32 text-center text-gray-500">
-                                        No services found. Add one to get started.
+                                    <td colSpan={5} className="h-32 text-center text-gray-500">
+                                        No sub-categories found. Add one to get started.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredItems.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                        onClick={() => router.push(`/services/${categoryId}/${item.id}`)}
+                                    >
                                         <td className="px-6 py-4">
                                             {item.image ? (
-                                                <img src={item.image} alt={item.title} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+                                                <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
                                             ) : (
                                                 <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
                                                     <ImageIcon className="h-6 w-6 text-gray-400" />
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 font-semibold text-gray-900">{item.title}</td>
-                                        <td className="px-6 py-4 text-green-600 font-bold">{item.price}</td>
-                                        <td className="px-6 py-4 text-gray-500">{item.duration}</td>
-                                        <td className="px-6 py-4 text-gray-900">★ {item.rating}</td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 font-semibold text-gray-900">{item.name}</td>
+                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{item.slug}</td>
+                                        <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{item.description}</td>
+                                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => openEdit(item)}
-                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                >
+                                                <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                                     <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(item.id)}
-                                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -232,76 +188,43 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingItem ? 'Edit Service' : 'Add New Service'}
-                            </h2>
+                            <h2 className="text-xl font-bold text-gray-900">Add New Sub-Category</h2>
                             <button onClick={() => setIsDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                 <input
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder="e.g. Deep Cleaning"
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Title (Optional)</label>
-                                <input
-                                    value={formData.titleFull}
-                                    onChange={(e) => setFormData({ ...formData, titleFull: e.target.value })}
-                                    placeholder="e.g. Complete Home Deep Cleaning Service"
+                                    value={formData.name}
+                                    onChange={handleNameChange}
+                                    placeholder="e.g. AC Repair"
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                                 <input
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                    placeholder="e.g. ₹1999"
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={formData.slug}
+                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                                <input
-                                    value={formData.duration}
-                                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                    placeholder="e.g. 2 HOURS"
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    rows={3}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                                <input
-                                    type="number" step="0.1" max="5.0"
-                                    value={formData.rating}
-                                    onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
-                                <input
-                                    type="color"
-                                    value={formData.color}
-                                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                    className="w-full h-[42px] border border-gray-300 rounded-lg px-1 py-1"
-                                />
-                            </div>
-
-                            <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                                 <input
                                     value={formData.image}
@@ -309,16 +232,6 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                                     placeholder="https://..."
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
-                            </div>
-
-                            <div className="col-span-2 flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isImage}
-                                    onChange={(e) => setFormData({ ...formData, isImage: e.target.checked })}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <label className="ml-2 block text-sm text-gray-900">Display as full image?</label>
                             </div>
                         </div>
 
@@ -333,7 +246,7 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                                 onClick={handleSave}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                             >
-                                Save Service
+                                Save Sub-Category
                             </button>
                         </div>
                     </div>

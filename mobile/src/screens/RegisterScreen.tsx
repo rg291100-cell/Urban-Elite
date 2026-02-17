@@ -21,7 +21,12 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
 import { Camera, Image as ImageIcon, FileText, CheckCircle2, Upload, X } from 'lucide-react-native';
 import { storageService } from '../services/storage';
+import { authService } from '../services/authService';
 import { Theme } from '../theme';
+import {
+    GoogleSignin,
+    statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -61,6 +66,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
 
+
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com', // From .env
+            offlineAccess: true,
+        });
+    }, []);
+
     useEffect(() => {
         if (selectedRole === 'VENDOR') {
             fetchServiceCategories();
@@ -86,6 +100,65 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             ]);
         } finally {
             setLoadingCategories(false);
+        }
+    };
+
+
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const response = await GoogleSignin.signIn();
+
+            // Check for success or data property depending on library version
+            // For newer versions, response might contain user info directly or in data property
+            const idToken = response.data ? response.data.idToken : (response as any).idToken;
+
+            if (idToken) {
+                // Determine role based on selection
+                // Note: For Vendors, this will create a PENDING account if they don't exist
+                // Ideally we might want to redirect them to fill details, but for now we follow the backend logic
+                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
+                const data = apiResponse.data;
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Google Sign Up failed');
+                }
+
+                await authService.setToken(data.token);
+                await authService.setUser(data.user);
+
+                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: targetScreen as any }],
+                });
+            } else {
+                // If response was cancelled or other status, handle gracefully
+                if (response.type === 'cancelled') {
+                    console.log('Google Sign in cancelled');
+                    return;
+                }
+                throw new Error('No ID token received from Google');
+            }
+        } catch (error: any) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log('Google Sign in cancelled');
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log('Google Sign in in progress');
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert('Error', 'Google Play Services not available');
+            } else {
+                console.error('Google login error:', error);
+                const errorData = error.response?.data;
+                if (errorData) {
+                    Alert.alert('Sign Up Failed', errorData.error || 'Google sign up failed');
+                } else {
+                    Alert.alert('Google Sign Up Failed', error.message || 'An error occurred');
+                }
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -422,6 +495,14 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                             )}
                         </TouchableOpacity>
 
+                        <TouchableOpacity
+                            style={[styles.googleButton, loading && styles.buttonDisabled]}
+                            onPress={handleGoogleLogin}
+                            disabled={loading}
+                        >
+                            <Text style={styles.googleButtonText}>Continue with Google</Text>
+                        </TouchableOpacity>
+
                         <View style={styles.loginContainer}>
                             <Text style={styles.loginText}>Already have an account? </Text>
                             <TouchableOpacity onPress={() => navigation.navigate('Login' as any)}>
@@ -541,7 +622,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Theme.colors.background,
     },
     scrollContent: {
         flexGrow: 1,
@@ -553,12 +634,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
+        color: Theme.colors.textLight,
         marginBottom: 32,
     },
     form: {
@@ -566,12 +647,12 @@ const styles = StyleSheet.create({
     },
     roleSelector: {
         flexDirection: 'row',
-        backgroundColor: '#F1F5F9',
+        backgroundColor: Theme.colors.searchBg,
         borderRadius: 12,
         padding: 4,
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: Theme.colors.border,
     },
     roleButton: {
         flex: 1,
@@ -580,12 +661,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     roleButtonActive: {
-        backgroundColor: '#0F172A',
+        backgroundColor: Theme.colors.navy,
     },
     roleButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#64748B',
+        color: Theme.colors.textLight,
     },
     roleButtonTextActive: {
         color: '#FFFFFF',
@@ -593,26 +674,26 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         marginTop: 16,
         marginBottom: 12,
         marginLeft: 4,
     },
     input: {
-        backgroundColor: '#F8FAFC',
+        backgroundColor: Theme.colors.inputBg,
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         marginBottom: 16,
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: Theme.colors.border,
     },
     dropdownButton: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: Theme.colors.inputBg,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
@@ -621,18 +702,18 @@ const styles = StyleSheet.create({
     },
     dropdownButtonText: {
         fontSize: 16,
-        color: '#0F172A',
+        color: Theme.colors.textDark,
     },
     dropdownPlaceholder: {
         fontSize: 16,
-        color: '#64748B',
+        color: Theme.colors.textLight,
     },
     fileSelectorContainer: {
         marginBottom: 16,
     },
     fileLabel: {
         fontSize: 13,
-        color: '#64748B',
+        color: Theme.colors.textLight,
         marginBottom: 6,
         marginLeft: 4,
     },
@@ -641,7 +722,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#FDFCF0',
         borderWidth: 1,
-        borderColor: '#D4AF37',
+        borderColor: Theme.colors.primary,
         borderStyle: 'dashed',
         borderRadius: 12,
         padding: 16,
@@ -650,7 +731,7 @@ const styles = StyleSheet.create({
     uploadButtonText: {
         marginLeft: 8,
         fontSize: 15,
-        color: '#D4AF37',
+        color: Theme.colors.primary,
         fontWeight: '600',
     },
     uploadedContainer: {
@@ -670,7 +751,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     button: {
-        backgroundColor: '#D4AF37',
+        backgroundColor: Theme.colors.primary,
         borderRadius: 12,
         padding: 18,
         alignItems: 'center',
@@ -686,6 +767,24 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         letterSpacing: 0.5,
     },
+
+    googleButton: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 18,
+        alignItems: 'center',
+        marginTop: 16,
+        borderWidth: 1,
+        borderColor: Theme.colors.border,
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    googleButtonText: {
+        color: Theme.colors.textDark,
+        fontSize: 16,
+        fontWeight: '600',
+        letterSpacing: 0.5,
+    },
     loginContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -693,11 +792,11 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     loginText: {
-        color: '#64748B',
+        color: Theme.colors.textLight,
         fontSize: 14,
     },
     loginLink: {
-        color: '#0F172A',
+        color: Theme.colors.textDark,
         fontSize: 14,
         fontWeight: 'bold',
     },

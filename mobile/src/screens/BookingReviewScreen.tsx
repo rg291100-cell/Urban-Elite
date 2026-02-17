@@ -40,13 +40,13 @@ const BookingReviewScreen = () => {
 
         try {
             // Prepaid Flow (Cashfree)
-            const priceValue = parseFloat(String(item.price).replace(/[₹,]/g, ''));
+            const priceValue = parseFloat(String(item?.price || '0').replace(/[₹,]/g, ''));
             const orderResponse = await paymentAPI.createOrder({
                 orderAmount: priceValue,
                 orderCurrency: 'INR',
                 customerId: 'USER_123',
                 customerPhone: '9999999999',
-                customerName: 'Urban Elite User',
+                customerName: 'Olfix User',
                 customerEmail: 'user@example.com'
             });
 
@@ -85,13 +85,13 @@ const BookingReviewScreen = () => {
     const createBooking = async (mode: 'PREPAID' | 'POSTPAID') => {
         try {
             const response = await bookingAPI.createBooking({
-                serviceId: item.id,
-                serviceName: item.title,
-                date,
-                timeSlot: slot,
-                location,
+                serviceId: item?.id || '',
+                serviceName: item?.title || 'Service',
+                date: date || '',
+                timeSlot: slot || '',
+                location: location || { type: 'Home', address: '' },
                 instructions: instructions || '',
-                price: item.price,
+                price: item?.price || '₹0',
                 paymentMode: mode
             });
 

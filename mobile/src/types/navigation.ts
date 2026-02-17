@@ -16,6 +16,7 @@ export type RootStackParamList = {
     ACRepair: undefined;
     Revamp: undefined;
     NativeSmartHome: undefined;
+    SubCategory: { slug: string; name: string };
     ServiceListing: { slug: string; name: string };
     ServiceDetail: { item: any };
     VendorSelection: { item: any };
