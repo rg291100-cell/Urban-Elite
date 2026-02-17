@@ -43,6 +43,7 @@ import VendorCreateOfferScreen from './src/screens/vendor/VendorCreateOfferScree
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import VerifyOTPScreen from './src/screens/VerifyOTPScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
+import SubCategoryScreen from './src/screens/SubCategoryScreen';
 import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
@@ -129,6 +130,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="ServiceListing" component={ServiceListingScreen} />
       <Stack.Screen name="VendorSelection" component={VendorSelectionScreen} />
       <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+      <Stack.Screen name="SubCategory" component={SubCategoryScreen} />
 
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <Stack.Screen name="VendorCreateOffer" component={VendorCreateOfferScreen} />
