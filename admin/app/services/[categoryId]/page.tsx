@@ -31,6 +31,8 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
         image: ''
     });
 
+    const [editingItem, setEditingItem] = useState<SubCategory | null>(null);
+
     const fetchItems = async () => {
         try {
             setLoading(true);
@@ -51,24 +53,42 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
 
     const handleSave = async () => {
         try {
-            if (!formData.name || !formData.slug) {
-                alert('Name and Slug are required');
+            if (!formData.name) {
+                alert('Name is required');
                 return;
             }
 
             const dataToSave = {
-                ...formData,
-                categoryId
+                name: formData.name,
+                slug: formData.slug || formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+                description: formData.description,
+                image: formData.image,
+                categoryId // Only needed for create, ignored by update in backend typically or not harmful
             };
 
-            await adminAPI.createSubCategory(dataToSave);
+            if (editingItem) {
+                await adminAPI.updateSubCategory(editingItem.id, dataToSave);
+            } else {
+                await adminAPI.createSubCategory(dataToSave);
+            }
 
             setIsDialogOpen(false);
             resetForm();
             fetchItems();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving subcategory:', error);
-            alert('Failed to save subcategory');
+            alert(`Failed to save subcategory: ${error.response?.data?.error || error.message}`);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this sub-category? This will also delete all service options under it.')) return;
+        try {
+            await adminAPI.deleteSubCategory(id);
+            fetchItems();
+        } catch (error: any) {
+            console.error('Error deleting subcategory:', error);
+            alert(`Failed to delete subcategory: ${error.response?.data?.error || error.message}`);
         }
     };
 
@@ -79,6 +99,18 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
             description: '',
             image: ''
         });
+        setEditingItem(null);
+    };
+
+    const openEdit = (item: SubCategory) => {
+        setEditingItem(item);
+        setFormData({
+            name: item.name,
+            slug: item.slug,
+            description: item.description || '',
+            image: item.image || ''
+        });
+        setIsDialogOpen(true);
     };
 
     // Auto-generate slug from name
@@ -170,8 +202,24 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                                         <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{item.description}</td>
                                         <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-end gap-2">
-                                                <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <Link
+                                                    href={`/services/${categoryId}/${item.id}`}
+                                                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+                                                    title="Manage Items"
+                                                >
+                                                    <Plus className="h-4 w-4" /> Items
+                                                </Link>
+                                                <button
+                                                    onClick={() => openEdit(item)}
+                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                >
                                                     <Pencil className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -188,7 +236,9 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900">Add New Sub-Category</h2>
+                            <h2 className="text-xl font-bold text-gray-900">
+                                {editingItem ? 'Edit Sub-Category' : 'Add New Sub-Category'}
+                            </h2>
                             <button onClick={() => setIsDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="h-5 w-5" />
                             </button>
@@ -246,7 +296,7 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                                 onClick={handleSave}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                             >
-                                Save Sub-Category
+                                {editingItem ? 'Update Sub-Category' : 'Save Sub-Category'}
                             </button>
                         </div>
                     </div>

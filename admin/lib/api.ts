@@ -74,6 +74,8 @@ export const adminAPI = {
     // Sub-Categories (Level 2)
     getSubCategories: (categoryId: string) => api.get(`/admin/services/subcategories/${categoryId}`),
     createSubCategory: (data: any) => api.post('/admin/services/subcategories', data),
+    updateSubCategory: (id: string, data: any) => api.put(`/admin/services/subcategories/${id}`, data),
+    deleteSubCategory: (id: string) => api.delete(`/admin/services/subcategories/${id}`),
 
     // Service Items (Level 3 - Listing)
     getServiceListing: (subCategoryId: string) => api.get(`/admin/services/listing/${subCategoryId}`),
