@@ -25,7 +25,6 @@ export type RootStackParamList = {
     BookingLocation: { item: any; date: string; slot: string };
     BookingInstructions: { item: any; date: string; slot: string; location: any };
     BookingReview: { item: any; date: string; slot: string; location: any; instructions: string; attachmentUrl?: string };
-    BookingTracking: { bookingId: string; item: any; date: string; slot: string; location: any };
     PersonalInformation: undefined;
     SavedAddresses: undefined;
     AddAddress: undefined;
@@ -36,7 +35,6 @@ export type RootStackParamList = {
     Topup: undefined;
     WalletHistory: undefined;
     Chat: { bookingId: string; professionalName: string; professionalImage?: string };
-    SOS: { bookingId: string; professionalName?: string };
     VendorTabs: undefined;
     VendorCreateOffer: undefined;
     BookingDetails: { bookingId: string };

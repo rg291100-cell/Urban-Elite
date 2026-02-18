@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
@@ -82,9 +82,11 @@ const BookingReviewScreen = () => {
         }
     };
 
+    const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
     const createBooking = async (mode: 'PREPAID' | 'POSTPAID') => {
         try {
-            const response = await bookingAPI.createBooking({
+            await bookingAPI.createBooking({
                 serviceId: item?.id || '',
                 serviceName: item?.title || 'Service',
                 date: date || '',
@@ -93,23 +95,26 @@ const BookingReviewScreen = () => {
                 instructions: instructions || '',
                 price: item?.price || '₹0',
                 paymentMode: mode,
-                attachmentUrl: attachmentUrl // Pass attachmentUrl here
+                attachmentUrl: attachmentUrl
             });
-            // ...
 
-            navigation.navigate('BookingTracking', {
-                bookingId: response.data.bookingId,
-                item,
-                date,
-                slot,
-                location
-            });
+            // Show confirmation popup
+            setBookingConfirmed(true);
         } catch (error) {
             console.error('Booking creation error:', error);
             Alert.alert('Error', 'Booking failed. Please contact support.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleBookingConfirmedClose = () => {
+        setBookingConfirmed(false);
+        // Navigate to Home tab
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' }],
+        });
     };
 
     return (
@@ -217,12 +222,54 @@ const BookingReviewScreen = () => {
                     )}
                 </TouchableOpacity>
             </View>
+
+            {/* Booking Confirmed Modal */}
+            <Modal
+                visible={bookingConfirmed}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                        <View style={styles.modalCheckCircle}>
+                            <Text style={styles.modalCheckText}>✓</Text>
+                        </View>
+                        <Text style={styles.modalTitle}>Booking Confirmed!</Text>
+                        <Text style={styles.modalSubtitle}>
+                            Your booking for{' '}
+                            <Text style={styles.modalServiceName}>{item?.title || 'the service'}</Text>
+                            {' '}has been placed successfully.
+                        </Text>
+                        <Text style={styles.modalDetail}>📅 {date}  •  🕐 {slot}</Text>
+                        <Text style={styles.modalNote}>A professional will be assigned to your booking shortly.</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={handleBookingConfirmedClose}
+                        >
+                            <Text style={styles.modalButtonText}>Go to Home</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
+    // Modal styles
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    modalCard: { backgroundColor: '#FFF', borderRadius: 28, padding: 32, alignItems: 'center', width: '100%', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 },
+    modalCheckCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#22C55E', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+    modalCheckText: { fontSize: 40, color: '#FFF', fontWeight: 'bold' },
+    modalTitle: { fontSize: 26, fontWeight: 'bold', color: '#1A202C', marginBottom: 12, textAlign: 'center' },
+    modalSubtitle: { fontSize: 15, color: '#4A5568', textAlign: 'center', lineHeight: 22, marginBottom: 16 },
+    modalServiceName: { fontWeight: 'bold', color: Theme.colors.brandOrange },
+    modalDetail: { fontSize: 14, color: '#718096', marginBottom: 12, textAlign: 'center' },
+    modalNote: { fontSize: 13, color: '#A0AEC0', textAlign: 'center', marginBottom: 28, lineHeight: 20 },
+    modalButton: { backgroundColor: Theme.colors.brandOrange, paddingVertical: 16, paddingHorizontal: 48, borderRadius: 20, width: '100%', alignItems: 'center' },
+    modalButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
     header: { paddingHorizontal: 20, paddingTop: 10 },
     progressBar: { flexDirection: 'row', height: 4, backgroundColor: '#EDF2F7', borderRadius: 2 },
     progressStep: { flex: 1, borderRadius: 2, marginRight: 5, backgroundColor: '#EDF2F7' },

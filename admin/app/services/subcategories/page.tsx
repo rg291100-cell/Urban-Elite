@@ -36,7 +36,6 @@ export default function SubCategoriesListPage() {
         name: '',
         slug: '',
         description: '',
-        image: '',
         categoryId: ''
     });
 
@@ -84,9 +83,6 @@ export default function SubCategoriesListPage() {
                 await adminAPI.updateSubCategory(editingItem.id, {
                     name: formData.name,
                     description: formData.description,
-                    image: formData.image
-                    // Note: changing categoryId is not supported by backend currently for update, 
-                    // or would require moving permissions. Assuming purely field updates for now.
                 });
             } else {
                 await adminAPI.createSubCategory({
@@ -94,7 +90,6 @@ export default function SubCategoriesListPage() {
                     name: formData.name,
                     slug: formData.slug || formData.name.toLowerCase().replace(/ /g, '-'),
                     description: formData.description,
-                    image: formData.image
                 });
             }
 
@@ -124,14 +119,13 @@ export default function SubCategoriesListPage() {
             name: item.name,
             slug: item.slug,
             description: item.description || '',
-            image: item.image || '',
             categoryId: item.category_id
         });
         setIsDialogOpen(true);
     };
 
     const resetForm = () => {
-        setFormData({ name: '', slug: '', description: '', image: '', categoryId: '' });
+        setFormData({ name: '', slug: '', description: '', categoryId: '' });
         setEditingItem(null);
     };
 
@@ -296,15 +290,6 @@ export default function SubCategoriesListPage() {
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         rows={2}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                    <input
-                                        value={formData.image}
-                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                        placeholder="https://..."
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
                             </div>

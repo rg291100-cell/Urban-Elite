@@ -34,9 +34,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
         duration: '',
         price: '',
         rating: '4.8',
-        image: '',
         color: '#F7FAFC',
-        isImage: true
+        isImage: false
     });
 
     const fetchItems = async () => {
@@ -103,9 +102,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
             duration: '',
             price: '',
             rating: '4.8',
-            image: '',
             color: '#F7FAFC',
-            isImage: true
+            isImage: false
         });
         setEditingItem(null);
     };
@@ -118,7 +116,6 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
             duration: item.duration,
             price: item.price,
             rating: item.rating,
-            image: item.image || '',
             color: item.color || '#F7FAFC',
             isImage: item.isImage
         });
@@ -282,23 +279,7 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                             </div>
 
                             <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                <input
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    placeholder="https://..."
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div className="col-span-2 flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isImage}
-                                    onChange={(e) => setFormData({ ...formData, isImage: e.target.checked })}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <label className="ml-2 block text-sm text-gray-900">Display as full image?</label>
+                                <p className="text-xs text-gray-500">💡 Icons are automatically assigned based on the service title.</p>
                             </div>
                         </div>
 

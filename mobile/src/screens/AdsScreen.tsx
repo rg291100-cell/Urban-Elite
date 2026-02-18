@@ -5,7 +5,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { offersAPI } from '../services/api';
-import { Tag, Clock, Briefcase, MapPin } from 'lucide-react-native';
+import { Tag, Clock, Briefcase, MapPin, Bell } from 'lucide-react-native';
 
 const AdsScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -49,10 +49,7 @@ const AdsScreen = () => {
                 style={styles.notificationButton}
                 onPress={() => navigation.navigate('Notifications')}
             >
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3602/3602145.png' }}
-                    style={styles.notificationIcon}
-                />
+                <Bell size={22} color={Theme.colors.textDark} />
             </TouchableOpacity>
         </View>
     );

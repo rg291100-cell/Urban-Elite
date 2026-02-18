@@ -21,27 +21,47 @@ exports.createBooking = async (req, res) => {
         const userId = req.user.id; // supabase auth uses 'id'
 
         // Insert into Supabase (professional will be assigned later)
-        const { data: booking, error } = await supabase
+        const bookingData = {
+            service_id: serviceId,
+            service_name: serviceName,
+            date,
+            time_slot: timeSlot,
+            location_type: location?.type || 'Home',
+            location_address: location?.address || '',
+            instructions: instructions || '',
+            status: 'PENDING',
+            price,
+            payment_mode: paymentMode || 'PREPAID',
+            professional_id: null,
+            professional_name: null,
+            estimated_time: '12m',
+            user_id: userId,
+        };
+
+        // Include attachment_url only if provided (column may not exist yet in DB)
+        if (attachmentUrl) {
+            bookingData.attachment_url = attachmentUrl;
+        }
+
+        let booking, error;
+
+        // First attempt: with attachment_url if present
+        ({ data: booking, error } = await supabase
             .from('bookings')
-            .insert({
-                service_id: serviceId,
-                service_name: serviceName,
-                date,
-                time_slot: timeSlot,
-                location_type: location?.type || 'Home',
-                location_address: location?.address || '',
-                instructions: instructions || '',
-                status: 'PENDING',
-                price,
-                payment_mode: paymentMode || 'PREPAID',
-                professional_id: null,
-                professional_name: null,
-                estimated_time: '12m',
-                user_id: userId,
-                attachment_url: attachmentUrl || null
-            })
+            .insert(bookingData)
             .select()
-            .single();
+            .single());
+
+        // If column doesn't exist yet, retry without attachment_url
+        if (error && error.message && error.message.includes('attachment_url')) {
+            console.warn('attachment_url column not found, retrying without it...');
+            const { attachment_url, ...dataWithoutAttachment } = bookingData;
+            ({ data: booking, error } = await supabase
+                .from('bookings')
+                .insert(dataWithoutAttachment)
+                .select()
+                .single());
+        }
 
         if (error) {
             console.error('Booking DB Insert Error:', error);

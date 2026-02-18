@@ -23,7 +23,7 @@ export default function ServicesPage() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    const [formData, setFormData] = useState({ name: '', image: '' });
+    const [formData, setFormData] = useState({ name: '' });
 
     const fetchCategories = async () => {
         try {
@@ -59,7 +59,7 @@ export default function ServicesPage() {
             }
 
             setIsDialogOpen(false);
-            setFormData({ name: '', image: '' });
+            setFormData({ name: '' });
             setEditingCategory(null);
             fetchCategories();
         } catch (error) {
@@ -81,7 +81,7 @@ export default function ServicesPage() {
 
     const openEdit = (category: Category) => {
         setEditingCategory(category);
-        setFormData({ name: category.name, image: category.image || '' });
+        setFormData({ name: category.name });
         setIsDialogOpen(true);
     };
 
@@ -98,7 +98,7 @@ export default function ServicesPage() {
                         <p className="text-gray-500 mt-1">Manage service categories and icons.</p>
                     </div>
                     <button
-                        onClick={() => { setEditingCategory(null); setFormData({ name: '', image: '' }); setIsDialogOpen(true); }}
+                        onClick={() => { setEditingCategory(null); setFormData({ name: '' }); setIsDialogOpen(true); }}
                         className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         <Plus className="h-4 w-4" /> Add Category
@@ -209,16 +209,7 @@ export default function ServicesPage() {
                                         placeholder="e.g. Electrician"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon (Emoji or URL)</label>
-                                    <input
-                                        value={formData.image}
-                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                        placeholder="📦"
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Use an emoji for simplicity or an external image URL.</p>
+                                    <p className="text-xs text-gray-500 mt-1">Icons are automatically assigned based on category name.</p>
                                 </div>
                             </div>
 

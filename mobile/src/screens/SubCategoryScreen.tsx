@@ -1,21 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Image, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Animated, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { homeAPI } from '../services/api';
+import { Bell, Search, ArrowLeft, X } from 'lucide-react-native';
+import { AutoIcon } from '../utils/autoIcon';
 
 type SubCategoryRouteProp = RouteProp<RootStackParamList, 'SubCategory'>;
 
 const SubCategoryScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<SubCategoryRouteProp>();
-    // Default fallback if parameters not provided
     const { slug, name } = route.params || { slug: 'repair-maintenance', name: 'Repair & Maintenance' };
 
     const [subcategories, setSubcategories] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchOpen, setSearchOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const searchInputRef = useRef<TextInput>(null);
+    const searchAnim = useRef(new Animated.Value(0)).current;
+
+    const filteredSubcategories = searchQuery.trim()
+        ? subcategories.filter(s => s.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+        : subcategories;
 
     useEffect(() => {
         const fetchSubCategories = async () => {
@@ -33,53 +42,47 @@ const SubCategoryScreen = () => {
         fetchSubCategories();
     }, [slug]);
 
-    const renderHeader = () => (
-        <View style={styles.header}>
-            <View style={styles.logoContainer}>
-                <View style={styles.logoIcon}>
-                    <Text style={styles.logoIconText}>🛠️</Text>
-                </View>
-                <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>OLFIX</Text>
-                </Text>
-            </View>
-            <TouchableOpacity
-                style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
-            >
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3602/3602145.png' }}
-                    style={styles.notificationIcon}
-                />
-                <View style={styles.notificationBadge} />
-            </TouchableOpacity>
-        </View>
-    );
+    const openSearch = () => {
+        setSearchOpen(true);
+        Animated.spring(searchAnim, {
+            toValue: 1,
+            useNativeDriver: false,
+            tension: 80,
+            friction: 10,
+        }).start(() => {
+            searchInputRef.current?.focus();
+        });
+    };
 
-    const renderSearchBar = () => (
-        <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-                <Text style={{ fontSize: 18, color: Theme.colors.textLight }}>🔍</Text>
-                <TextInput
-                    placeholder={`Search within ${name}...`}
-                    placeholderTextColor={Theme.colors.textLight}
-                    style={styles.searchInput}
-                />
-            </View>
-        </View>
-    );
+    const closeSearch = () => {
+        Keyboard.dismiss();
+        setSearchQuery('');
+        Animated.spring(searchAnim, {
+            toValue: 0,
+            useNativeDriver: false,
+            tension: 80,
+            friction: 10,
+        }).start(() => {
+            setSearchOpen(false);
+        });
+    };
 
-    const renderSubCategoryItem = ({ item }: { item: any }) => (
+    const searchBarWidth = searchAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '70%'],
+    });
+
+    const renderSubCategoryItem = useCallback(({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.gridItem}
             onPress={() => navigation.navigate('ServiceListing', { slug: item.slug, name: item.name })}
         >
             <View style={styles.iconContainer}>
-                <Image source={{ uri: item.image || 'https://via.placeholder.com/150' }} style={styles.serviceIcon} />
+                <AutoIcon name={item.name} size={34} color={Theme.colors.brandOrange} />
             </View>
             <Text style={styles.serviceText}>{item.name}</Text>
         </TouchableOpacity>
-    );
+    ), [navigation]);
 
     if (loading) {
         return (
@@ -91,33 +94,89 @@ const SubCategoryScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            {/* Header - Fixed above FlatList */}
+            <View style={styles.header}>
+                {!searchOpen && (
+                    <View style={styles.logoContainer}>
+                        <View style={styles.logoIcon}>
+                            <Text style={styles.logoIconText}>🛠️</Text>
+                        </View>
+                        <Text style={styles.headerTitle}>
+                            <Text style={styles.titleUrban}>OLFIX</Text>
+                        </Text>
+                    </View>
+                )}
+
+                <View style={styles.headerRight}>
+                    {searchOpen && (
+                        <Animated.View style={[styles.inlineSearchBar, { width: searchBarWidth }]}>
+                            <Search size={16} color={Theme.colors.textLight} />
+                            <TextInput
+                                ref={searchInputRef}
+                                placeholder={`Search ${name}...`}
+                                placeholderTextColor={Theme.colors.textLight}
+                                style={styles.inlineSearchInput}
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                returnKeyType="search"
+                                autoCorrect={false}
+                                autoCapitalize="none"
+                            />
+                        </Animated.View>
+                    )}
+
+                    <TouchableOpacity
+                        style={styles.iconButton}
+                        onPress={searchOpen ? closeSearch : openSearch}
+                    >
+                        {searchOpen
+                            ? <X size={20} color={Theme.colors.textDark} />
+                            : <Search size={20} color={Theme.colors.textDark} />
+                        }
+                    </TouchableOpacity>
+
+                    {!searchOpen && (
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={() => navigation.navigate('Notifications')}
+                        >
+                            <Bell size={22} color={Theme.colors.textDark} />
+                            <View style={styles.notificationBadge} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+
+            {/* Title Section - Also outside FlatList for stability */}
+            <View style={styles.pageTitleContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft size={22} color="#2D3748" />
+                </TouchableOpacity>
+                <View>
+                    <Text style={styles.pageTitle}>{name.toUpperCase()}</Text>
+                    <Text style={styles.resultsText}>
+                        {filteredSubcategories.length} {searchQuery.trim() ? 'RESULTS' : 'CATEGORIES'}
+                    </Text>
+                </View>
+            </View>
+
             <FlatList
-                data={subcategories}
+                data={filteredSubcategories}
                 renderItem={renderSubCategoryItem}
-                keyExtractor={item => item.id}
+                keyExtractor={item => String(item.id)}
                 numColumns={3}
                 contentContainerStyle={styles.gridContainer}
-                ListHeaderComponent={
-                    <>
-                        {renderHeader()}
-                        {renderSearchBar()}
-                        <View style={styles.pageTitleContainer}>
-                            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                                <Text style={styles.backArrow}>‹</Text>
-                            </TouchableOpacity>
-                            <View>
-                                <Text style={styles.pageTitle}>{name.toUpperCase()}</Text>
-                                <Text style={styles.resultsText}>{subcategories.length} CATEGORIES</Text>
-                            </View>
-                        </View>
-                    </>
-                }
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No subcategories found.</Text>
+                        <Search size={36} color="#CBD5E0" />
+                        <Text style={[styles.emptyText, { marginTop: 12 }]}>
+                            {searchQuery.trim() ? `No results for "${searchQuery}"` : 'No subcategories found.'}
+                        </Text>
                     </View>
                 }
-                showsVerticalScrollIndicator={false}
+                ListFooterComponent={<View style={{ height: 80 }} />}
             />
         </SafeAreaView>
     );
@@ -125,34 +184,71 @@ const SubCategoryScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Theme.colors.background },
-    header: { paddingHorizontal: 20, paddingTop: 10, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    logoContainer: { flexDirection: 'row', alignItems: 'center' },
+
+    // Header
+    header: {
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        marginBottom: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 60,
+    },
+    logoContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.primary, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24 },
     headerTitle: { fontSize: 24, fontWeight: Theme.typography.weights.bold },
     titleUrban: { color: Theme.colors.navy, fontWeight: '900', letterSpacing: -0.5 },
-    notificationButton: { width: 40, height: 40, backgroundColor: Theme.colors.searchBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    notificationIcon: { width: 20, height: 20, tintColor: Theme.colors.textLight },
-    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.primary, borderRadius: 4, position: 'absolute', top: 10, right: 10, borderWidth: 1, borderColor: '#FFF' },
 
-    searchContainer: { paddingHorizontal: 20, marginBottom: 20 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.searchBg, borderRadius: 15, paddingHorizontal: 15, paddingVertical: 12 },
-    searchInput: { marginLeft: 10, flex: 1, fontSize: 16, color: Theme.colors.textDark },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    iconButton: {
+        width: 40,
+        height: 40,
+        backgroundColor: '#F1F5F9',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.primary, borderRadius: 4, position: 'absolute', top: 8, right: 8, borderWidth: 1, borderColor: '#FFF' },
 
-    pageTitleContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 25 },
+    // Inline animated search bar
+    inlineSearchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F1F5F9',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        height: 40,
+        borderWidth: 1,
+        borderColor: Theme.colors.brandOrange,
+        overflow: 'hidden',
+    },
+    inlineSearchInput: {
+        flex: 1,
+        marginLeft: 6,
+        fontSize: 14,
+        color: Theme.colors.textDark,
+        height: 40,
+    },
+
+    // Page title
+    pageTitleContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 20, marginTop: 10 },
     backButton: { width: 45, height: 45, backgroundColor: '#F7FAFC', borderRadius: 22.5, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    backArrow: { fontSize: 28, color: '#2D3748', fontWeight: 'bold', marginTop: -2 },
     pageTitle: { fontSize: 24, fontWeight: '900', color: '#1A1025', fontStyle: 'italic', marginLeft: 5 },
     resultsText: { fontSize: 10, fontWeight: 'bold', color: '#A0AEC0', letterSpacing: 1, marginLeft: 5, marginTop: 5 },
 
+    // Grid
     gridContainer: { paddingHorizontal: 10, paddingBottom: 20 },
     gridItem: { flex: 1, alignItems: 'center', marginBottom: 25, marginHorizontal: 5 },
     iconContainer: { width: 80, height: 80, backgroundColor: '#FFFFFF', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-    serviceIcon: { width: 40, height: 40, resizeMode: 'contain' },
     serviceText: { fontSize: 11, fontWeight: '700', color: Theme.colors.textDark, textAlign: 'center' },
 
+    // Empty
     emptyContainer: { alignItems: 'center', marginTop: 50 },
-    emptyText: { color: '#A0AEC0', fontSize: 16 }
+    emptyText: { color: '#A0AEC0', fontSize: 16 },
 });
 
 export default SubCategoryScreen;

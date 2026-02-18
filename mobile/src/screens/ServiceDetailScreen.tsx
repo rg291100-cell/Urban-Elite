@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { ArrowLeft, Bell, Search } from 'lucide-react-native';
+import { AutoIcon } from '../utils/autoIcon';
 import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
@@ -62,33 +63,33 @@ const ServiceDetailScreen = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ArrowLeft size={24} color={Theme.colors.textDark} />
                 </TouchableOpacity>
-                {/* Search Bar Placeholder */}
                 <View style={styles.searchBar}>
-                    <Text style={styles.searchIcon}>🔍</Text>
-                    <Text style={styles.searchText}>Search for services...</Text>
-                    <Text style={styles.filterIcon}>⚖️</Text>
+                    <Search size={16} color={Theme.colors.textLight} />
+                    <TextInput
+                        placeholder="Search for services..."
+                        placeholderTextColor={Theme.colors.textLight}
+                        style={styles.searchInput}
+                    />
                 </View>
-                {/* Notification Icon */}
                 <TouchableOpacity style={styles.notificationButton}>
-                    <Text style={styles.bellIcon}>🔔</Text>
+                    <Bell size={20} color={Theme.colors.textDark} />
                     <View style={styles.badge} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Hero Image Section */}
-                <ImageBackground
-                    source={{ uri: serviceDetail.image }}
-                    style={styles.heroImage}
-                    imageStyle={styles.heroImageStyle}
-                >
-                    <View style={styles.overlay}>
+                {/* Hero Icon Section */}
+                <View style={[styles.heroImage, { backgroundColor: serviceDetail.color || '#FFF5F0' }]}>
+                    <View style={styles.heroIconWrapper}>
+                        <AutoIcon name={serviceDetail.title || serviceDetail.category?.name || 'service'} size={110} color={Theme.colors.brandOrange} />
+                    </View>
+                    <View style={styles.heroOverlayContent}>
                         <View style={styles.tagContainer}>
                             <Text style={styles.tagText}>{(serviceDetail.category?.name || 'SERVICE').toUpperCase()}</Text>
                         </View>
                         <Text style={styles.heroTitle}>{serviceDetail.title}</Text>
                     </View>
-                </ImageBackground>
+                </View>
 
                 {/* Stats Row */}
                 <View style={styles.statsContainer}>
@@ -157,18 +158,18 @@ const ServiceDetailScreen = () => {
 
 const styles = StyleSheet.create({
     headerContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 10, alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF' },
-    searchBar: { flex: 1, flexDirection: 'row', backgroundColor: '#F7FAFC', borderRadius: 25, paddingHorizontal: 15, paddingVertical: 10, marginRight: 15, alignItems: 'center' },
-    searchIcon: { marginRight: 10, fontSize: 16 },
-    searchText: { color: '#A0AEC0', flex: 1, fontSize: 14 },
-    filterIcon: { fontSize: 16 },
-    backButton: { marginRight: 15, padding: 5 },
+    headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: Theme.colors.textDark, marginHorizontal: 12 },
+    searchBar: { flex: 1, flexDirection: 'row', backgroundColor: '#F7FAFC', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, marginHorizontal: 10, alignItems: 'center' },
+    searchInput: { marginLeft: 8, flex: 1, fontSize: 14, color: Theme.colors.textDark },
+    backButton: { marginRight: 5, padding: 5 },
     notificationButton: { padding: 10, backgroundColor: '#F7FAFC', borderRadius: 15 },
-    bellIcon: { fontSize: 18 },
     badge: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, backgroundColor: Theme.colors.brandOrange, borderRadius: 4, borderWidth: 1, borderColor: '#FFF' },
 
     scrollContent: { paddingBottom: 100 },
 
-    heroImage: { width: '100%', height: 350, justifyContent: 'flex-end' },
+    heroImage: { width: '100%', height: 300, justifyContent: 'flex-end', alignItems: 'center', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, overflow: 'hidden', position: 'relative' },
+    heroIconWrapper: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', opacity: 0.15 },
+    heroOverlayContent: { width: '100%', padding: 25, justifyContent: 'flex-end' },
     heroImageStyle: { borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
     overlay: { padding: 25, justifyContent: 'flex-end', height: '100%', backgroundColor: 'rgba(0,0,0,0.1)' },
     tagContainer: { backgroundColor: Theme.colors.brandOrange, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 10 },
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
 
     // Section
     section: { paddingHorizontal: 20, marginBottom: 25 },
-    sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A202C', marginBottom: 15,  },
+    sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A202C', marginBottom: 15, },
     descriptionText: { fontSize: 16, lineHeight: 24, color: '#4A5568', fontWeight: '500' },
 
     // Features

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { userAPI } from '../services/api';
 import { authService } from '../services/authService';
+import { Bell } from 'lucide-react-native';
 
 const MENU_ITEMS = [
     { id: 'PersonalInformation', title: 'Personal Information', icon: '👤' },
@@ -56,29 +57,9 @@ const ProfileScreen = () => {
                 style={styles.notificationButton}
                 onPress={() => navigation.navigate('Notifications')}
             >
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3602/3602145.png' }}
-                    style={styles.notificationIcon}
-                />
+                <Bell size={22} color={Theme.colors.textDark} />
                 <View style={styles.notificationBadge} />
             </TouchableOpacity>
-        </View>
-    );
-
-    const renderSearchBar = () => (
-        <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-                <Text style={{ fontSize: 18, color: Theme.colors.textLight }}>🔍</Text>
-                <TextInput
-                    placeholder="Search for services..."
-                    placeholderTextColor={Theme.colors.textLight}
-                    style={styles.searchInput}
-                />
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3018/3018442.png' }}
-                    style={styles.filterIcon}
-                />
-            </View>
         </View>
     );
 
@@ -94,7 +75,6 @@ const ProfileScreen = () => {
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 {renderHeader()}
-                {renderSearchBar()}
 
                 <View style={styles.contentContainer}>
                     {/* Profile Header */}

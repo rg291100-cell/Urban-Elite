@@ -22,8 +22,7 @@ import BookingScheduleScreen from './src/screens/BookingScheduleScreen';
 import BookingLocationScreen from './src/screens/BookingLocationScreen';
 import BookingInstructionsScreen from './src/screens/BookingInstructionsScreen';
 import BookingReviewScreen from './src/screens/BookingReviewScreen';
-import BookingTrackingScreen from './src/screens/BookingTrackingScreen';
-import PersonalInformationScreen from './src/screens/PersonalInformationScreen';
+
 import SavedAddressesScreen from './src/screens/SavedAddressesScreen';
 import AddAddressScreen from './src/screens/AddAddressScreen';
 import PaymentMethodsScreen from './src/screens/PaymentMethodsScreen';
@@ -33,8 +32,7 @@ import SupportHelpScreen from './src/screens/SupportHelpScreen';
 import TopupScreen from './src/screens/TopupScreen';
 import WalletHistoryScreen from './src/screens/WalletHistoryScreen';
 import ChatScreen from './src/screens/ChatScreen';
-import SOSScreen from './src/screens/SOSScreen';
-import ServiceListingScreen from './src/screens/ServiceListingScreen';
+import PersonalInformationScreen from './src/screens/PersonalInformationScreen';
 import VendorSelectionScreen from './src/screens/VendorSelectionScreen';
 import BookingDetailsScreen from './src/screens/BookingDetailsScreen';
 import TabNavigator from './src/navigation/TabNavigator';
@@ -44,6 +42,7 @@ import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import VerifyOTPScreen from './src/screens/VerifyOTPScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import SubCategoryScreen from './src/screens/SubCategoryScreen';
+import ServiceListingScreen from './src/screens/ServiceListingScreen';
 import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
@@ -116,7 +115,6 @@ export const RootNavigator = () => {
       <Stack.Screen name="BookingLocation" component={BookingLocationScreen} />
       <Stack.Screen name="BookingInstructions" component={BookingInstructionsScreen} />
       <Stack.Screen name="BookingReview" component={BookingReviewScreen} />
-      <Stack.Screen name="BookingTracking" component={BookingTrackingScreen} />
       <Stack.Screen name="PersonalInformation" component={PersonalInformationScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
       <Stack.Screen name="AddAddress" component={AddAddressScreen} />
@@ -126,7 +124,6 @@ export const RootNavigator = () => {
       <Stack.Screen name="SupportHelp" component={SupportHelpScreen} />
       <Stack.Screen name="Topup" component={TopupScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
-      <Stack.Screen name="SOS" component={SOSScreen} />
       <Stack.Screen name="ServiceListing" component={ServiceListingScreen} />
       <Stack.Screen name="VendorSelection" component={VendorSelectionScreen} />
       <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
