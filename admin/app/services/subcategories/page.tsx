@@ -101,9 +101,9 @@ export default function SubCategoriesListPage() {
             setIsDialogOpen(false);
             resetForm();
             fetchData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving subcategory:', error);
-            alert('Failed to save subcategory');
+            alert(`Failed to save subcategory: ${error.response?.data?.error || error.message}`);
         }
     };
 

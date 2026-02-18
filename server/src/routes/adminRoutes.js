@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const adminServiceController = require('../controllers/adminServiceController');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
 // All admin routes require admin authentication
@@ -25,15 +26,20 @@ router.put('/professionals/:id', adminController.updateProfessional);
 router.delete('/professionals/:id', adminController.deleteProfessional);
 
 // Service Category Management
-// Service Category Management
 router.get('/services/categories', adminController.getAllServiceCategories);
 router.post('/services/categories', adminController.createServiceCategory);
 router.put('/services/categories/:id', adminController.updateServiceCategory);
 router.delete('/services/categories/:id', adminController.deleteServiceCategory);
 
+// Sub-Category Management (Level 2)
+router.get('/services/subcategories/:categoryId', adminServiceController.getSubCategories);
+router.post('/services/subcategories', adminServiceController.createSubCategory);
+
 // Service Item Management
 router.get('/services/categories/:categoryId/items', adminController.getServiceItems);
+router.get('/services/listing/:subCategoryId', adminServiceController.getServiceListing);
 router.post('/services/categories/:categoryId/items', adminController.createServiceItem);
+router.post('/services/items', adminServiceController.createServiceItem);
 router.put('/services/items/:id', adminController.updateServiceItem);
 router.delete('/services/items/:id', adminController.deleteServiceItem);
 
