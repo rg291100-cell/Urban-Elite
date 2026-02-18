@@ -36,19 +36,39 @@ export default function ServiceItemsListPage() {
     // Since items require a SubCategory, better to redirect to the specific subcategory page or show a complex modal.
     // Let's us a Redirect Modal first.
 
+    // State for create modal
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        title: '',
+        titleFull: '',
+        duration: '',
+        price: '',
+        rating: '4.8',
+        image: '',
+        color: '#F7FAFC',
+        isImage: true,
+        categoryId: '',
+        subCategoryId: ''
+    });
+
+    const categories = Array.from(new Set(subCategories.map(s => s.category_id))).map(cid => {
+        const sub = subCategories.find(s => s.category_id === cid);
+        return { id: cid, name: 'Category ' + cid }; // We need actual category name, but let's try to pass it down or fetch it.
+        // Actually, in fetchData we fetched categories. We should store them.
+    });
+
+    // Let's improve valid category storage
+    const [allCategories, setAllCategories] = useState<{ id: string, name: string }[]>([]);
+
     const fetchData = async () => {
         try {
             setLoading(true);
-            // FETCHING ALL ITEMS IS EXPENSIVE. 
-            // Ideally we should have pagination or filter by subcat enforced.
-            // For now, let's fetch categories -> subcategories -> then items (or just use what we have).
-            // Actually, let's just show "Select a Sub-Category to view Items" initially to avoid massive load?
-            // Or fetch all subcategories to populate filter.
-
-            // 1. Fetch Categories/Subcats for filter
             const catsRes = await adminAPI.getServiceCategories();
-            const allSubs: SubCategory[] = [];
+            let allSubs: SubCategory[] = [];
+
             if (catsRes.data.success) {
+                setAllCategories(catsRes.data.categories);
+
                 for (const cat of catsRes.data.categories) {
                     try {
                         const subRes = await adminAPI.getSubCategories(cat.id);
@@ -60,11 +80,6 @@ export default function ServiceItemsListPage() {
                 setSubCategories(allSubs);
             }
 
-            // 2. If 'all', we might want to avoid fetching ALL unless necessary.
-            // checking if there is a 'getAllServiceItems' API? No.
-            // We have getServiceListing(subCategoryId).
-            // So we MUST select a subcategory or iterate.
-            // Iterating is safer for now given small data.
             const allItems: ServiceItem[] = [];
             for (const sub of allSubs) {
                 try {
@@ -87,6 +102,32 @@ export default function ServiceItemsListPage() {
         fetchData();
     }, []);
 
+    const handleSave = async () => {
+        try {
+            if (!formData.title || !formData.price || !formData.subCategoryId) {
+                alert('Title, Price, and Sub-Category are required');
+                return;
+            }
+
+            // Find categoryId from subCategoryId if not selected (though we force selection)
+            const sub = subCategories.find(s => s.id === formData.subCategoryId);
+            const payload = {
+                ...formData,
+                categoryId: sub?.category_id || formData.categoryId
+            };
+
+            await adminAPI.createServiceItem(payload);
+            setIsDialogOpen(false);
+            setFormData({
+                title: '', titleFull: '', duration: '', price: '', rating: '4.8', image: '', color: '#F7FAFC', isImage: true, categoryId: '', subCategoryId: ''
+            });
+            fetchData();
+        } catch (error: any) {
+            console.error('Error saving item:', error);
+            alert(`Failed to save item: ${error.response?.data?.error || error.message}`);
+        }
+    };
+
     const filteredItems = items.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
         const matchesSubCat = selectedSubCat === 'all' || item.subcategory_id === selectedSubCat;
@@ -103,8 +144,12 @@ export default function ServiceItemsListPage() {
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900">All Service Items</h1>
                         <p className="text-gray-500 mt-1">Global list of all service options (Level 3).</p>
                     </div>
-                    {/* Add button here could be tricky without pre-selecting subcat. 
-                        Maybe prompt user to select subcat first? */}
+                    <button
+                        onClick={() => setIsDialogOpen(true)}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus className="h-4 w-4" /> Add New Service
+                    </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -179,9 +224,9 @@ export default function ServiceItemsListPage() {
                                                             router.push(`/services/${sub.category_id}/${sub.id}`);
                                                         }
                                                     }}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs px-2 py-1 bg-blue-50 rounded"
+                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 >
-                                                    Edit
+                                                    <Pencil className="h-4 w-4" />
                                                 </button>
                                             </td>
                                         </tr>
@@ -191,6 +236,105 @@ export default function ServiceItemsListPage() {
                         </table>
                     </div>
                 </div>
+
+                {isDialogOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-gray-900">Add New Service</h2>
+                                <button onClick={() => setIsDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                                    <select
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                        value={formData.categoryId}
+                                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subCategoryId: '' })}
+                                    >
+                                        <option value="">Select Category</option>
+                                        {allCategories.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sub-Category</label>
+                                    <select
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                        value={formData.subCategoryId}
+                                        onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })}
+                                        disabled={!formData.categoryId}
+                                    >
+                                        <option value="">Select Sub-Category</option>
+                                        {subCategories.filter(s => s.category_id === formData.categoryId).map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                    <input
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                        placeholder="e.g. AC Not Cooling"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                    <input
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                        placeholder="e.g. ₹599"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                                    <input
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                        placeholder="e.g. 45 Mins"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                                    <input
+                                        value={formData.image}
+                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                        placeholder="https://..."
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setIsDialogOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    Save Service
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );
