@@ -105,9 +105,10 @@ const createServiceItem = async (req, res) => {
     // Normalize fields based on schema (title, price, image) vs inputs
     const itemData = {
         title: title || name,
+        title_full: req.body.titleFull || description, // Map titleFull or description to title_full
         price: price || basePrice, // Text field in DB
         image: image || imageUrl,
-        description: description,
+        // description field removed as it does not exist in service_items table
         duration: duration,
         // If subCategoryId is provided, use it. Else use categoryId (legacy or if strict hierarchy not enforced)
         subcategory_id: subCategoryId || null,
