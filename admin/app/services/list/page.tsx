@@ -31,6 +31,8 @@ export default function ServiceItemsListPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedSubCat, setSelectedSubCat] = useState<string>('all');
+    // State for filtering
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
     // Dialog States (Simple Add - Redirects or basic form?)
     // Since items require a SubCategory, better to redirect to the specific subcategory page or show a complex modal.
@@ -130,11 +132,24 @@ export default function ServiceItemsListPage() {
 
     const filteredItems = items.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+
+        // Filter by category
+        let matchesCategory = true;
+        if (selectedCategory !== 'all') {
+            const sub = subCategories.find(s => s.id === item.subcategory_id);
+            if (sub?.category_id !== selectedCategory) matchesCategory = false;
+        }
+
         const matchesSubCat = selectedSubCat === 'all' || item.subcategory_id === selectedSubCat;
-        return matchesSearch && matchesSubCat;
+        return matchesSearch && matchesCategory && matchesSubCat;
     });
 
     const getSubCatName = (id: string) => subCategories.find(s => s.id === id)?.name || 'Unknown';
+
+    // Filter subcategories for dropdown based on selectedCategory
+    const filteredSubCategories = selectedCategory === 'all'
+        ? subCategories
+        : subCategories.filter(s => s.category_id === selectedCategory);
 
     return (
         <DashboardLayout>
@@ -162,13 +177,29 @@ export default function ServiceItemsListPage() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+
+                    {/* Category Filter */}
+                    <select
+                        className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        value={selectedCategory}
+                        onChange={(e) => {
+                            setSelectedCategory(e.target.value);
+                            setSelectedSubCat('all'); // Reset subcat
+                        }}
+                    >
+                        <option value="all">All Categories</option>
+                        {allCategories.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                    </select>
+                    {/* SubCategory Filter */}
                     <select
                         className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         value={selectedSubCat}
                         onChange={(e) => setSelectedSubCat(e.target.value)}
                     >
                         <option value="all">All Sub-Categories</option>
-                        {subCategories.map(s => (
+                        {filteredSubCategories.map(s => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                     </select>
