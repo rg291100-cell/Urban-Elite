@@ -11,7 +11,8 @@ exports.createBooking = async (req, res) => {
             location,
             instructions,
             price,
-            paymentMode
+            paymentMode,
+            attachmentUrl
         } = req.body;
 
         console.log('Booking Request Received:', { serviceName, date, timeSlot, userId: req.user?.id, paymentMode });
@@ -36,7 +37,8 @@ exports.createBooking = async (req, res) => {
                 professional_id: null,
                 professional_name: null,
                 estimated_time: '12m',
-                user_id: userId
+                user_id: userId,
+                attachment_url: attachmentUrl || null
             })
             .select()
             .single();

@@ -49,8 +49,86 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'USER' | 'VENDOR'>('USER');
 
+    // Vendor-specific fields (Level 2 & 3)
+    const [subCategory, setSubCategory] = useState('');
+    const [serviceItems, setServiceItems] = useState<string[]>([]);
+
+    // Vendor Data Holders
+    const [categories, setCategories] = useState<ServiceCategory[]>([]);
+    const [subCategories, setSubCategories] = useState<{ id: string, name: string }[]>([]);
+    const [availableServices, setAvailableServices] = useState<{ id: string, title: string }[]>([]);
+
+    // Loaders
+    const [loadingCategories, setLoadingCategories] = useState(false);
+    const [loadingSubCategories, setLoadingSubCategories] = useState(false);
+    const [loadingServices, setLoadingServices] = useState(false);
+
+    // Dropdown Visibility
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com',
+            offlineAccess: true,
+        });
+    }, []);
+
+    useEffect(() => {
+        if (selectedRole === 'VENDOR') {
+            fetchCategories();
+        }
+    }, [selectedRole]);
+
+    const fetchCategories = async () => {
+        setLoadingCategories(true);
+        try {
+            const response = await serviceAPI.getCategories();
+            if (response.data.success) {
+                setCategories(response.data.categories);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            // Fallback removed, rely on API
+        } finally {
+            setLoadingCategories(false);
+        }
+    };
+
+    const fetchSubCategories = async (categoryId: string) => {
+        setLoadingSubCategories(true);
+        setSubCategory('');
+        setServiceItems([]);
+        setAvailableServices([]);
+        try {
+            const response = await serviceAPI.getSubCategories(categoryId);
+            if (response.data.success) {
+                setSubCategories(response.data.subcategories);
+            }
+        } catch (error) {
+            console.error('Error fetching subcategories:', error);
+        } finally {
+            setLoadingSubCategories(false);
+        }
+    };
+
+    const fetchServices = async (subCatId: string) => {
+        setLoadingServices(true);
+        setServiceItems([]);
+        try {
+            const response = await serviceAPI.getServiceItems(subCatId);
+            if (response.data.success) {
+                setAvailableServices(response.data.services);
+            }
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        } finally {
+            setLoadingServices(false);
+        }
+    };
+
     // Vendor-specific fields
-    const [serviceCategory, setServiceCategory] = useState('');
     const [businessName, setBusinessName] = useState('');
     const [businessAddress, setBusinessAddress] = useState('');
     const [experienceYears, setExperienceYears] = useState('');
@@ -61,176 +139,46 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [showAadhaarOptions, setShowAadhaarOptions] = useState(false);
     const [showPanOptions, setShowPanOptions] = useState(false);
 
-    // Service categories from API
-    const [categories, setCategories] = useState<ServiceCategory[]>([]);
-    const [loadingCategories, setLoadingCategories] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
+    // Vendor Selection State
+    const [serviceCategory, setServiceCategory] = useState(''); // Stores ID now
+    const [selectedCategoryName, setSelectedCategoryName] = useState('');
 
-
-
-    useEffect(() => {
-        GoogleSignin.configure({
-            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com', // From .env
-            offlineAccess: true,
-        });
-    }, []);
-
-    useEffect(() => {
-        if (selectedRole === 'VENDOR') {
-            fetchServiceCategories();
-        }
-    }, [selectedRole]);
-
-    const fetchServiceCategories = async () => {
-        setLoadingCategories(true);
-        try {
-            const response = await serviceAPI.getCategories();
-            if (response.data.success && response.data.categories) {
-                setCategories(response.data.categories);
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-            // Fallback to default categories if API fails
-            setCategories([
-                { id: '1', name: 'Cleaning', slug: 'cleaning' },
-                { id: '2', name: 'Electrician', slug: 'electrician' },
-                { id: '3', name: 'Plumbing', slug: 'plumbing' },
-                { id: '4', name: 'Carpentry', slug: 'carpentry' },
-                { id: '5', name: 'Painting', slug: 'painting' },
-            ]);
-        } finally {
-            setLoadingCategories(false);
-        }
-    };
-
-
-
-    const handleGoogleLogin = async () => {
-        try {
-            setLoading(true);
-            const response = await GoogleSignin.signIn();
-
-            // Check for success or data property depending on library version
-            // For newer versions, response might contain user info directly or in data property
-            const idToken = response.data ? response.data.idToken : (response as any).idToken;
-
-            if (idToken) {
-                // Determine role based on selection
-                // Note: For Vendors, this will create a PENDING account if they don't exist
-                // Ideally we might want to redirect them to fill details, but for now we follow the backend logic
-                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
-                const data = apiResponse.data;
-
-                if (!data.success) {
-                    throw new Error(data.error || 'Google Sign Up failed');
-                }
-
-                await authService.setToken(data.token);
-                await authService.setUser(data.user);
-
-                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: targetScreen as any }],
-                });
-            } else {
-                // If response was cancelled or other status, handle gracefully
-                if (response.type === 'cancelled') {
-                    console.log('Google Sign in cancelled');
-                    return;
-                }
-                throw new Error('No ID token received from Google');
-            }
-        } catch (error: any) {
-            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                console.log('Google Sign in cancelled');
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-                console.log('Google Sign in in progress');
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                Alert.alert('Error', 'Google Play Services not available');
-            } else {
-                console.error('Google login error:', error);
-                const errorData = error.response?.data;
-                if (errorData) {
-                    Alert.alert('Sign Up Failed', errorData.error || 'Google sign up failed');
-                } else {
-                    Alert.alert('Google Sign Up Failed', error.message || 'An error occurred');
-                }
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRegister = async () => {
-        // Validation
-        if (!name || !email || !password) {
-            Alert.alert('Error', 'Please fill in all required fields');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
-        }
-
-        if (password.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
-            return;
-        }
-
-        // Validate vendor-specific fields
-        if (selectedRole === 'VENDOR') {
-            if (!serviceCategory || !businessName || !businessAddress || !aadhaarUrl || !panUrl) {
-                Alert.alert('Error', 'Please fill in all vendor details including KYC (Aadhaar & PAN)');
-                return;
-            }
-        }
-
-        setLoading(true);
-        try {
-            // Use authAPI directly to ensure we use the hardcoded local URL defined in api.ts
-            // This prevents stale .env variables (pointing to production) from causing issues
-            const response = await authAPI.register({
-                name, email, phone, password, role: selectedRole,
-                serviceCategory, businessName, businessAddress, experienceYears,
-                aadhaarUrl, panUrl
-            });
-
-            const data = response.data;
-
-            if (!data.success) {
-                throw new Error(data.error || 'Registration failed');
-            }
-
-            const successMessage = data.requiresApproval
-                ? 'Vendor registration successful! Your account is pending admin approval. You will be notified once approved.'
-                : 'Account created successfully! Please login.';
-
-            Alert.alert(
-                'Success',
-                successMessage,
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.navigate('Login'),
-                    },
-                ]
-            );
-        } catch (error: any) {
-            console.error('Registration error:', error);
-            Alert.alert(
-                'Registration Failed',
-                error.message || 'An error occurred. Please try again.'
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Render helper for file selector
+    const renderFileSelector = (type: 'aadhaar' | 'pan', label: string, currentUrl: string, isUploading: boolean) => (
+        <View style={styles.fileSelectorContainer}>
+            <Text style={styles.fileLabel}>{label} *</Text>
+            {currentUrl ? (
+                <View style={styles.uploadedContainer}>
+                    <CheckCircle2 size={20} color="#48BB78" />
+                    <Text style={styles.uploadedText} numberOfLines={1}>Document Uploaded</Text>
+                    <TouchableOpacity onPress={() => type === 'aadhaar' ? setAadhaarUrl('') : setPanUrl('')}>
+                        <X size={20} color="#A0AEC0" />
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={styles.uploadButton}
+                    onPress={() => type === 'aadhaar' ? setShowAadhaarOptions(true) : setShowPanOptions(true)}
+                    disabled={isUploading}
+                >
+                    {isUploading ? (
+                        <ActivityIndicator size="small" color="#FF6B6B" />
+                    ) : (
+                        <>
+                            <Upload size={20} color="#FF6B6B" />
+                            <Text style={styles.uploadButtonText}>Attach Document</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            )}
+        </View>
+    );
 
     const selectCategory = (category: ServiceCategory) => {
-        setServiceCategory(category.name);
-        setShowDropdown(false);
+        setServiceCategory(category.id);
+        setSelectedCategoryName(category.name);
+        setShowCategoryDropdown(false);
+        fetchSubCategories(category.id);
     };
 
     const handleFileUpload = async (type: 'aadhaar' | 'pan', source: 'camera' | 'library' | 'pdf') => {
@@ -274,13 +222,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 setShowPanOptions(false);
             }
 
-            // If PDF, we need to convert to base64 or use another method. 
-            // For simplicity in this demo, let's stick to images if possible, 
-            // or use a base64 reader if PDF is picked.
             let base64 = fileData.base64;
             if (source === 'pdf') {
-                // In a real app, you'd use react-native-fs to read the file as base64
-                // For now, let's assume images for the best visual experience
+                // Simplified for demo
                 Alert.alert('Info', 'PDF support requires additional setup. Please upload an image for now.');
                 setIsUploadingAadhaar(false);
                 setIsUploadingPan(false);
@@ -313,35 +257,94 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         }
     };
 
-    const renderFileSelector = (type: 'aadhaar' | 'pan', label: string, currentUrl: string, isUploading: boolean) => (
-        <View style={styles.fileSelectorContainer}>
-            <Text style={styles.fileLabel}>{label} *</Text>
-            {currentUrl ? (
-                <View style={styles.uploadedContainer}>
-                    <CheckCircle2 size={20} color="#48BB78" />
-                    <Text style={styles.uploadedText} numberOfLines={1}>Document Uploaded</Text>
-                    <TouchableOpacity onPress={() => type === 'aadhaar' ? setAadhaarUrl('') : setPanUrl('')}>
-                        <X size={20} color="#A0AEC0" />
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <TouchableOpacity
-                    style={styles.uploadButton}
-                    onPress={() => type === 'aadhaar' ? setShowAadhaarOptions(true) : setShowPanOptions(true)}
-                    disabled={isUploading}
-                >
-                    {isUploading ? (
-                        <ActivityIndicator size="small" color="#FF6B6B" />
-                    ) : (
-                        <>
-                            <Upload size={20} color="#FF6B6B" />
-                            <Text style={styles.uploadButtonText}>Attach Document</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            )}
-        </View>
-    );
+    const toggleServiceSelection = (serviceId: string) => {
+        if (serviceItems.includes(serviceId)) {
+            setServiceItems(serviceItems.filter(id => id !== serviceId));
+        } else {
+            setServiceItems([...serviceItems, serviceId]);
+        }
+    };
+
+    const handleRegister = async () => {
+        // Validation
+        if (!name || !email || !password) {
+            Alert.alert('Error', 'Please fill in all required fields');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match');
+            return;
+        }
+
+        if (password.length < 6) {
+            Alert.alert('Error', 'Password must be at least 6 characters');
+            return;
+        }
+
+        // Validate vendor-specific fields
+        if (selectedRole === 'VENDOR') {
+            if (!serviceCategory || !subCategory || serviceItems.length === 0 || !businessName || !businessAddress || !aadhaarUrl || !panUrl) {
+                Alert.alert('Error', 'Please fill in all vendor details including selecting services and KYC documents.');
+                return;
+            }
+        }
+
+        setLoading(true);
+        try {
+            const response = await authAPI.register({
+                name, email, phone, password, role: selectedRole,
+                serviceCategory, // ID
+                subCategory, // ID
+                serviceItems, // Array of IDs
+                businessName, businessAddress, experienceYears,
+                aadhaarUrl, panUrl
+            });
+
+            const data = response.data;
+            if (!data.success) throw new Error(data.error || 'Registration failed');
+
+            const successMessage = data.requiresApproval
+                ? 'Vendor registration successful! Admin approval pending.'
+                : 'Account created successfully! Please login.';
+
+            Alert.alert('Success', successMessage, [{ text: 'OK', onPress: () => navigation.navigate('Login') }]);
+        } catch (error: any) {
+            console.error('Registration error:', error);
+            Alert.alert('Registration Failed', error.message || 'An error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const response = await GoogleSignin.signIn();
+            const idToken = response.data ? response.data.idToken : (response as any).idToken;
+
+            if (idToken) {
+                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
+                const data = apiResponse.data;
+
+                if (!data.success) throw new Error(data.error || 'Google Sign Up failed');
+
+                await authService.setToken(data.token);
+                await authService.setUser(data.user);
+
+                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
+                navigation.reset({ index: 0, routes: [{ name: targetScreen as any }] });
+            } else {
+                if (response.type === 'cancelled') return;
+                throw new Error('No ID token received from Google');
+            }
+        } catch (error: any) {
+            console.error('Google login error:', error);
+            Alert.alert('Google Sign Up Failed', error.message || 'An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <KeyboardAvoidingView
@@ -414,16 +417,62 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         {selectedRole === 'VENDOR' && (
                             <>
                                 {/* Service Category Dropdown */}
+                                <Text style={styles.sectionTitle}>Service Details</Text>
                                 <TouchableOpacity
                                     style={styles.dropdownButton}
-                                    onPress={() => setShowDropdown(true)}
+                                    onPress={() => setShowCategoryDropdown(true)}
                                     disabled={loading || loadingCategories}
                                 >
-                                    <Text style={serviceCategory ? styles.dropdownButtonText : styles.dropdownPlaceholder}>
-                                        {loadingCategories ? 'Loading categories...' : (serviceCategory || 'Service Category *')}
+                                    <Text style={selectedCategoryName ? styles.dropdownButtonText : styles.dropdownPlaceholder}>
+                                        {loadingCategories ? 'Loading categories...' : (selectedCategoryName || 'Select Parent Category *')}
                                     </Text>
                                     <Text style={styles.dropdownButtonText}>▼</Text>
                                 </TouchableOpacity>
+
+                                {/* Sub Category Dropdown */}
+                                {serviceCategory && (
+                                    <TouchableOpacity
+                                        style={styles.dropdownButton}
+                                        onPress={() => setShowSubCategoryDropdown(true)}
+                                        disabled={loadingSubCategories}
+                                    >
+                                        <Text style={subCategory ? styles.dropdownButtonText : styles.dropdownPlaceholder}>
+                                            {loadingSubCategories ? 'Loading sub-categories...' : (subCategories.find(s => s.id === subCategory)?.name || 'Select Sub-Category *')}
+                                        </Text>
+                                        <Text style={styles.dropdownButtonText}>▼</Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                {/* Service Items Multi-Select */}
+                                {subCategory && (
+                                    <View style={{ marginBottom: 16 }}>
+                                        <Text style={[styles.fileLabel, { marginLeft: 0, marginBottom: 8 }]}>Select Services You Offer *</Text>
+                                        {loadingServices ? (
+                                            <ActivityIndicator size="small" color="#000" />
+                                        ) : availableServices.length > 0 ? (
+                                            availableServices.map(service => (
+                                                <TouchableOpacity
+                                                    key={service.id}
+                                                    style={[
+                                                        styles.serviceItem,
+                                                        serviceItems.includes(service.id) && styles.serviceItemActive
+                                                    ]}
+                                                    onPress={() => toggleServiceSelection(service.id)}
+                                                >
+                                                    <View style={[
+                                                        styles.checkbox,
+                                                        serviceItems.includes(service.id) && styles.checkboxActive
+                                                    ]}>
+                                                        {serviceItems.includes(service.id) && <Text style={styles.checkmark}>✓</Text>}
+                                                    </View>
+                                                    <Text style={styles.serviceItemText}>{service.title}</Text>
+                                                </TouchableOpacity>
+                                            ))
+                                        ) : (
+                                            <Text style={{ color: '#718096', fontStyle: 'italic' }}>No services available in this category.</Text>
+                                        )}
+                                    </View>
+                                )}
 
                                 <TextInput
                                     style={styles.input}
@@ -513,17 +562,17 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Dropdown Modal */}
+            {/* Category Dropdown Modal */}
             <Modal
-                visible={showDropdown}
+                visible={showCategoryDropdown}
                 transparent={true}
                 animationType="fade"
-                onRequestClose={() => setShowDropdown(false)}
+                onRequestClose={() => setShowCategoryDropdown(false)}
             >
                 <TouchableOpacity
                     style={styles.modalOverlay}
                     activeOpacity={1}
-                    onPress={() => setShowDropdown(false)}
+                    onPress={() => setShowCategoryDropdown(false)}
                 >
                     <View style={styles.dropdownModal}>
                         <Text style={styles.dropdownTitle}>Select Service Category</Text>
@@ -536,7 +585,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                                     onPress={() => selectCategory(item)}
                                 >
                                     <Text style={styles.dropdownItemText}>{item.name}</Text>
-                                    {serviceCategory === item.name && (
+                                    {serviceCategory === item.id && (
                                         <Text style={styles.checkmark}>✓</Text>
                                     )}
                                 </TouchableOpacity>
@@ -544,7 +593,50 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         />
                         <TouchableOpacity
                             style={styles.dropdownCancel}
-                            onPress={() => setShowDropdown(false)}
+                            onPress={() => setShowCategoryDropdown(false)}
+                        >
+                            <Text style={styles.dropdownCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
+            {/* Sub-Category Dropdown Modal */}
+            <Modal
+                visible={showSubCategoryDropdown}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSubCategoryDropdown(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowSubCategoryDropdown(false)}
+                >
+                    <View style={styles.dropdownModal}>
+                        <Text style={styles.dropdownTitle}>Select Sub-Category</Text>
+                        <FlatList
+                            data={subCategories}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.dropdownItem}
+                                    onPress={() => {
+                                        setSubCategory(item.id);
+                                        setShowSubCategoryDropdown(false);
+                                        fetchServices(item.id);
+                                    }}
+                                >
+                                    <Text style={styles.dropdownItemText}>{item.name}</Text>
+                                    {subCategory === item.id && (
+                                        <Text style={styles.checkmark}>✓</Text>
+                                    )}
+                                </TouchableOpacity>
+                            )}
+                        />
+                        <TouchableOpacity
+                            style={styles.dropdownCancel}
+                            onPress={() => setShowSubCategoryDropdown(false)}
                         >
                             <Text style={styles.dropdownCancelText}>Cancel</Text>
                         </TouchableOpacity>
@@ -767,7 +859,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         letterSpacing: 0.5,
     },
-
     googleButton: {
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
@@ -839,6 +930,100 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#0F172A',
     },
+    dropdownCancel: {
+        marginTop: 16,
+        padding: 16,
+        alignItems: 'center',
+        backgroundColor: '#F1F5F9',
+        borderRadius: 12,
+    },
+    dropdownCancelText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#64748B',
+    },
+    checkmark: {
+        color: Theme.colors.primary,
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    optionsModal: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        width: '100%',
+        padding: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: Theme.colors.textDark,
+        marginBottom: 24,
+        textAlign: 'center',
+    },
+    optionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 16,
+        marginBottom: 12,
+    },
+    optionIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    optionText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: Theme.colors.textDark,
+    },
+    cancelBtn: {
+        marginTop: 12,
+        padding: 16,
+        alignItems: 'center',
+    },
+    cancelBtnText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: Theme.colors.textLight,
+    },
+    // New Styles for Service Items
+    serviceItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: Theme.colors.inputBg,
+        borderRadius: 8,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: Theme.colors.border,
+    },
+    serviceItemActive: {
+        borderColor: Theme.colors.primary,
+        backgroundColor: '#F0FFF4',
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 2,
+        borderColor: Theme.colors.textLight,
+        marginRight: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkboxActive: {
+        borderColor: Theme.colors.primary,
+        backgroundColor: Theme.colors.primary,
+    },
+    serviceItemText: {
+        fontSize: 14,
+        color: Theme.colors.textDark,
+    },
     checkmark: {
         fontSize: 18,
         color: '#D4AF37',
@@ -894,16 +1079,10 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#0F172A',
     },
-    cancelBtn: {
-        marginTop: 16,
-        padding: 16,
-        alignItems: 'center',
-    },
-    cancelBtnText: {
-        fontSize: 16,
-        color: '#EF4444',
-        fontWeight: '700',
-    },
+    // The previous cancelBtn style might be duplicate, ensuring consistent naming
+    // We already have cancelBtn defined above, if we want to override or use this one:
+    // If it's duplicate, keys will just be overwritten. 
+    // Let's assume these are the intended styles for the modal options.
 });
 
 export default RegisterScreen;

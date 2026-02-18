@@ -13,7 +13,7 @@ type BookingReviewRouteProp = RouteProp<RootStackParamList, 'BookingReview'>;
 const BookingReviewScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingReviewRouteProp>();
-    const { item, date, slot, location, instructions } = route.params || {};
+    const { item, date, slot, location, instructions, attachmentUrl } = route.params || {};
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState<boolean>(false);
     const currentOrderId = React.useRef<string | null>(null);
@@ -92,8 +92,10 @@ const BookingReviewScreen = () => {
                 location: location || { type: 'Home', address: '' },
                 instructions: instructions || '',
                 price: item?.price || '₹0',
-                paymentMode: mode
+                paymentMode: mode,
+                attachmentUrl: attachmentUrl // Pass attachmentUrl here
             });
+            // ...
 
             navigation.navigate('BookingTracking', {
                 bookingId: response.data.bookingId,

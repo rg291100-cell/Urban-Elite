@@ -124,6 +124,48 @@ const getServiceListing = async (req, res) => {
     }
 };
 
+// Get Subcategories by Category ID (for Registration)
+const getSubCategoriesById = async (req, res) => {
+    const { categoryId } = req.params;
+    try {
+        const { data: subcategories, error } = await supabase
+            .from('service_subcategories')
+            .select('*')
+            .eq('category_id', categoryId);
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            subcategories: subcategories || []
+        });
+    } catch (error) {
+        console.error('Error fetching subcategories by ID:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch subcategories' });
+    }
+};
+
+// Get Service Items by Subcategory ID (for Registration)
+const getServiceListingById = async (req, res) => {
+    const { subCategoryId } = req.params;
+    try {
+        const { data: services, error } = await supabase
+            .from('service_items')
+            .select('*')
+            .eq('subcategory_id', subCategoryId);
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            services: services || []
+        });
+    } catch (error) {
+        console.error('Error fetching service listing by ID:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch services' });
+    }
+};
+
 // Deprecated: Old getServiceDetails (kept/renamed if necessary, but we are replacing it)
 // We will replace the export with the new functions.
 
@@ -172,4 +214,12 @@ const getServiceDetailById = async (req, res) => {
     }
 };
 
-module.exports = { getHomeData, getSubCategories, getServiceListing, getServiceDetailById, getServiceCategories };
+module.exports = {
+    getHomeData,
+    getSubCategories,
+    getServiceListing,
+    getServiceDetailById,
+    getServiceCategories,
+    getSubCategoriesById,  // New
+    getServiceListingById  // New
+};

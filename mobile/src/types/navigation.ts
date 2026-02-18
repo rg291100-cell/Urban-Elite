@@ -24,7 +24,7 @@ export type RootStackParamList = {
     BookingSchedule: { item: any };
     BookingLocation: { item: any; date: string; slot: string };
     BookingInstructions: { item: any; date: string; slot: string; location: any };
-    BookingReview: { item: any; date: string; slot: string; location: any; instructions: string };
+    BookingReview: { item: any; date: string; slot: string; location: any; instructions: string; attachmentUrl?: string };
     BookingTracking: { bookingId: string; item: any; date: string; slot: string; location: any };
     PersonalInformation: undefined;
     SavedAddresses: undefined;

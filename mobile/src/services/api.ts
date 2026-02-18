@@ -113,6 +113,7 @@ export const bookingAPI = {
         instructions: string;
         price: string;
         paymentMode?: string;
+        attachmentUrl?: string | null;
     }) => api.post('/api/bookings', data),
     getBooking: (id: string) => api.get(`/api/bookings/${id}`),
     getBookingTracking: (id: string) => api.get(`/api/bookings/${id}/tracking`),
@@ -122,6 +123,8 @@ export const bookingAPI = {
 // Service Categories
 export const serviceAPI = {
     getCategories: () => api.get('/api/home/services/categories'),
+    getSubCategories: (categoryId: string) => api.get(`/api/home/subcategories/by-id/${categoryId}`),
+    getServiceItems: (subCategoryId: string) => api.get(`/api/home/listing/by-id/${subCategoryId}`),
 };
 
 export const vendorAPI = {

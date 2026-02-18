@@ -10,12 +10,12 @@ exports.register = async (req, res) => {
     try {
         const {
             name, email, phone, password, role,
-            serviceCategory, businessName, businessAddress, experienceYears,
+            serviceCategory, subCategory, serviceItems, // Updated fields
+            businessName, businessAddress, experienceYears,
             aadhaarUrl, panUrl
         } = req.body;
 
         console.log('Registration Request Body:', req.body); // DEBUG
-        console.log('Role received:', role); // DEBUG
 
         // Validate required fields
         if (!name || !email || !password) {
@@ -25,20 +25,17 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Validate role
         const userRole = role && (role === 'VENDOR' || role === 'USER') ? role : 'USER';
 
-        // Validate vendor-specific fields
         if (userRole === 'VENDOR') {
-            if (!serviceCategory || !businessName || !businessAddress) {
+            if (!serviceCategory || !subCategory || !businessName || !businessAddress) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Service category, business name, and business address are required for vendors'
+                    error: 'Service category, sub-category, business name, and address are required'
                 });
             }
         }
 
-        // Check if user already exists
         const { data: existingUser } = await supabase
             .from('users')
             .select('id')
@@ -46,16 +43,11 @@ exports.register = async (req, res) => {
             .single();
 
         if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                error: 'User with this email already exists'
-            });
+            return res.status(400).json({ success: false, error: 'User with this email already exists' });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Prepare user data
         const userData = {
             name,
             email,
@@ -66,9 +58,13 @@ exports.register = async (req, res) => {
             approval_status: userRole === 'VENDOR' ? 'PENDING' : 'APPROVED'
         };
 
-        // Add vendor-specific fields if vendor
         if (userRole === 'VENDOR') {
+            // We store IDs now. Frontend should send IDs.
+            userData.service_category_id = serviceCategory;
+            userData.sub_category_id = subCategory;
+            // Legacy field support (store ID as string or fetch name if needed, assuming ID for now)
             userData.service_category = serviceCategory;
+
             userData.business_name = businessName;
             userData.business_address = businessAddress;
             userData.experience_years = experienceYears ? parseInt(experienceYears) : null;
@@ -76,7 +72,6 @@ exports.register = async (req, res) => {
             userData.pan_url = panUrl || null;
         }
 
-        // Create user
         const { data: user, error } = await supabase
             .from('users')
             .insert(userData)
@@ -85,7 +80,24 @@ exports.register = async (req, res) => {
 
         if (error) throw error;
 
-        // For vendors, don't generate token - they need approval first
+        // Insert Vendor Services
+        if (userRole === 'VENDOR' && Array.isArray(serviceItems) && serviceItems.length > 0) {
+            try {
+                const vendorServicesData = serviceItems.map(itemId => ({
+                    vendor_id: user.id,
+                    service_item_id: itemId
+                }));
+
+                const { error: vsError } = await supabase
+                    .from('vendor_services')
+                    .insert(vendorServicesData);
+
+                if (vsError) console.error('Error inserting vendor services:', vsError);
+            } catch (err) {
+                console.error('Vendor service insert exception:', err);
+            }
+        }
+
         if (userRole === 'VENDOR') {
             return res.status(201).json({
                 success: true,
