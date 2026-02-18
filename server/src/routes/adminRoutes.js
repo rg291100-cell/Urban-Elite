@@ -34,6 +34,8 @@ router.delete('/services/categories/:id', adminController.deleteServiceCategory)
 // Sub-Category Management (Level 2)
 router.get('/services/subcategories/:categoryId', adminServiceController.getSubCategories);
 router.post('/services/subcategories', adminServiceController.createSubCategory);
+router.put('/services/subcategories/:id', adminServiceController.updateSubCategory);
+router.delete('/services/subcategories/:id', adminServiceController.deleteSubCategory);
 
 // Service Item Management
 router.get('/services/categories/:categoryId/items', adminController.getServiceItems);

@@ -51,6 +51,49 @@ const getSubCategories = async (req, res) => {
     }
 };
 
+const updateSubCategory = async (req, res) => {
+    const { id } = req.params;
+    const { name, description, image } = req.body;
+    try {
+        const updates = {};
+        if (name) {
+            updates.name = name;
+            updates.slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        }
+        if (description !== undefined) updates.description = description;
+        if (image !== undefined) updates.image = image;
+
+        const { data, error } = await supabase
+            .from('service_subcategories')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json({ success: true, message: 'Subcategory updated', data });
+    } catch (error) {
+        console.error('Update SubCategory Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+const deleteSubCategory = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase
+            .from('service_subcategories')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true, message: 'Subcategory deleted' });
+    } catch (error) {
+        console.error('Delete SubCategory Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 
 // 3. Manage Service Items (Level 3 - Listings)
 // Renamed from createServiceItem to be specific to Level 3, but keeping old for legacy reference or update it.
@@ -148,6 +191,8 @@ module.exports = {
     createCategory,
     createSubCategory,
     getSubCategories,
+    updateSubCategory,
+    deleteSubCategory,
     createServiceItem,
     getServiceListing,
     getServiceItems,
