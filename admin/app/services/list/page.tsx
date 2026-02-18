@@ -104,8 +104,8 @@ export default function ServiceItemsListPage() {
 
     const handleSave = async () => {
         try {
-            if (!formData.title || !formData.price || !formData.subCategoryId) {
-                alert('Title, Price, and Sub-Category are required');
+            if (!formData.title || !formData.subCategoryId) {
+                alert('Title and Sub-Category are required');
                 return;
             }
 

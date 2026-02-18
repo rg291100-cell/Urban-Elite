@@ -59,8 +59,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
 
     const handleSave = async () => {
         try {
-            if (!formData.title || !formData.price) {
-                alert('Title and Price are required');
+            if (!formData.title) {
+                alert('Title is required');
                 return;
             }
 
