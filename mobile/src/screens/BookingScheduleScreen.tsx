@@ -1,36 +1,87 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    View, Text, StyleSheet, TouchableOpacity,
+    ScrollView, ActivityIndicator
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
+import { bookingAPI } from '../services/api';
 
 type BookingScheduleRouteProp = RouteProp<RootStackParamList, 'BookingSchedule'>;
+
+// Generate next 7 days as date options
+const buildDays = () => {
+    const days = [];
+    const now = new Date();
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() + i);
+        const weekday = d.toLocaleDateString('en-IN', { weekday: 'short' });
+        const dayNum = d.getDate();
+        const month = d.toLocaleDateString('en-IN', { month: 'short' });
+        // ISO date string for the API query (YYYY-MM-DD)
+        const iso = d.toISOString().split('T')[0];
+        const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : `${weekday}, ${dayNum} ${month}`;
+        days.push({ label, value: iso });
+    }
+    return days;
+};
+
+const ALL_SLOTS = [
+    '09:00 AM', '11:00 AM',
+    '01:00 PM', '03:00 PM',
+    '05:00 PM', '07:00 PM',
+];
 
 const BookingScheduleScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingScheduleRouteProp>();
-
-    // We can use this item to pass to the next step (Payment)
     const { item } = route.params || {};
-
     const insets = useSafeAreaInsets();
 
-    const [selectedDate, setSelectedDate] = useState('Today');
+    const days = buildDays();
+
+    const [selectedDate, setSelectedDate] = useState(days[0].value);
     const [selectedSlot, setSelectedSlot] = useState('');
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
 
-    const days = [
-        { label: 'Today', value: 'Today' },
-        { label: 'Tomorrow', value: 'Tomorrow' },
-        { label: 'Monday, 24th', value: 'Mon 24' },
-        { label: 'Tuesday, 25th', value: 'Tue 25' },
-    ];
+    // Extract vendorId if a vendor was selected upstream
+    const vendorId: string | undefined = item?.provider?.id || item?.vendorId;
 
-    const slots = [
-        '09:00 AM', '11:00 AM',
-        '01:00 PM', '03:00 PM',
-        '05:00 PM', '07:00 PM'
-    ];
+    const fetchBookedSlots = useCallback(async (date: string) => {
+        if (!vendorId) return; // No vendor selected → no availability to check
+        setLoadingSlots(true);
+        setSelectedSlot(''); // reset selection when date changes
+        try {
+            const res = await bookingAPI.getVendorAvailability(vendorId, date);
+            setBookedSlots(res.data?.bookedSlots || []);
+        } catch (err) {
+            console.warn('Could not fetch vendor availability:', err);
+            setBookedSlots([]);
+        } finally {
+            setLoadingSlots(false);
+        }
+    }, [vendorId]);
+
+    useEffect(() => {
+        fetchBookedSlots(selectedDate);
+    }, [selectedDate, fetchBookedSlots]);
+
+    // When date chip changes, auto-deselect slot if it was booked
+    const handleDateChange = (dateValue: string) => {
+        setSelectedDate(dateValue);
+        setSelectedSlot(''); // force re-pick when date changes
+    };
+
+    const handleSlotSelect = (slot: string) => {
+        if (bookedSlots.includes(slot)) return; // blocked
+        setSelectedSlot(slot);
+    };
+
+    const canContinue = !!selectedSlot && !bookedSlots.includes(selectedSlot);
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -53,34 +104,86 @@ const BookingScheduleScreen = () => {
                     </View>
                 </View>
 
+                {/* Vendor notice if availability loaded */}
+                {vendorId && (
+                    <View style={styles.availabilityNotice}>
+                        <Text style={styles.availabilityNoticeText}>
+                            🗓️ Showing real-time availability for your selected professional
+                        </Text>
+                    </View>
+                )}
+
                 {/* Date Selection */}
                 <Text style={styles.sectionLabel}>PICK A DAY</Text>
-                <View style={styles.gridContainer}>
-                    {days.map((day, index) => (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+                    {days.map((day) => (
                         <TouchableOpacity
-                            key={index}
+                            key={day.value}
                             style={[styles.dateButton, selectedDate === day.value && styles.selectedButton]}
-                            onPress={() => setSelectedDate(day.value)}
+                            onPress={() => handleDateChange(day.value)}
                         >
-                            <Text style={[styles.dateText, selectedDate === day.value && styles.selectedText]}>{day.label}</Text>
+                            <Text style={[styles.dateText, selectedDate === day.value && styles.selectedText]}>
+                                {day.label}
+                            </Text>
                         </TouchableOpacity>
                     ))}
+                </ScrollView>
+
+                {/* Time Slots */}
+                <View style={styles.slotsHeader}>
+                    <Text style={[styles.sectionLabel, { marginTop: 30, marginBottom: 0 }]}>AVAILABLE SLOTS</Text>
+                    {loadingSlots && (
+                        <ActivityIndicator size="small" color={Theme.colors.brandOrange} style={{ marginTop: 28 }} />
+                    )}
                 </View>
 
-                {/* Time Selection */}
-                <Text style={[styles.sectionLabel, { marginTop: 30 }]}>AVAILABLE SLOTS</Text>
                 <View style={styles.gridContainer}>
-                    {slots.map((slot, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={[styles.slotButton, selectedSlot === slot && styles.selectedButton]}
-                            onPress={() => setSelectedSlot(slot)}
-                        >
-                            <Text style={[styles.slotText, selectedSlot === slot && styles.selectedText]}>{slot}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    {ALL_SLOTS.map((slot) => {
+                        const isBooked = bookedSlots.includes(slot);
+                        const isSelected = selectedSlot === slot;
+                        return (
+                            <TouchableOpacity
+                                key={slot}
+                                style={[
+                                    styles.slotButton,
+                                    isSelected && styles.selectedButton,
+                                    isBooked && styles.bookedButton,
+                                ]}
+                                onPress={() => handleSlotSelect(slot)}
+                                disabled={isBooked}
+                                activeOpacity={isBooked ? 1 : 0.7}
+                            >
+                                <Text style={[
+                                    styles.slotText,
+                                    isSelected && styles.selectedText,
+                                    isBooked && styles.bookedText,
+                                ]}>
+                                    {slot}
+                                </Text>
+                                {isBooked && (
+                                    <Text style={styles.bookedLabel}>Booked</Text>
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
 
+                {bookedSlots.length > 0 && (
+                    <View style={styles.legend}>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: Theme.colors.brandOrange }]} />
+                            <Text style={styles.legendText}>Selected</Text>
+                        </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: '#E2E8F0' }]} />
+                            <Text style={styles.legendText}>Booked</Text>
+                        </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: '#F7FAFC' }]} />
+                            <Text style={styles.legendText}>Available</Text>
+                        </View>
+                    </View>
+                )}
             </ScrollView>
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
@@ -88,13 +191,14 @@ const BookingScheduleScreen = () => {
                     <Text style={styles.backButtonText}>Back</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.continueButton, !selectedSlot && styles.disabledButton]}
-                    disabled={!selectedSlot}
+                    style={[styles.continueButton, !canContinue && styles.disabledButton]}
+                    disabled={!canContinue}
                     onPress={() => {
                         navigation.navigate('BookingLocation', {
                             item,
                             date: selectedDate,
-                            slot: selectedSlot
+                            slot: selectedSlot,
+                            vendorId,
                         });
                     }}
                 >
@@ -111,45 +215,72 @@ const styles = StyleSheet.create({
     progressBar: { flexDirection: 'row', height: 4, backgroundColor: '#EDF2F7', borderRadius: 2 },
     progressStep: { flex: 1, borderRadius: 2, marginRight: 5 },
     completedStep: { backgroundColor: Theme.colors.brandOrange },
-    activeStep: { backgroundColor: Theme.colors.brandOrange }, // Or a lighter shade if indicating 'current'
+    activeStep: { backgroundColor: Theme.colors.brandOrange },
 
     content: { padding: 20 },
 
-    titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 40 },
+    titleContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30 },
     stepBadge: { width: 30, height: 30, borderRadius: 15, backgroundColor: Theme.colors.brandOrange, justifyContent: 'center', alignItems: 'center', marginRight: 15, marginTop: 5 },
     stepText: { color: '#FFF', fontWeight: 'bold' },
-    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36, },
+    pageTitle: { fontSize: 32, fontWeight: 'bold', color: '#000', lineHeight: 36 },
     subTitle: { fontSize: 16, color: '#718096', marginTop: 10, fontWeight: '600', maxWidth: 200 },
+
+    availabilityNotice: {
+        backgroundColor: '#EBF8FF',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#BEE3F8',
+    },
+    availabilityNoticeText: { fontSize: 13, color: '#2B6CB0', fontWeight: '500' },
 
     sectionLabel: { fontSize: 10, fontWeight: 'bold', color: '#A0AEC0', letterSpacing: 1.5, marginBottom: 15, textTransform: 'uppercase' },
 
-    gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    dateButton: { width: '48%', backgroundColor: '#F7FAFC', paddingVertical: 20, borderRadius: 20, alignItems: 'center', marginBottom: 15 },
-    dateText: { fontSize: 16, fontWeight: 'bold', color: '#4A5568' },
+    // Horizontal date scroll
+    dateScroll: { marginBottom: 5 },
+    dateButton: {
+        backgroundColor: '#F7FAFC',
+        paddingVertical: 14,
+        paddingHorizontal: 18,
+        borderRadius: 20,
+        alignItems: 'center',
+        marginRight: 10,
+        minWidth: 100,
+    },
+    dateText: { fontSize: 13, fontWeight: '700', color: '#4A5568' },
 
-    slotButton: { width: '48%', backgroundColor: '#F7FAFC', paddingVertical: 20, borderRadius: 20, alignItems: 'center', marginBottom: 15 },
-    slotText: { fontSize: 16, fontWeight: 'bold', color: '#4A5568' },
+    slotsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
 
-    selectedButton: { backgroundColor: Theme.colors.brandOrange },
-    // User image shows White text on "Today" but button background is white? Wait.
-    // In "Image 2", "Today" is selected? No, it looks like just buttons.
-    // Wait, the user image shows "Today" and "Tomorrow" button backgrounds are white/light-grey.
-    // Let's stick to a clear selection state. I'll use Dark Blue/Black for selected as per "Elite" theme or Orange.
-    // The design has "Continue" as Orange.
-    // I will use Theme.brandOrange for active selection too to be consistent, or keeping the dark text if unselected.
-    // Let's check "Image 2" again. The buttons are light grey. None seem selected in the screenshot except maybe they are all capable of selection.
+    gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 15 },
 
-    // Correction: "Image 2" shows "Continue" disabled (light orange) maybe?
-    // I'll implement selection logic: Unselected = Light Grey (#F7FAFC), Selected = Theme Orange or Dark.
-    // Let's go with Theme Orange for selected state to match the brand.
+    slotButton: {
+        width: '48%',
+        backgroundColor: '#F7FAFC',
+        paddingVertical: 18,
+        borderRadius: 20,
+        alignItems: 'center',
+        marginBottom: 15,
+        borderWidth: 1.5,
+        borderColor: 'transparent',
+    },
+    slotText: { fontSize: 15, fontWeight: '700', color: '#4A5568' },
 
-    // Oh wait, looking closer at Image 2 crop 2:
-    // "Today" background is #F7FAFC (light).
-    // The "Continue" button is disabled-ish (light orange).
-    // So default state is light grey.
-    // I will make selected state Text White and Background Orange.
+    bookedButton: {
+        backgroundColor: '#EDF2F7',
+        borderColor: '#E2E8F0',
+        opacity: 0.7,
+    },
+    bookedText: { color: '#A0AEC0', textDecorationLine: 'line-through' },
+    bookedLabel: { fontSize: 10, color: '#FC8181', fontWeight: '700', marginTop: 3, letterSpacing: 0.5 },
 
+    selectedButton: { backgroundColor: Theme.colors.brandOrange, borderColor: Theme.colors.brandOrange },
     selectedText: { color: '#FFF' },
+
+    legend: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 5, marginBottom: 10 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    legendDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: '#CBD5E0' },
+    legendText: { fontSize: 12, color: '#718096' },
 
     footer: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 20, alignItems: 'center', justifyContent: 'space-between' },
     backButton: { paddingVertical: 15, paddingHorizontal: 30, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', width: '30%', alignItems: 'center' },

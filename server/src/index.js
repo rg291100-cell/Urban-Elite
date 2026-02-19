@@ -34,6 +34,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const offersRoutes = require('./routes/offersRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const adminRequestRoutes = require('./routes/adminRequestRoutes');
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -45,8 +46,23 @@ app.use('/api/home', homeRoutes); // Handles /api/home and /api/services
 app.use('/api/chat', chatRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin-requests', adminRequestRoutes);
+
+
+// 404 Handler
+app.use((req, res, next) => {
+    console.log(`[404] Route not found: ${req.method} ${req.url}`);
+    res.status(404).json({ success: false, error: 'Route not found' });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error(`[500] Global Error:`, err);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+});
 
 app.listen(PORT, '0.0.0.0', () => {
+
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Access from network: http://192.168.1.47:${PORT}`);
 });

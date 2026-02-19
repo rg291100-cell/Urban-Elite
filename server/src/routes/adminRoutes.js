@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const adminServiceController = require('../controllers/adminServiceController');
+const adminRequestController = require('../controllers/adminRequestController');
 const adminMiddleware = require('../middleware/adminMiddleware');
 
 // All admin routes require admin authentication
@@ -54,5 +55,11 @@ router.post('/services/assign-vendor', adminController.assignServiceToVendor);
 
 // Payment Management
 router.get('/payments', adminController.getAllPayments);
+
+// Others Category (Admin Service Requests) Management
+router.get('/others-requests', adminRequestController.getAllAdminRequests);
+router.get('/others-requests/count', adminRequestController.getOthersRequestsCount);
+router.get('/others-requests/:id', adminRequestController.getAdminRequest);
+router.put('/others-requests/:id', adminRequestController.updateAdminRequest);
 
 module.exports = router;

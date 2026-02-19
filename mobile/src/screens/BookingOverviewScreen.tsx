@@ -70,7 +70,7 @@ const BookingOverviewScreen = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.continueButton}
-                    onPress={() => navigation.navigate('BookingSchedule', { item })}
+                    onPress={() => navigation.navigate('BookingSchedule', { item, vendorId: item?.provider?.id })}
                 >
                     <Text style={styles.continueButtonText}>Continue</Text>
                 </TouchableOpacity>

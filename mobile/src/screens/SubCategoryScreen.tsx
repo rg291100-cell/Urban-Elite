@@ -13,7 +13,7 @@ type SubCategoryRouteProp = RouteProp<RootStackParamList, 'SubCategory'>;
 const SubCategoryScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<SubCategoryRouteProp>();
-    const { slug, name } = route.params || { slug: 'repair-maintenance', name: 'Repair & Maintenance' };
+    const { slug, name, isOthers } = route.params || { slug: 'repair-maintenance', name: 'Repair & Maintenance', isOthers: false };
 
     const [subcategories, setSubcategories] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -75,14 +75,14 @@ const SubCategoryScreen = () => {
     const renderSubCategoryItem = useCallback(({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.gridItem}
-            onPress={() => navigation.navigate('ServiceListing', { slug: item.slug, name: item.name })}
+            onPress={() => navigation.navigate('ServiceListing', { slug: item.slug, name: item.name, isOthers })}
         >
             <View style={styles.iconContainer}>
                 <AutoIcon name={item.name} size={34} color={Theme.colors.brandOrange} />
             </View>
             <Text style={styles.serviceText}>{item.name}</Text>
         </TouchableOpacity>
-    ), [navigation]);
+    ), [navigation, isOthers]);
 
     if (loading) {
         return (

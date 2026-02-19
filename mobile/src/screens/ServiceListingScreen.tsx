@@ -11,7 +11,7 @@ import { AutoIcon } from '../utils/autoIcon';
 const ServiceListingScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<any>();
-    const { slug, name } = route.params || { slug: 'all', name: 'Services' };
+    const { slug, name, isOthers } = route.params || { slug: 'all', name: 'Services', isOthers: false };
 
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [filters, setFilters] = useState<string[]>([]);
@@ -79,27 +79,55 @@ const ServiceListingScreen = () => {
         outputRange: ['0%', '70%'],
     });
 
-    const renderServiceCard = useCallback(({ item }: { item: any }) => (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('ServiceDetail', { item })}
-        >
-            <View style={[styles.cardIconBox, { backgroundColor: item.color || '#FFF5F0' }]}>
-                <AutoIcon name={item.title} size={40} color={Theme.colors.brandOrange} />
-            </View>
+    const renderServiceCard = useCallback(({ item }: { item: any }) => {
+        // For Others category: navigate to request form instead of service detail
+        const handlePress = () => {
+            if (isOthers) {
+                navigation.navigate('OthersServiceRequest', {
+                    serviceName: item.title || item.name || name,
+                    serviceItemId: item.id,
+                    subcategoryName: name,
+                });
+            } else {
+                navigation.navigate('ServiceDetail', { item });
+            }
+        };
 
-            <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDuration}>{item.duration}</Text>
-                <Text style={styles.cardPrice}>{item.price}</Text>
-            </View>
+        return (
+            <TouchableOpacity
+                style={[styles.card, isOthers && styles.cardOthers]}
+                onPress={handlePress}
+            >
+                <View style={[styles.cardIconBox, { backgroundColor: item.color || (isOthers ? '#F5F0FF' : '#FFF5F0') }]}>
+                    <AutoIcon name={item.title} size={40} color={isOthers ? '#805AD5' : Theme.colors.brandOrange} />
+                </View>
 
-            <View style={styles.ratingBadge}>
-                <Text style={styles.star}>★</Text>
-                <Text style={styles.ratingText}>{item.rating}</Text>
-            </View>
-        </TouchableOpacity>
-    ), [navigation]);
+                <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={styles.cardDuration}>{isOthers ? 'ON DEMAND' : item.duration}</Text>
+                    {isOthers ? (
+                        <View style={styles.onDemandBadge}>
+                            <Text style={styles.onDemandText}>📋 Request Admin</Text>
+                        </View>
+                    ) : (
+                        <Text style={styles.cardPrice}>{item.price}</Text>
+                    )}
+                </View>
+
+                {!isOthers && (
+                    <View style={styles.ratingBadge}>
+                        <Text style={styles.star}>★</Text>
+                        <Text style={styles.ratingText}>{item.rating}</Text>
+                    </View>
+                )}
+                {isOthers && (
+                    <View style={[styles.ratingBadge, styles.adminBadge]}>
+                        <Text style={styles.adminBadgeText}>ADMIN</Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    }, [navigation, isOthers, name]);
 
     if (loading) {
         return (
@@ -298,15 +326,22 @@ const styles = StyleSheet.create({
 
     // Service Card
     card: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 25, marginHorizontal: 20, marginBottom: 20, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+    cardOthers: { borderLeftWidth: 3, borderLeftColor: '#805AD5' },
     cardIconBox: { width: 100, height: 100, borderRadius: 20, marginRight: 20, justifyContent: 'center', alignItems: 'center' },
     cardContent: { flex: 1 },
     cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A1025', marginBottom: 5 },
     cardDuration: { fontSize: 10, fontWeight: 'bold', color: '#A0AEC0', letterSpacing: 1, marginBottom: 10 },
     cardPrice: { fontSize: 20, fontWeight: '900', color: Theme.colors.brandOrange },
 
+    // Others / On-demand variants
+    onDemandBadge: { backgroundColor: '#FAF5FF', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start' },
+    onDemandText: { fontSize: 11, fontWeight: '700', color: '#805AD5' },
+
     ratingBadge: { position: 'absolute', bottom: 20, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFAF0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
     star: { color: '#ECC94B', fontSize: 12, marginRight: 4 },
     ratingText: { fontSize: 12, fontWeight: 'bold', color: '#D69E2E' },
+    adminBadge: { backgroundColor: '#EDE9FE' },
+    adminBadgeText: { fontSize: 10, fontWeight: '800', color: '#6B46C1', letterSpacing: 0.5 },
 
     // Empty state
     emptyContainer: { alignItems: 'center', paddingTop: 50, paddingBottom: 20 },

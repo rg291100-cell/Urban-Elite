@@ -7,11 +7,13 @@ const authMiddleware = async (req, res, next) => {
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.log('Auth middleware: No token provided - returning 401');
             return res.status(401).json({
                 success: false,
                 error: 'No token provided'
             });
         }
+
 
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 

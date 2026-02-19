@@ -16,15 +16,15 @@ export type RootStackParamList = {
     ACRepair: undefined;
     Revamp: undefined;
     NativeSmartHome: undefined;
-    SubCategory: { slug: string; name: string };
-    ServiceListing: { slug: string; name: string };
+    SubCategory: { slug: string; name: string; isOthers?: boolean };
+    ServiceListing: { slug: string; name: string; isOthers?: boolean };
     ServiceDetail: { item: any };
     VendorSelection: { item: any };
     BookingOverview: { item: any; vendor?: any };
-    BookingSchedule: { item: any };
-    BookingLocation: { item: any; date: string; slot: string };
-    BookingInstructions: { item: any; date: string; slot: string; location: any };
-    BookingReview: { item: any; date: string; slot: string; location: any; instructions: string; attachmentUrl?: string };
+    BookingSchedule: { item: any; vendorId?: string };
+    BookingLocation: { item: any; date: string; slot: string; vendorId?: string };
+    BookingInstructions: { item: any; date: string; slot: string; location: any; vendorId?: string };
+    BookingReview: { item: any; date: string; slot: string; location: any; instructions: string; attachmentUrl?: string; vendorId?: string };
     PersonalInformation: undefined;
     SavedAddresses: undefined;
     AddAddress: undefined;
@@ -42,6 +42,17 @@ export type RootStackParamList = {
     VendorNotificationSettings: undefined;
     VendorSupportHelp: undefined;
     VendorQuestionnaire: undefined;
+    // Others category flow screens
+    OthersServiceRequest: {
+        serviceName: string;
+        serviceItemId?: string;
+        categoryId?: string;
+        categoryName?: string;
+        subcategoryId?: string;
+        subcategoryName?: string;
+    };
+    OthersRequestSuccess: { requestId: string };
+    MyOthersRequests: undefined;
 };
 
 export type TabParamList = {

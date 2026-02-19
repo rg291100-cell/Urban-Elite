@@ -6,7 +6,7 @@ const getHomeData = async (req, res) => {
         console.log('Home Controller: Fetching home data...');
         const { data: services, error } = await supabase
             .from('service_categories')
-            .select('id, name, image, slug');
+            .select('id, name, image, slug, is_others');
 
         if (error) {
             console.error('Home Controller DB Error:', error);
@@ -26,12 +26,13 @@ const getHomeData = async (req, res) => {
     }
 };
 
-// Get Service Categories (for Vendor Registration)
+// Get Service Categories (for Vendor Registration - excludes Others)
 const getServiceCategories = async (req, res) => {
     try {
         const { data: categories, error } = await supabase
             .from('service_categories')
-            .select('*');
+            .select('*')
+            .or('is_others.is.null,is_others.eq.false'); // Exclude Others category from vendor signup
 
         if (error) throw error;
 

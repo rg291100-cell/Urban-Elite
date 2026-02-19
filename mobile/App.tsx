@@ -43,6 +43,9 @@ import VerifyOTPScreen from './src/screens/VerifyOTPScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import SubCategoryScreen from './src/screens/SubCategoryScreen';
 import ServiceListingScreen from './src/screens/ServiceListingScreen';
+import OthersServiceRequestScreen from './src/screens/OthersServiceRequestScreen';
+import OthersRequestSuccessScreen from './src/screens/OthersRequestSuccessScreen';
+import MyOthersRequestsScreen from './src/screens/MyOthersRequestsScreen';
 import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
@@ -135,6 +138,10 @@ export const RootNavigator = () => {
       <Stack.Screen name="VendorNotificationSettings" component={require('./src/screens/vendor/VendorNotificationSettingsScreen').default} />
       <Stack.Screen name="VendorSupportHelp" component={require('./src/screens/vendor/VendorSupportHelpScreen').default} />
       <Stack.Screen name="VendorQuestionnaire" component={require('./src/screens/vendor/VendorQuestionnaireScreen').default} />
+      {/* Others Category Flow */}
+      <Stack.Screen name="OthersServiceRequest" component={OthersServiceRequestScreen} />
+      <Stack.Screen name="OthersRequestSuccess" component={OthersRequestSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="MyOthersRequests" component={MyOthersRequestsScreen} />
     </Stack.Navigator>
   );
 };

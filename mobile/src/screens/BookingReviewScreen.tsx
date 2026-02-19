@@ -13,7 +13,8 @@ type BookingReviewRouteProp = RouteProp<RootStackParamList, 'BookingReview'>;
 const BookingReviewScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingReviewRouteProp>();
-    const { item, date, slot, location, instructions, attachmentUrl } = route.params || {};
+    const { item, date, slot, location, instructions, attachmentUrl, vendorId } = route.params || {};
+
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState<boolean>(false);
     const currentOrderId = React.useRef<string | null>(null);
@@ -95,18 +96,32 @@ const BookingReviewScreen = () => {
                 instructions: instructions || '',
                 price: item?.price || '₹0',
                 paymentMode: mode,
-                attachmentUrl: attachmentUrl
+                attachmentUrl: attachmentUrl,
+                vendorId: vendorId || null,
             });
 
             // Show confirmation popup
             setBookingConfirmed(true);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Booking creation error:', error);
-            Alert.alert('Error', 'Booking failed. Please contact support.');
+            const errCode = error?.response?.data?.errorCode;
+            if (errCode === 'VENDOR_SLOT_TAKEN') {
+                Alert.alert(
+                    '⚠️ Slot No Longer Available',
+                    error.response.data.error || 'This professional is already booked for that slot. Please go back and choose a different time or professional.',
+                    [
+                        { text: 'Change Time', onPress: () => navigation.navigate('BookingSchedule', { item, vendorId }) },
+                        { text: 'OK', style: 'cancel' },
+                    ]
+                );
+            } else {
+                Alert.alert('Error', 'Booking failed. Please contact support.');
+            }
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleBookingConfirmedClose = () => {
         setBookingConfirmed(false);

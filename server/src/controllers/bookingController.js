@@ -12,15 +12,35 @@ exports.createBooking = async (req, res) => {
             instructions,
             price,
             paymentMode,
-            attachmentUrl
+            attachmentUrl,
+            vendorId   // selected vendor/professional
         } = req.body;
 
-        console.log('Booking Request Received:', { serviceName, date, timeSlot, userId: req.user?.id, paymentMode });
+        console.log('Booking Request Received:', { serviceName, date, timeSlot, vendorId, userId: req.user?.id, paymentMode });
 
-        // Get authenticated user ID from middleware
-        const userId = req.user.id; // supabase auth uses 'id'
+        const userId = req.user.id;
 
-        // Insert into Supabase (professional will be assigned later)
+        // ── Vendor conflict check ─────────────────────────────────────────────
+        if (vendorId) {
+            const { data: conflict } = await supabase
+                .from('bookings')
+                .select('id')
+                .eq('vendor_id', vendorId)
+                .eq('date', date)
+                .eq('time_slot', timeSlot)
+                .not('status', 'eq', 'CANCELLED')
+                .maybeSingle();
+
+            if (conflict) {
+                return res.status(409).json({
+                    success: false,
+                    errorCode: 'VENDOR_SLOT_TAKEN',
+                    error: 'This professional is already booked for the selected date and time. Please choose a different slot or professional.'
+                });
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         const bookingData = {
             service_id: serviceId,
             service_name: serviceName,
@@ -32,27 +52,25 @@ exports.createBooking = async (req, res) => {
             status: 'PENDING',
             price,
             payment_mode: paymentMode || 'PREPAID',
-            professional_id: null,
+            professional_id: vendorId || null,
             professional_name: null,
             estimated_time: '12m',
             user_id: userId,
+            vendor_id: vendorId || null,
         };
 
-        // Include attachment_url only if provided (column may not exist yet in DB)
         if (attachmentUrl) {
             bookingData.attachment_url = attachmentUrl;
         }
 
         let booking, error;
 
-        // First attempt: with attachment_url if present
         ({ data: booking, error } = await supabase
             .from('bookings')
             .insert(bookingData)
             .select()
             .single());
 
-        // If column doesn't exist yet, retry without attachment_url
         if (error && error.message && error.message.includes('attachment_url')) {
             console.warn('attachment_url column not found, retrying without it...');
             const { attachment_url, ...dataWithoutAttachment } = bookingData;
@@ -61,6 +79,15 @@ exports.createBooking = async (req, res) => {
                 .insert(dataWithoutAttachment)
                 .select()
                 .single());
+        }
+
+        // Handle DB-level unique constraint violation (race-condition safety)
+        if (error && error.code === '23505') {
+            return res.status(409).json({
+                success: false,
+                errorCode: 'VENDOR_SLOT_TAKEN',
+                error: 'This professional was just booked for that slot by someone else. Please choose a different slot or professional.'
+            });
         }
 
         if (error) {
@@ -72,12 +99,12 @@ exports.createBooking = async (req, res) => {
             success: true,
             bookingId: booking.id,
             status: booking.status,
-            professional: booking.professional_id ? {
-                id: booking.professional_id,
+            professional: booking.vendor_id ? {
+                id: booking.vendor_id,
                 name: booking.professional_name
             } : null,
             estimatedArrival: booking.estimated_time,
-            message: 'Booking confirmed! A professional will be assigned shortly.'
+            message: 'Booking confirmed!'
         });
     } catch (error) {
         console.error('Error creating booking:', error);
@@ -87,6 +114,45 @@ exports.createBooking = async (req, res) => {
         });
     }
 };
+
+/**
+ * GET /api/bookings/vendor-availability
+ * Returns the booked time slots for a specific vendor on a specific date.
+ * Used by BookingScheduleScreen to grey-out taken slots.
+ *
+ * Query params: vendorId (required), date (required)
+ */
+exports.getVendorAvailability = async (req, res) => {
+    try {
+        const { vendorId, date } = req.query;
+
+        if (!vendorId || !date) {
+            return res.status(400).json({ success: false, error: 'vendorId and date are required' });
+        }
+
+        const { data: bookings, error } = await supabase
+            .from('bookings')
+            .select('time_slot')
+            .eq('vendor_id', vendorId)
+            .eq('date', date)
+            .not('status', 'eq', 'CANCELLED');
+
+        if (error) throw error;
+
+        const bookedSlots = (bookings || []).map(b => b.time_slot);
+
+        res.json({
+            success: true,
+            vendorId,
+            date,
+            bookedSlots // e.g. ["09:00 AM", "03:00 PM"]
+        });
+    } catch (error) {
+        console.error('Error fetching vendor availability:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch availability' });
+    }
+};
+
 
 // Get booking by ID
 exports.getBooking = async (req, res) => {

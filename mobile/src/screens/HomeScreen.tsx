@@ -1,14 +1,19 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList,
     ActivityIndicator, Animated, Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
+
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
-import { homeAPI } from '../services/api';
+import { homeAPI, notificationsAPI } from '../services/api';
+import { authService } from '../services/authService';
 import { Bell, User, Search, X } from 'lucide-react-native';
+
+
 import { AutoIcon } from '../utils/autoIcon';
 
 const HomeScreen = () => {
@@ -17,8 +22,30 @@ const HomeScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
     const searchInputRef = useRef<TextInput>(null);
     const searchAnim = useRef(new Animated.Value(0)).current;
+
+    // Refresh unread count whenever screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            authService.isAuthenticated().then(isAuth => {
+                if (isAuth) {
+                    notificationsAPI.getUnreadCount()
+                        .then(res => setUnreadCount(res.data.unreadCount || 0))
+                        .catch(err => {
+                            // Suppress 401 errors from unread count (avoid toast spam)
+                            if (err.response && err.response.status === 401) return;
+                            console.warn('Failed to fetch unread count', err);
+                        });
+                } else {
+                    setUnreadCount(0);
+                }
+            });
+        }, [])
+    );
+
+
 
     // Filtering — runs every render, always fresh
     const filteredServices = searchQuery.trim()
@@ -55,7 +82,8 @@ const HomeScreen = () => {
                 style={styles.gridItem}
                 onPress={() => {
                     const slug = item.slug || item.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-                    navigation.navigate('SubCategory', { slug, name: item.name });
+                    const isOthers = item.is_others === true || item.slug === 'others';
+                    navigation.navigate('SubCategory', { slug, name: item.name, isOthers });
                 }}
             >
                 <View style={styles.iconContainer}>
@@ -116,9 +144,14 @@ const HomeScreen = () => {
                     {!searchOpen && (
                         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
                             <Bell size={22} color={Theme.colors.textDark} />
-                            <View style={styles.notificationBadge} />
+                            {unreadCount > 0 && (
+                                <View style={styles.notificationBadge}>
+                                    <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     )}
+
                 </View>
             </View>
 
@@ -194,7 +227,28 @@ const styles = StyleSheet.create({
         justifyContent: 'center', alignItems: 'center',
         borderWidth: 1, borderColor: '#E2E8F0',
     },
-    notificationBadge: { width: 8, height: 8, backgroundColor: Theme.colors.primary, borderRadius: 4, position: 'absolute', top: 8, right: 8, borderWidth: 1, borderColor: '#FFF' },
+    notificationBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#EF4444', // Red for badge
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
+        borderColor: '#FFFFFF',
+        zIndex: 10,
+        paddingHorizontal: 3,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 9,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        lineHeight: 12,
+    },
 
     inlineSearchBar: {
         flexDirection: 'row', alignItems: 'center',

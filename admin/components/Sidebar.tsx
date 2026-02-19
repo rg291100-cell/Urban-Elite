@@ -12,7 +12,8 @@ import {
     CreditCard,
     LayoutGrid,
     GitBranch,
-    ClipboardList
+    ClipboardList,
+    Inbox,
 } from 'lucide-react';
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
     { name: 'Categories', href: '/services/categories', icon: LayoutGrid },
     { name: 'Sub-Category', href: '/services/subcategories', icon: GitBranch },
     { name: 'Services', href: '/services/list', icon: ClipboardList },
+    { name: 'Others Requests', href: '/others-requests', icon: Inbox },
     { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
 ];
 

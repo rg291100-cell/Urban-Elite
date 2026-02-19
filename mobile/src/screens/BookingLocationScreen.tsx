@@ -16,7 +16,7 @@ interface Location {
 const BookingLocationScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingLocationRouteProp>();
-    const { item, date, slot } = route.params || {};
+    const { item, date, slot, vendorId } = route.params || {};
     const insets = useSafeAreaInsets();
 
     const [locations, setLocations] = useState<any[]>([]);
@@ -143,7 +143,8 @@ const BookingLocationScreen = () => {
                         item,
                         date,
                         slot,
-                        location: selectedLocation
+                        location: selectedLocation,
+                        vendorId,
                     })}
                 >
                     <Text style={styles.continueButtonText}>Continue</Text>

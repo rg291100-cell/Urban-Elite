@@ -11,6 +11,7 @@ import { Bell } from 'lucide-react-native';
 const MENU_ITEMS = [
     { id: 'PersonalInformation', title: 'Personal Information', icon: '👤' },
     { id: 'SavedAddresses', title: 'Saved Addresses', icon: '📍' },
+    { id: 'MyOthersRequests', title: 'My Service Requests', icon: '📋' },
     { id: 'PaymentMethods', title: 'Payment Methods', icon: '💳' },
     { id: 'PushNotifications', title: 'Push Notifications', icon: '🔔' },
     { id: 'SupportHelp', title: 'Support & Help', icon: '🎧' },

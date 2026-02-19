@@ -13,7 +13,7 @@ type BookingInstructionsRouteProp = RouteProp<RootStackParamList, 'BookingInstru
 const BookingInstructionsScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<BookingInstructionsRouteProp>();
-    const { item, date, slot, location } = route.params || {};
+    const { item, date, slot, location, vendorId } = route.params || {};
     const insets = useSafeAreaInsets();
 
     const [instructions, setInstructions] = useState('');
@@ -139,7 +139,8 @@ const BookingInstructionsScreen = () => {
                         slot,
                         location,
                         instructions,
-                        attachmentUrl
+                        attachmentUrl,
+                        vendorId,
                     })}
                 >
                     <Text style={styles.continueButtonText}>Continue</Text>

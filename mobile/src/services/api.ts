@@ -4,7 +4,7 @@ import { authService } from './authService';
 
 import { API_URL } from '@env';
 
-// Use API_URL from .env for production, fallback to localhost for development
+// Use API_URL from .env for production, fallback to 10.0.2.2 for emulator
 const BASE_URL = API_URL || 'http://10.0.2.2:3000';
 
 const api = axios.create({
@@ -32,15 +32,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        // Only log if it's NOT a 401 (Unauthorized). 
+        // 401s are expected when switching between dev/prod environments
         if (error.response) {
-            console.error(`API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-                status: error.response.status,
-                data: error.response.data,
-            });
+            if (error.response.status !== 401) {
+                console.error(`API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+                    status: error.response.status,
+                    data: error.response.data,
+                });
+            }
         } else if (error.request) {
             console.error(`API No Response: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.request);
-        } else {
-            console.error('API Setup Error:', error.message);
         }
 
         if (error.response?.status === 401) {
@@ -114,10 +116,14 @@ export const bookingAPI = {
         price: string;
         paymentMode?: string;
         attachmentUrl?: string | null;
+        vendorId?: string | null;  // selected vendor/professional
     }) => api.post('/api/bookings', data),
     getBooking: (id: string) => api.get(`/api/bookings/${id}`),
     getBookingTracking: (id: string) => api.get(`/api/bookings/${id}/tracking`),
     cancelBooking: (id: string) => api.post(`/api/bookings/${id}/cancel`, {}),
+    // Returns booked time slots for a vendor on a given date
+    getVendorAvailability: (vendorId: string, date: string) =>
+        api.get('/api/bookings/vendor-availability', { params: { vendorId, date } }),
 }
 
 // Service Categories
@@ -137,6 +143,12 @@ export const vendorAPI = {
     updateServices: (services: any) => api.put('/api/vendor/services', { services }),
 };
 
+export const vendorListingAPI = {
+    getVendors: (params?: { categoryName?: string; categorySlug?: string; serviceItemId?: string; limit?: number }) =>
+        api.get('/api/home/vendors', { params }),
+    getVendorProfile: (id: string) => api.get(`/api/home/vendors/${id}`),
+};
+
 export const chatAPI = {
     getMessages: (bookingId: string) => api.get(`/api/chat/${bookingId}`),
     sendMessage: (bookingId: string, content: string) => api.post(`/api/chat/${bookingId}`, { content }),
@@ -151,6 +163,31 @@ export const offersAPI = {
 export const paymentAPI = {
     createOrder: (data: any) => api.post('/api/payments/create-order', data),
     verifyPayment: (data: any) => api.post('/api/payments/verify-payment', data),
+};
+
+export const adminRequestAPI = {
+    submitRequest: (data: {
+        categoryId?: string;
+        categoryName?: string;
+        subcategoryId?: string;
+        subcategoryName?: string;
+        serviceItemId?: string;
+        serviceName: string;
+        description: string;
+        preferredDate?: string;
+        preferredTime?: string;
+        location?: { type: string; address: string };
+        attachmentUrl?: string;
+    }) => api.post('/api/admin-requests', data),
+    getMyRequests: () => api.get('/api/admin-requests/my-requests'),
+};
+
+// Notifications
+export const notificationsAPI = {
+    getNotifications: () => api.get('/api/user/notifications'),
+    getUnreadCount: () => api.get('/api/user/notifications/unread-count'),
+    markRead: (notificationIds?: string[], all?: boolean) =>
+        api.post('/api/user/notifications/mark-read', { notificationIds, all }),
 };
 
 export default api;

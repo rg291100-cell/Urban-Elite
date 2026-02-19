@@ -9,6 +9,15 @@ const {
     getPaymentMethods, addPaymentMethod, deletePaymentMethod,
     getNotificationSettings, updateNotificationSettings
 } = require('../controllers/userController');
+const {
+    getUserNotifications,
+    markNotificationsRead,
+    getUnreadCount
+} = require('../controllers/notificationsController');
+
+console.log('User Routes loaded'); // DEBUG
+
+
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
@@ -36,7 +45,12 @@ router.post('/payment-methods', addPaymentMethod);
 router.delete('/payment-methods/:id', deletePaymentMethod);
 
 // Notifications
-router.get('/notifications/settings', getNotificationSettings);
+router.get('/notifications/settings', (req, res, next) => { console.log('Hit /notifications/settings'); next(); }, getNotificationSettings);
 router.put('/notifications/settings', updateNotificationSettings);
+router.get('/notifications/unread-count', (req, res, next) => { console.log('Hit /notifications/unread-count'); next(); }, getUnreadCount);
+router.post('/notifications/mark-read', markNotificationsRead);
+router.get('/notifications', getUserNotifications);
+
+
 
 module.exports = router;

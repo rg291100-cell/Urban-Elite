@@ -1,4 +1,5 @@
 const supabase = require('../config/database');
+const { createOfferNotification } = require('./notificationsController');
 
 // Get all active offers
 exports.getOffers = async (req, res) => {
@@ -60,11 +61,22 @@ exports.createOffer = async (req, res) => {
 
         if (error) throw error;
 
+        // 🔔 Automatically notify all users about this offer/job
+        createOfferNotification({
+            offerId: offer.id,
+            vendorId: role === 'VENDOR' ? userId : null,
+            type: offerData.type,
+            title,
+            description,
+            discountAmount,
+        });
+
         res.status(201).json({
             success: true,
             message: 'Offer created successfully',
             data: offer
         });
+
     } catch (error) {
         console.error('Error creating offer:', error);
         res.status(500).json({

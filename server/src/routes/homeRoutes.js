@@ -9,6 +9,7 @@ const {
     getSubCategoriesById,
     getServiceListingById
 } = require('../controllers/homeController');
+const { getVendorsForService, getVendorProfile } = require('../controllers/vendorListingController');
 
 router.get('/', getHomeData);
 router.get('/services/categories', getServiceCategories);
@@ -23,5 +24,9 @@ router.get('/listing/by-id/:subCategoryId', getServiceListingById); // New for r
 
 // Specific Item Detail
 router.get('/service/:id', getServiceDetailById);
+
+// Vendor Listing (for booking screen) — public route, no auth required
+router.get('/vendors', getVendorsForService);
+router.get('/vendors/:id', getVendorProfile);
 
 module.exports = router;

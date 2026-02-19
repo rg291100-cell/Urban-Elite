@@ -5,6 +5,10 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 // All booking routes require authentication
 router.post('/', authMiddleware, bookingController.createBooking);
+
+// Vendor availability — must be BEFORE /:id param route
+router.get('/vendor-availability', authMiddleware, bookingController.getVendorAvailability);
+
 router.get('/:id', authMiddleware, bookingController.getBooking);
 router.get('/:id/tracking', authMiddleware, bookingController.getBookingTracking);
 router.post('/:id/cancel', authMiddleware, bookingController.cancelBooking);
