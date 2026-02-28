@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "206297713985-9271mgjs64u47ahvakr0njnb4jvqhfke.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.urbanelite",
+            "certificate_hash": "13d9868b5a7f76d15657655cd5d341045901bf282"
+          }
+        },
+        {
           "client_id": "206297713985-hiijn9vngqa4flqi27aumdel2gcqvu4j.apps.googleusercontent.com",
           "client_type": 3
         }
