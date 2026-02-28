@@ -10,6 +10,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 import { authAPI } from '../services/api';
@@ -19,6 +20,7 @@ import {
     GoogleSignin,
     statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { supabase } from '../lib/supabase';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -34,59 +36,75 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
     useEffect(() => {
         GoogleSignin.configure({
-            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com', // From .env
-            offlineAccess: true,
+            webClientId: '206297713985-hiijn9vngqa4flqi27aumdel2gcqvu4j.apps.googleusercontent.com',
+            offlineAccess: true, // Required to receive idToken
         });
     }, []);
 
     const handleGoogleLogin = async () => {
         try {
             setLoading(true);
+
+            // Step 1: Check Play Services & trigger native Google Sign-In
+            await GoogleSignin.hasPlayServices();
             const response = await GoogleSignin.signIn();
 
-            // Check for success or data property depending on library version
-            // For newer versions, response might contain user info directly or in data property
-            const idToken = response.data ? response.data.idToken : (response as any).idToken;
+            // Handle both old and new library response shapes
+            const idToken = response.data?.idToken ?? (response as any).idToken;
 
-            if (idToken) {
-                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
-                const data = apiResponse.data;
-
-                if (!data.success) {
-                    throw new Error(data.error || 'Google Login failed');
-                }
-
-                await authService.setToken(data.token);
-                await authService.setUser(data.user);
-
-                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: targetScreen as any }],
-                });
-            } else {
-                // If response was cancelled or other status, handle gracefully
-                if (response.type === 'cancelled') {
+            if (!idToken) {
+                if ((response as any).type === 'cancelled') {
                     console.log('Google Sign in cancelled');
                     return;
                 }
                 throw new Error('No ID token received from Google');
             }
+
+            // Step 2: Create a Supabase session using the Google idToken
+            const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithIdToken({
+                provider: 'google',
+                token: idToken,
+            });
+
+            if (supabaseError) {
+                console.error('Supabase signInWithIdToken error:', supabaseError);
+                throw supabaseError;
+            }
+
+            if (!supabaseData.session) {
+                throw new Error('No session returned from Supabase');
+            }
+
+            console.log('Supabase session created for:', supabaseData.user?.email);
+
+            // Step 3: Sync user to our custom users table via backend
+            const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
+            const data = apiResponse.data;
+
+            if (!data.success) {
+                throw new Error(data.error || 'Google Login failed');
+            }
+
+            // Step 4: Store app-level token and user data
+            await authService.setToken(data.token);
+            await authService.setUser(data.user);
+
+            // Step 5: Navigate based on role
+            const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
+            navigation.reset({
+                index: 0,
+                routes: [{ name: targetScreen as any }],
+            });
+
         } catch (error: any) {
             if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                // user cancelled the login flow
                 console.log('Google Sign in cancelled');
             } else if (error.code === statusCodes.IN_PROGRESS) {
-                // operation (e.g. sign in) is in progress already
                 console.log('Google Sign in in progress');
             } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                // play services not available or outdated
-                Alert.alert('Error', 'Google Play Services not available');
+                Alert.alert('Error', 'Google Play Services not available or outdated');
             } else {
-                // some other error happened
                 console.error('Google login error:', error);
-
-                // Handle specific API errors
                 const errorData = error.response?.data;
                 if (errorData) {
                     if (errorData.approvalStatus === 'PENDING') {
@@ -100,7 +118,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     Alert.alert('Login Failed', errorData.error || 'Google login failed');
                     return;
                 }
-
                 Alert.alert('Google Login Failed', error.message || 'An error occurred');
             }
         } finally {
@@ -240,6 +257,12 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                         onPress={handleGoogleLogin}
                         disabled={loading}
                     >
+                        <Svg width={20} height={20} viewBox="0 0 48 48" style={{ marginRight: 10 }}>
+                            <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                            <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                            <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                            <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                        </Svg>
                         <Text style={styles.googleButtonText}>Continue with Google</Text>
                     </TouchableOpacity>
 

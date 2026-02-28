@@ -1,39 +1,47 @@
 {
-    "project_info": {
-        "project_number": "473322533502",
-        "project_id": "urban-elite-487307",
-        "storage_bucket": "urban-elite-487307.appspot.com"
-    },
-    "client": [
-        {
-            "client_info": {
-                "mobilesdk_app_id": "1:473322533502:android:0000000000000000",
-                "android_client_info": {
-                    "package_name": "com.urbanelite"
-                }
-            },
-            "oauth_client": [
-                {
-                    "client_id": "473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com",
-                    "client_type": 3
-                }
-            ],
-            "api_key": [
-                {
-                    "current_key": "AIzaSyDUMMYKEY"
-                }
-            ],
-            "services": {
-                "appinvite_service": {
-                    "other_platform_oauth_client": [
-                        {
-                            "client_id": "473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com",
-                            "client_type": 3
-                        }
-                    ]
-                }
-            }
+  "project_info": {
+    "project_number": "206297713985",
+    "project_id": "urban-elite-1f185",
+    "storage_bucket": "urban-elite-1f185.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:206297713985:android:7fc519ab5d86cd2e8be5c0",
+        "android_client_info": {
+          "package_name": "com.urbanelite"
         }
-    ],
-    "configuration_version": "1"
+      },
+      "oauth_client": [
+        {
+          "client_id": "206297713985-u3lh4bfdhnhdcgt4sjctqttg3e08oang.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.urbanelite",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "206297713985-hiijn9vngqa4flqi27aumdel2gcqvu4j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDW5eSPkupI2nYUfqiCYa9p_PSuDxcbHnQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "206297713985-hiijn9vngqa4flqi27aumdel2gcqvu4j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

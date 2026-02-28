@@ -23,10 +23,7 @@ import { Camera, Image as ImageIcon, FileText, CheckCircle2, Upload, X } from 'l
 import { storageService } from '../services/storage';
 import { authService } from '../services/authService';
 import { Theme } from '../theme';
-import {
-    GoogleSignin,
-    statusCodes,
-} from '@react-native-google-signin/google-signin';
+
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -68,12 +65,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
     const [showServiceDropdown, setShowServiceDropdown] = useState(false);
 
-    useEffect(() => {
-        GoogleSignin.configure({
-            webClientId: '473322533502-dheriad0mjmdiq6a9e191ui11sknp230.apps.googleusercontent.com',
-            offlineAccess: true,
-        });
-    }, []);
+
 
     useEffect(() => {
         if (selectedRole === 'VENDOR') {
@@ -317,34 +309,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         }
     };
 
-    const handleGoogleLogin = async () => {
-        try {
-            setLoading(true);
-            const response = await GoogleSignin.signIn();
-            const idToken = response.data ? response.data.idToken : (response as any).idToken;
 
-            if (idToken) {
-                const apiResponse = await authAPI.googleLogin(idToken, selectedRole);
-                const data = apiResponse.data;
-
-                if (!data.success) throw new Error(data.error || 'Google Sign Up failed');
-
-                await authService.setToken(data.token);
-                await authService.setUser(data.user);
-
-                const targetScreen = data.user.role === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
-                navigation.reset({ index: 0, routes: [{ name: targetScreen as any }] });
-            } else {
-                if (response.type === 'cancelled') return;
-                throw new Error('No ID token received from Google');
-            }
-        } catch (error: any) {
-            console.error('Google login error:', error);
-            Alert.alert('Google Sign Up Failed', error.message || 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     return (
         <KeyboardAvoidingView
@@ -544,13 +509,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                             )}
                         </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={[styles.googleButton, loading && styles.buttonDisabled]}
-                            onPress={handleGoogleLogin}
-                            disabled={loading}
-                        >
-                            <Text style={styles.googleButtonText}>Continue with Google</Text>
-                        </TouchableOpacity>
+
 
                         <View style={styles.loginContainer}>
                             <Text style={styles.loginText}>Already have an account? </Text>
