@@ -145,14 +145,14 @@ const ServiceListingScreen = () => {
             {/* Header Cluster - Fixed above FlatList */}
             <View style={styles.header}>
                 {!searchOpen && (
-                    <View style={styles.logoContainer}>
+                    <TouchableOpacity activeOpacity={0.7} style={styles.logoContainer} onPress={() => navigation.navigate("MainTabs" as any, { screen: "Explore" } as any)}>
                         <View style={styles.logoIcon}>
                             <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
                             <Text style={styles.titleUrban}>OLFIX</Text>
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 <View style={styles.headerRight}>

@@ -135,42 +135,6 @@ export const RootNavigator = () => {
 // ── Root App ──────────────────────────────────────────────────────────────────
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const backPressedOnce = useRef(false);
-
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      const nav = navigationRef.current;
-      if (!nav) return false;
-
-      // Navigator has screens it can pop → go back normally
-      if (nav.canGoBack()) {
-        nav.goBack();
-        return true;
-      }
-
-      // At a root screen — show exit confirmation (double-back or dialog)
-      if (backPressedOnce.current) {
-        BackHandler.exitApp();
-        return true;
-      }
-
-      backPressedOnce.current = true;
-      Alert.alert(
-        'Exit App',
-        'Press back again to exit Olfix.',
-        [
-          { text: 'Stay', onPress: () => { backPressedOnce.current = false; }, style: 'cancel' },
-          { text: 'Exit', onPress: () => BackHandler.exitApp(), style: 'destructive' },
-        ],
-        { cancelable: true, onDismiss: () => { backPressedOnce.current = false; } }
-      );
-
-      setTimeout(() => { backPressedOnce.current = false; }, 2000);
-      return true;
-    });
-
-    return () => sub.remove();
-  }, []);
 
   if (showSplash) {
     return (

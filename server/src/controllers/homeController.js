@@ -201,7 +201,6 @@ const getServiceDetailById = async (req, res) => {
             specifications: service.description || `Professional ${service.title} service. Our certified experts ensure top-quality results using premium tools and safe practices. Guaranteed satisfaction with post-service support.`,
             features: [
                 'Certified Professional',
-                'Insurance Covered',
                 '100% Guaranteed',
                 'Post-Service Support'
             ],

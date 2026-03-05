@@ -38,7 +38,7 @@ const BookingsScreen = () => {
                     <Text style={styles.logoIconText}>⚡</Text>
                 </View>
                 <Text style={styles.headerTitle}>
-                    <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                    <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
             </TouchableOpacity>
             <NotificationBell navigation={navigation} />
