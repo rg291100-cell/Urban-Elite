@@ -12,6 +12,7 @@ import {
     Platform,
     Modal,
     FlatList,
+    PermissionsAndroid,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
@@ -173,6 +174,30 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         fetchSubCategories(category.id);
     };
 
+    const requestCameraPermission = async (): Promise<boolean> => {
+        if (Platform.OS !== 'android') return true;
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.CAMERA,
+                {
+                    title: 'Camera Permission',
+                    message: 'This app needs access to your camera to take document photos.',
+                    buttonNeutral: 'Ask Me Later',
+                    buttonNegative: 'Cancel',
+                    buttonPositive: 'OK',
+                }
+            );
+            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                Alert.alert('Permission Denied', 'Camera permission is required to take photos. Please enable it in Settings.');
+                return false;
+            }
+            return true;
+        } catch (err) {
+            console.warn('Camera permission error:', err);
+            return false;
+        }
+    };
+
     const handleFileUpload = async (type: 'aadhaar' | 'pan', source: 'camera' | 'library' | 'pdf') => {
         try {
             let fileData: any = null;
@@ -189,11 +214,20 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     quality: 0.7,
                 };
 
+                if (source === 'camera') {
+                    const hasPermission = await requestCameraPermission();
+                    if (!hasPermission) return;
+                }
+
                 const result = source === 'camera'
                     ? await launchCamera(options)
                     : await launchImageLibrary(options);
 
                 if (result.didCancel) return;
+                if (result.errorCode) {
+                    Alert.alert('Camera Error', result.errorMessage || 'Could not open camera.');
+                    return;
+                }
                 if (result.assets && result.assets.length > 0) {
                     fileData = {
                         uri: result.assets[0].uri,
@@ -983,65 +1017,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Theme.colors.textDark,
     },
-    checkmark: {
-        fontSize: 18,
-        color: '#D4AF37',
-        fontWeight: 'bold',
-    },
-    dropdownCancel: {
-        marginTop: 16,
-        padding: 16,
-        backgroundColor: '#F1F5F9',
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    dropdownCancelText: {
-        fontSize: 16,
-        color: '#0F172A',
-        fontWeight: '600',
-    },
-    optionsModal: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        width: '100%',
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#0F172A',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    optionItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        marginBottom: 4,
-    },
-    optionIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-        backgroundColor: '#F8FAFC',
-    },
-    optionText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#0F172A',
-    },
-    // The previous cancelBtn style might be duplicate, ensuring consistent naming
-    // We already have cancelBtn defined above, if we want to override or use this one:
-    // If it's duplicate, keys will just be overwritten. 
-    // Let's assume these are the intended styles for the modal options.
 });
 
 export default RegisterScreen;

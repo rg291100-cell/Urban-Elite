@@ -2,24 +2,25 @@ const supabase = require('../config/database');
 
 /**
  * GET /api/user/notifications
- * Returns all global notifications, enriched with read status for the calling user.
- * Also returns the unread count.
+ * Returns global broadcast notifications + personal notifications targeted at the calling user.
+ * Enriched with read status. Ordered newest first.
  */
 exports.getUserNotifications = async (req, res) => {
     try {
-        console.log('GET /notifications hit for user:', req.user.id);
         const userId = req.user.id;
 
-        // Fetch all notifications (newest first), max 50
+        // Fetch broadcast notifications (target_user_id IS NULL) +
+        // personal notifications addressed to this user
         const { data: notifications, error: nErr } = await supabase
             .from('notifications')
             .select('*, vendor:users!notifications_vendor_id_fkey(name, business_name)')
+            .or(`target_user_id.is.null,target_user_id.eq.${userId}`)
             .order('created_at', { ascending: false })
-            .limit(50);
+            .limit(80);
 
         if (nErr) throw nErr;
 
-        // Fetch which of these the user has already read
+        // Fetch which notifications this user has already read
         const { data: reads, error: rErr } = await supabase
             .from('notification_reads')
             .select('notification_id')
@@ -34,11 +35,13 @@ exports.getUserNotifications = async (req, res) => {
             type: n.type,
             title: n.title,
             message: n.message,
-            icon: n.icon || (n.type === 'OFFER' ? '🎁' : n.type === 'JOB' ? '💼' : '🔔'),
+            icon: n.icon || iconForType(n.type),
             actionLabel: n.action_label,
             actionData: n.action_data,
-            vendorName: n.vendor?.business_name || n.vendor?.name || 'Urban Elite',
+            vendorName: n.vendor?.business_name || n.vendor?.name || 'Olfix',
             offerId: n.offer_id,
+            bookingId: n.booking_id,
+            isPersonal: !!n.target_user_id,
             unread: !readSet.has(n.id),
             createdAt: n.created_at,
             timeAgo: formatTimeAgo(n.created_at),
@@ -46,11 +49,7 @@ exports.getUserNotifications = async (req, res) => {
 
         const unreadCount = enriched.filter(n => n.unread).length;
 
-        res.json({
-            success: true,
-            notifications: enriched,
-            unreadCount,
-        });
+        res.json({ success: true, notifications: enriched, unreadCount });
     } catch (error) {
         console.error('Error fetching notifications:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch notifications' });
@@ -60,7 +59,7 @@ exports.getUserNotifications = async (req, res) => {
 
 /**
  * POST /api/user/notifications/mark-read
- * Body: { notificationIds: string[] }  OR  { all: true } to mark everything read
+ * Body: { notificationIds: string[] }  OR  { all: true }
  */
 exports.markNotificationsRead = async (req, res) => {
     try {
@@ -68,10 +67,11 @@ exports.markNotificationsRead = async (req, res) => {
         const { notificationIds, all } = req.body;
 
         if (all) {
-            // Fetch all notification IDs first
+            // Fetch all relevant notification IDs for this user
             const { data: allNotes } = await supabase
                 .from('notifications')
-                .select('id');
+                .select('id')
+                .or(`target_user_id.is.null,target_user_id.eq.${userId}`);
 
             const ids = (allNotes || []).map(n => n.id);
             if (ids.length > 0) {
@@ -98,41 +98,30 @@ exports.markNotificationsRead = async (req, res) => {
     }
 };
 
+
 /**
  * GET /api/user/notifications/unread-count
- * Lightweight endpoint used to show the badge on the bell icon.
+ * Lightweight — only returns the badge count for the bell icon.
  */
 exports.getUnreadCount = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        console.log('GET /notifications/unread-count hit for user:', userId);
-
-        // Total notifications
+        // Count notifications visible to this user (broadcast + personal)
         const { count: total, error: totalErr } = await supabase
             .from('notifications')
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true })
+            .or(`target_user_id.is.null,target_user_id.eq.${userId}`);
 
-        if (totalErr) {
-            console.error('Error fetching total notifications:', totalErr);
-            throw totalErr;
-        }
+        if (totalErr) throw totalErr;
 
-
-        // How many the user has read
-        // How many the user has read
+        // Count how many they've read
         const { count: readCount, error: readErr } = await supabase
             .from('notification_reads')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', userId);
 
-        if (readErr) {
-            console.error('Error fetching read count:', readErr);
-            throw readErr;
-        }
-
-        console.log(`Unread count calculation: Total=${total}, Read=${readCount}`);
-
+        if (readErr) throw readErr;
 
         const unreadCount = Math.max(0, (total || 0) - (readCount || 0));
 
@@ -143,10 +132,12 @@ exports.getUnreadCount = async (req, res) => {
     }
 };
 
-// ─── Internal helper — called by offersController after inserting an offer ────
+
+// ─── Internal Helpers — called by other controllers ───────────────────────────
+
 /**
- * Creates a notification entry for a newly posted offer or job opening.
- * Not an HTTP handler — called directly from offersController.
+ * Creates a broadcast notification when a vendor/admin posts an offer or job.
+ * target_user_id = NULL → delivered to all users.
  */
 exports.createOfferNotification = async ({ offerId, vendorId, type, title, description, discountAmount }) => {
     try {
@@ -163,18 +154,114 @@ exports.createOfferNotification = async ({ offerId, vendorId, type, title, descr
             icon: isJob ? '💼' : '🎁',
             offer_id: offerId,
             vendor_id: vendorId || null,
+            target_user_id: null, // Broadcast
             action_label: isJob ? 'VIEW JOB →' : 'CLAIM NOW →',
             action_data: { screen: 'Ads', offerId },
         });
 
-        console.log(`[Notifications] Created notification for ${isJob ? 'job' : 'offer'}: ${title}`);
+        console.log(`[Notifications] Broadcast notification created for ${isJob ? 'job' : 'offer'}: ${title}`);
     } catch (err) {
-        // Non-fatal — don't block the offer creation
-        console.error('[Notifications] Failed to create notification:', err.message);
+        console.error('[Notifications] Failed to create offer notification:', err.message);
     }
 };
 
-// ─── Utility ──────────────────────────────────────────────────────────────────
+/**
+ * Notifies the assigned VENDOR that they received a new booking.
+ * target_user_id = vendorId → only vendor sees it.
+ */
+exports.createBookingNotificationForVendor = async ({ bookingId, vendorId, serviceName, date, timeSlot, userName }) => {
+    if (!vendorId) return;
+    try {
+        await supabase.from('notifications').insert({
+            type: 'BOOKING',
+            title: '📅 New Booking Received!',
+            message: `${userName || 'A customer'} booked ${serviceName} on ${date} at ${timeSlot}. Please confirm.`,
+            icon: '📅',
+            booking_id: bookingId,
+            target_user_id: vendorId, // Personal — vendor only
+            action_label: 'VIEW BOOKING →',
+            action_data: { screen: 'VendorBookings', bookingId },
+        });
+        console.log(`[Notifications] New booking notification sent to vendor ${vendorId}`);
+    } catch (err) {
+        console.error('[Notifications] Failed to notify vendor of booking:', err.message);
+    }
+};
+
+/**
+ * Notifies the USER about a booking status change.
+ * target_user_id = userId → only that user sees it.
+ */
+exports.createBookingStatusNotificationForUser = async ({ bookingId, userId, serviceName, newStatus }) => {
+    if (!userId) return;
+    try {
+        const { icon, title, message, actionLabel } = getStatusNotificationContent(newStatus, serviceName);
+
+        await supabase.from('notifications').insert({
+            type: 'BOOKING_UPDATE',
+            title,
+            message,
+            icon,
+            booking_id: bookingId,
+            target_user_id: userId, // Personal — user only
+            action_label: actionLabel,
+            action_data: { screen: 'BookingDetail', params: { bookingId } },
+        });
+        console.log(`[Notifications] Booking status update (${newStatus}) sent to user ${userId}`);
+    } catch (err) {
+        console.error('[Notifications] Failed to notify user of status change:', err.message);
+    }
+};
+
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function iconForType(type) {
+    switch (type) {
+        case 'OFFER': return '🎁';
+        case 'JOB': return '💼';
+        case 'BOOKING': return '📅';
+        case 'BOOKING_UPDATE': return '🔄';
+        default: return '🔔';
+    }
+}
+
+function getStatusNotificationContent(status, serviceName) {
+    switch (status?.toUpperCase()) {
+        case 'ACCEPTED':
+            return {
+                icon: '✅', title: 'Booking Accepted!',
+                message: `Your ${serviceName} booking has been accepted. Your professional is getting ready.`,
+                actionLabel: 'TRACK →'
+            };
+        case 'ACTIVE':
+        case 'IN_PROGRESS':
+            return {
+                icon: '🔧', title: 'Service In Progress',
+                message: `Your ${serviceName} service has started. Track your professional in real-time.`,
+                actionLabel: 'TRACK NOW →'
+            };
+        case 'COMPLETED':
+            return {
+                icon: '⭐', title: 'Service Completed!',
+                message: `Your ${serviceName} service is done. How was your experience? Leave a review.`,
+                actionLabel: 'RATE SERVICE →'
+            };
+        case 'CANCELLED':
+            return {
+                icon: '❌', title: 'Booking Cancelled',
+                message: `Your ${serviceName} booking has been cancelled. Tap to rebook or contact support.`,
+                actionLabel: 'REBOOK →'
+            };
+        default:
+            return {
+                icon: '🔔', title: `Booking Update: ${status}`,
+                message: `Your ${serviceName} booking status changed to ${status}.`,
+                actionLabel: 'VIEW →'
+            };
+    }
+}
+
 function formatTimeAgo(dateStr) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);

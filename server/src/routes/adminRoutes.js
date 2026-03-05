@@ -62,4 +62,11 @@ router.get('/others-requests/count', adminRequestController.getOthersRequestsCou
 router.get('/others-requests/:id', adminRequestController.getAdminRequest);
 router.put('/others-requests/:id', adminRequestController.updateAdminRequest);
 
+// Offers / Ads / Job Openings Management
+const offersController = require('../controllers/offersController');
+router.get('/offers', offersController.getAllOffers);
+router.post('/offers', offersController.createOffer);
+router.put('/offers/:id', offersController.updateOffer);
+router.delete('/offers/:id', offersController.deleteOffer);
+
 module.exports = router;

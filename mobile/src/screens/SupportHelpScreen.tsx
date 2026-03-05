@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Phone, Mail, MessageCircle, ChevronRight, HelpCircle } from 'lucide-react-native';
+import { ArrowLeft, Phone, Mail, ChevronRight, HelpCircle } from 'lucide-react-native';
 import { Theme } from '../theme';
 
 if (Platform.OS === 'android') {
@@ -42,13 +42,6 @@ const SupportHelpScreen = () => {
                             <Phone size={24} color="#0EA5E9" />
                         </View>
                         <Text style={styles.contactLabel}>Call Us</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.contactCard}>
-                        <View style={[styles.contactIconBox, { backgroundColor: '#DCFCE7' }]}>
-                            <MessageCircle size={24} color="#22C55E" />
-                        </View>
-                        <Text style={styles.contactLabel}>Chat with Us</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.contactCard}>

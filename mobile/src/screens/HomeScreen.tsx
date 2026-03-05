@@ -108,14 +108,18 @@ const HomeScreen = () => {
             {/* ── HEADER (always mounted, never inside FlatList) ── */}
             <View style={styles.header}>
                 {!searchOpen && (
-                    <View style={styles.logoContainer}>
+                    <TouchableOpacity
+                        style={styles.logoContainer}
+                        onPress={() => navigation.navigate('MainTabs' as any, { screen: 'Explore' } as any)}
+                        activeOpacity={0.75}
+                    >
                         <View style={styles.logoIcon}>
                             <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
                             <Text style={styles.titleUrban}>OLFIX</Text>
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 <View style={styles.headerRight}>

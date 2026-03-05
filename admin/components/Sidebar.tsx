@@ -14,6 +14,7 @@ import {
     GitBranch,
     ClipboardList,
     Inbox,
+    Megaphone,
 } from 'lucide-react';
 
 const navigation = [
@@ -25,6 +26,7 @@ const navigation = [
     { name: 'Sub-Category', href: '/services/subcategories', icon: GitBranch },
     { name: 'Services', href: '/services/list', icon: ClipboardList },
     { name: 'Others Requests', href: '/others-requests', icon: Inbox },
+    { name: 'Offers & Ads', href: '/offers', icon: Megaphone },
     { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
 ];
 
@@ -40,7 +42,7 @@ export default function Sidebar() {
     return (
         <div className="flex flex-col h-full bg-gray-900 text-white w-64">
             <div className="p-6">
-                <h1 className="text-2xl font-bold">Urban Elite</h1>
+                <h1 className="text-2xl font-bold">Olfix</h1>
                 <p className="text-gray-400 text-sm">Admin Panel</p>
             </div>
 

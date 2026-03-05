@@ -1,4 +1,5 @@
 const supabase = require('../config/database');
+const { createBookingStatusNotificationForUser } = require('./notificationsController');
 
 // Get vendor dashboard data
 exports.getDashboard = async (req, res) => {
@@ -190,6 +191,15 @@ exports.updateBookingStatus = async (req, res) => {
             message: 'Booking status updated successfully',
             data: booking
         });
+
+        // 🔔 Notify user of status change (non-blocking, after response)
+        createBookingStatusNotificationForUser({
+            bookingId: booking.id,
+            userId: booking.user_id,
+            serviceName: booking.service_name,
+            newStatus: status,
+        }).catch(err => console.error('[Notification] Error notifying user:', err.message));
+
     } catch (error) {
         console.error('Error updating booking status:', error);
         res.status(500).json({

@@ -1,4 +1,8 @@
 const supabase = require('../config/database');
+const {
+    createBookingNotificationForVendor,
+    createBookingStatusNotificationForUser,
+} = require('./notificationsController');
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
@@ -106,6 +110,27 @@ exports.createBooking = async (req, res) => {
             estimatedArrival: booking.estimated_time,
             message: 'Booking confirmed!'
         });
+
+        // 🔔 Notify vendor of new booking (non-blocking, after response)
+        if (vendorId) {
+            // Fetch user's name for the notification message
+            supabase
+                .from('users')
+                .select('name')
+                .eq('id', userId)
+                .single()
+                .then(({ data: userRow }) => {
+                    createBookingNotificationForVendor({
+                        bookingId: booking.id,
+                        vendorId,
+                        serviceName,
+                        date,
+                        timeSlot,
+                        userName: userRow?.name || 'A customer',
+                    });
+                })
+                .catch(err => console.error('[Notification] Could not fetch user name:', err.message));
+        }
     } catch (error) {
         console.error('Error creating booking:', error);
         res.status(500).json({

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StatusBar, ActivityIndicator, View } from 'react-native';
+import { StatusBar, ActivityIndicator, View, BackHandler, Alert } from 'react-native';
+import { authService } from './src/services/authService';
+
+import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
@@ -22,7 +25,6 @@ import BookingScheduleScreen from './src/screens/BookingScheduleScreen';
 import BookingLocationScreen from './src/screens/BookingLocationScreen';
 import BookingInstructionsScreen from './src/screens/BookingInstructionsScreen';
 import BookingReviewScreen from './src/screens/BookingReviewScreen';
-
 import SavedAddressesScreen from './src/screens/SavedAddressesScreen';
 import AddAddressScreen from './src/screens/AddAddressScreen';
 import PaymentMethodsScreen from './src/screens/PaymentMethodsScreen';
@@ -46,17 +48,18 @@ import ServiceListingScreen from './src/screens/ServiceListingScreen';
 import OthersServiceRequestScreen from './src/screens/OthersServiceRequestScreen';
 import OthersRequestSuccessScreen from './src/screens/OthersRequestSuccessScreen';
 import MyOthersRequestsScreen from './src/screens/MyOthersRequestsScreen';
-import { authService } from './src/services/authService';
 
 const Stack = createStackNavigator();
 
+// ── Shared navigation ref — lets BackHandler reach the active navigator ────────
+export const navigationRef = React.createRef<NavigationContainerRef<any>>();
+
+// ── Stack navigator (all screens) ─────────────────────────────────────────────
 export const RootNavigator = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {
     const authenticated = await authService.isAuthenticated();
@@ -67,7 +70,6 @@ export const RootNavigator = () => {
     setIsAuthenticated(authenticated);
   };
 
-  // Show loading while checking auth
   if (isAuthenticated === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -76,20 +78,10 @@ export const RootNavigator = () => {
     );
   }
 
-  // Determine initial route based on authentication and role
-  const getInitialRoute = () => {
-    if (!isAuthenticated) return 'Login';
-    return userRole === 'VENDOR' ? 'VendorTabs' : 'MainTabs';
-  };
+  const initialRoute = !isAuthenticated ? 'Login' : (userRole === 'VENDOR' ? 'VendorTabs' : 'MainTabs');
 
   return (
-    <Stack.Navigator
-      initialRouteName={getInitialRoute()}
-      screenOptions={{
-        headerShown: false,
-        cardStyle: { backgroundColor: '#FFFFFF' }
-      }}
-    >
+    <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#FFFFFF' } }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -97,11 +89,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="MainTabs" component={TabNavigator} />
       <Stack.Screen name="VendorTabs" component={VendorTabNavigator} />
-      <Stack.Screen
-        name="Notifications"
-        component={NotificationScreen}
-        options={{ presentation: 'modal' }}
-      />
+      <Stack.Screen name="Notifications" component={NotificationScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="InstaHelp" component={InstaHelpScreen} />
       <Stack.Screen name="WomensSalon" component={WomensSalonScreen} />
       <Stack.Screen name="MensSalon" component={MensSalonScreen} />
@@ -131,14 +119,12 @@ export const RootNavigator = () => {
       <Stack.Screen name="VendorSelection" component={VendorSelectionScreen} />
       <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
       <Stack.Screen name="SubCategory" component={SubCategoryScreen} />
-
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <Stack.Screen name="VendorCreateOffer" component={VendorCreateOfferScreen} />
       <Stack.Screen name="VendorPersonalInformation" component={require('./src/screens/vendor/VendorPersonalInformationScreen').default} />
       <Stack.Screen name="VendorNotificationSettings" component={require('./src/screens/vendor/VendorNotificationSettingsScreen').default} />
       <Stack.Screen name="VendorSupportHelp" component={require('./src/screens/vendor/VendorSupportHelpScreen').default} />
       <Stack.Screen name="VendorQuestionnaire" component={require('./src/screens/vendor/VendorQuestionnaireScreen').default} />
-      {/* Others Category Flow */}
       <Stack.Screen name="OthersServiceRequest" component={OthersServiceRequestScreen} />
       <Stack.Screen name="OthersRequestSuccess" component={OthersRequestSuccessScreen} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="MyOthersRequests" component={MyOthersRequestsScreen} />
@@ -146,10 +132,45 @@ export const RootNavigator = () => {
   );
 };
 
-import SplashScreen from './src/screens/SplashScreen';
-
+// ── Root App ──────────────────────────────────────────────────────────────────
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const backPressedOnce = useRef(false);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      const nav = navigationRef.current;
+      if (!nav) return false;
+
+      // Navigator has screens it can pop → go back normally
+      if (nav.canGoBack()) {
+        nav.goBack();
+        return true;
+      }
+
+      // At a root screen — show exit confirmation (double-back or dialog)
+      if (backPressedOnce.current) {
+        BackHandler.exitApp();
+        return true;
+      }
+
+      backPressedOnce.current = true;
+      Alert.alert(
+        'Exit App',
+        'Press back again to exit Olfix.',
+        [
+          { text: 'Stay', onPress: () => { backPressedOnce.current = false; }, style: 'cancel' },
+          { text: 'Exit', onPress: () => BackHandler.exitApp(), style: 'destructive' },
+        ],
+        { cancelable: true, onDismiss: () => { backPressedOnce.current = false; } }
+      );
+
+      setTimeout(() => { backPressedOnce.current = false; }, 2000);
+      return true;
+    });
+
+    return () => sub.remove();
+  }, []);
 
   if (showSplash) {
     return (
@@ -163,7 +184,7 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <RootNavigator />
       </NavigationContainer>
     </SafeAreaProvider>

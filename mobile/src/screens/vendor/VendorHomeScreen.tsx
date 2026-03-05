@@ -5,7 +5,8 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../../theme';
 import { RootStackParamList } from '../../types/navigation';
 import { vendorAPI } from '../../services/api';
-import { Calendar, Clock, DollarSign, Briefcase, Bell } from 'lucide-react-native';
+import { Calendar, Clock, DollarSign } from 'lucide-react-native';
+import NotificationBell from '../../components/NotificationBell';
 
 const VendorHomeScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -43,22 +44,20 @@ const VendorHomeScreen = () => {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <View style={styles.logoContainer}>
+                    <TouchableOpacity
+                        style={styles.logoContainer}
+                        onPress={() => navigation.navigate('VendorTabs' as any, { screen: 'Dashboard' } as any)}
+                        activeOpacity={0.75}
+                    >
                         <View style={styles.logoIcon}>
                             <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
                             <Text style={styles.titleUrban}>OLFIX</Text>
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <TouchableOpacity
-                            style={styles.notificationButton}
-                            onPress={() => navigation.navigate('Notifications' as any)}
-                        >
-                            <Bell size={24} color={Theme.colors.textDark} />
-                            <View style={styles.notificationBadge} />
-                        </TouchableOpacity>
+                        <NotificationBell navigation={navigation} />
                         <TouchableOpacity
                             style={[styles.notificationButton, { marginLeft: 10, backgroundColor: Theme.colors.brandOrange }]}
                             onPress={() => navigation.navigate('VendorCreateOffer' as any)}

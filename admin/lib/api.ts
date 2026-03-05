@@ -94,6 +94,12 @@ export const adminAPI = {
 
     // Payments
     getPayments: () => api.get('/admin/payments'),
+
+    // Offers / Ads / Job Openings
+    getOffers: () => api.get('/admin/offers'),
+    createOffer: (data: any) => api.post('/admin/offers', data),
+    updateOffer: (id: string, data: any) => api.put(`/admin/offers/${id}`, data),
+    deleteOffer: (id: string) => api.delete(`/admin/offers/${id}`),
 };
 
 export default api;

@@ -39,7 +39,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                 <Text style={styles.title}>
                     <Text style={styles.urban}>OLFIX</Text>
                 </Text>
-                <Text style={styles.tagline}>One call fixes all</Text>
+                <Text style={styles.tagline}>One call fix all</Text>
             </Animated.View>
         </View>
     );

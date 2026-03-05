@@ -34,7 +34,8 @@ const getUserProfile = async (req, res) => {
             phone: user.phone,
             location: user.location,
             isPremium: user.is_premium,
-            walletBalance: `₹${calculatedBalance}`
+            walletBalance: `₹${calculatedBalance}`,
+            profileImageUrl: user.profile_image_url || null,
         });
     } catch (error) {
         console.error(error);
@@ -109,8 +110,9 @@ const updateProfile = async (req, res) => {
         if (primaryService) updateData.primary_service = primaryService;
 
         // Experience Years
-        const { experienceYears } = req.body;
+        const { experienceYears, profileImageUrl } = req.body;
         if (experienceYears) updateData.experience_years = experienceYears;
+        if (profileImageUrl) updateData.profile_image_url = profileImageUrl;
 
         // Also map name/location to business_name/address for consistency if user is vendor
         if (req.user.role === 'VENDOR') {

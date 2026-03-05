@@ -5,7 +5,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { userAPI } from '../services/api';
-import { Bell } from 'lucide-react-native';
+import NotificationBell from '../components/NotificationBell';
 
 const BookingsScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -29,21 +29,19 @@ const BookingsScreen = () => {
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <View style={styles.logoContainer}>
+            <TouchableOpacity
+                style={styles.logoContainer}
+                onPress={() => navigation.navigate('MainTabs' as any, { screen: 'Explore' } as any)}
+                activeOpacity={0.75}
+            >
                 <View style={styles.logoIcon}>
                     <Text style={styles.logoIconText}>⚡</Text>
                 </View>
                 <Text style={styles.headerTitle}>
                     <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
                 </Text>
-            </View>
-            <TouchableOpacity
-                style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
-            >
-                <Bell size={22} color={Theme.colors.textDark} />
-                <View style={styles.notificationBadge} />
             </TouchableOpacity>
+            <NotificationBell navigation={navigation} />
         </View>
     );
 

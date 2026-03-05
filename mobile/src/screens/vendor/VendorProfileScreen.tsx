@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import {
+    View, Text, StyleSheet, ScrollView, TouchableOpacity,
+    ActivityIndicator, Image, Alert, Platform, PermissionsAndroid,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../../theme';
 import { RootStackParamList } from '../../types/navigation';
 import { userAPI } from '../../services/api';
+import { Camera } from 'lucide-react-native';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { storageService } from '../../services/storage';
 
 const MENU_ITEMS = [
     { id: 'VendorPersonalInformation', title: 'Business Information', icon: '🏢' },
@@ -13,10 +19,13 @@ const MENU_ITEMS = [
     { id: 'VendorQuestionnaire', title: 'Vendor Questionnaire', icon: '📝' },
 ];
 
+const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+
 const VendorProfileScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -38,6 +47,76 @@ const VendorProfileScreen = () => {
             index: 0,
             routes: [{ name: 'Login' }],
         });
+    };
+
+    const requestCameraPermission = async (): Promise<boolean> => {
+        if (Platform.OS !== 'android') return true;
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.CAMERA,
+                {
+                    title: 'Camera Permission',
+                    message: 'Allow access to camera to take a profile photo.',
+                    buttonNegative: 'Cancel',
+                    buttonPositive: 'OK',
+                }
+            );
+            return granted === PermissionsAndroid.RESULTS.GRANTED;
+        } catch {
+            return false;
+        }
+    };
+
+    const handleChangePhoto = () => {
+        Alert.alert('Change Profile Photo', 'Choose an option', [
+            {
+                text: 'Take Photo',
+                onPress: async () => {
+                    const hasPerm = await requestCameraPermission();
+                    if (!hasPerm) {
+                        Alert.alert('Permission Denied', 'Camera permission is required.');
+                        return;
+                    }
+                    const result = await launchCamera({ mediaType: 'photo', includeBase64: true, quality: 0.7 });
+                    if (!result.didCancel && result.assets?.[0]) handleUpload(result.assets[0]);
+                },
+            },
+            {
+                text: 'Choose from Gallery',
+                onPress: async () => {
+                    const result = await launchImageLibrary({ mediaType: 'photo', includeBase64: true, quality: 0.7 });
+                    if (!result.didCancel && result.assets?.[0]) handleUpload(result.assets[0]);
+                },
+            },
+            { text: 'Cancel', style: 'cancel' },
+        ]);
+    };
+
+    const handleUpload = async (asset: any) => {
+        if (!asset.base64) return;
+        setUploadingPhoto(true);
+        try {
+            const fileName = `profile_${Date.now()}.jpg`;
+            const uploadResult = await storageService.uploadFile(
+                'profile-images',
+                `vendors/${fileName}`,
+                asset.base64,
+                asset.type || 'image/jpeg'
+            );
+
+            if (uploadResult.error) {
+                Alert.alert('Upload Failed', uploadResult.error);
+                return;
+            }
+
+            await userAPI.updateProfile({ profileImageUrl: uploadResult.url });
+            setProfile((prev: any) => ({ ...prev, profileImageUrl: uploadResult.url }));
+            Alert.alert('Success', 'Profile photo updated!');
+        } catch (err: any) {
+            Alert.alert('Error', err.message || 'Failed to upload photo');
+        } finally {
+            setUploadingPhoto(false);
+        }
     };
 
     if (loading) {
@@ -66,12 +145,21 @@ const VendorProfileScreen = () => {
                 <View style={styles.contentContainer}>
                     {/* Profile Header */}
                     <View style={styles.profileHeader}>
-                        <View style={styles.avatarContainer}>
+                        <TouchableOpacity style={styles.avatarWrapper} onPress={handleChangePhoto} disabled={uploadingPhoto}>
                             <Image
-                                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }}
+                                source={{ uri: profile?.profileImageUrl || DEFAULT_AVATAR }}
                                 style={styles.avatar}
                             />
-                        </View>
+                            {uploadingPhoto ? (
+                                <View style={styles.avatarOverlay}>
+                                    <ActivityIndicator size="small" color="#fff" />
+                                </View>
+                            ) : (
+                                <View style={styles.cameraIcon}>
+                                    <Camera size={14} color="#fff" />
+                                </View>
+                            )}
+                        </TouchableOpacity>
                         <View style={styles.profileInfo}>
                             <Text style={styles.userName}>{profile?.name || 'Vendor'}</Text>
                             <Text style={styles.userTag}>VERIFIED VENDOR</Text>
@@ -135,10 +223,43 @@ const styles = StyleSheet.create({
     contentContainer: { paddingHorizontal: 20 },
 
     profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 25, paddingVertical: 10 },
-    avatarContainer: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center', marginRight: 20, borderWidth: 2, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-    avatar: { width: 40, height: 40, tintColor: Theme.colors.brandOrange },
+    avatarWrapper: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        marginRight: 20,
+        position: 'relative',
+    },
+    avatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        borderWidth: 3,
+        borderColor: Theme.colors.brandOrange,
+    },
+    avatarOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        borderRadius: 40,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cameraIcon: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: Theme.colors.brandOrange,
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
     profileInfo: { flex: 1 },
-    userName: { fontSize: 24, fontWeight: 'bold', color: '#1A202C',  },
+    userName: { fontSize: 24, fontWeight: 'bold', color: '#1A202C' },
     userTag: { fontSize: 10, fontWeight: 'bold', color: Theme.colors.brandOrange, letterSpacing: 1, marginTop: 5 },
 
     statsContainer: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 15, padding: 20, marginBottom: 25, borderWidth: 1, borderColor: '#F3F4F6' },
@@ -151,7 +272,7 @@ const styles = StyleSheet.create({
     menuItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', padding: 15, borderRadius: 20, marginBottom: 15 },
     menuIconBox: { width: 40, height: 40, backgroundColor: '#FFFFFF', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
     menuIcon: { fontSize: 18, color: '#4A5568' },
-    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2D3748',  },
+    menuTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2D3748' },
     chevron: { fontSize: 24, color: '#CBD5E0', fontWeight: 'bold' },
 
     logoutButton: { paddingVertical: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FED7D7', alignItems: 'center', backgroundColor: '#FFF5F5' },

@@ -63,7 +63,7 @@ const TopupScreen = () => {
                 orderCurrency: 'INR',
                 customerId: 'USER_ID_HERE', // In real app, get from auth service
                 customerPhone: '9999999999',
-                customerName: 'Urban Elite User',
+                customerName: 'Olfix User',
                 customerEmail: 'user@example.com'
             });
 

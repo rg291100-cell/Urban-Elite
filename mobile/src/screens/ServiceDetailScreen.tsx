@@ -49,8 +49,8 @@ const ServiceDetailScreen = () => {
     // Default fallback features if loading
     const defaultFeatures = [
         'Certified Professional',
-        'Insurance Covered',
-        '100% Guaranteed',
+        'Quality Guaranteed',
+        '100% Satisfaction',
         'Post-Service Support'
     ];
 

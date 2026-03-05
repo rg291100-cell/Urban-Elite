@@ -5,7 +5,8 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { offersAPI } from '../services/api';
-import { Tag, Clock, Briefcase, MapPin, Bell } from 'lucide-react-native';
+import { Tag, Clock, Briefcase, MapPin } from 'lucide-react-native';
+import NotificationBell from '../components/NotificationBell';
 
 const AdsScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -37,20 +38,19 @@ const AdsScreen = () => {
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <View style={styles.logoContainer}>
+            <TouchableOpacity
+                style={styles.logoContainer}
+                onPress={() => navigation.navigate('MainTabs' as any, { screen: 'Explore' } as any)}
+                activeOpacity={0.75}
+            >
                 <View style={styles.logoIcon}>
                     <Text style={styles.logoIconText}>🛠️</Text>
                 </View>
                 <Text style={styles.headerTitle}>
                     <Text style={styles.titleUrban}>OLFIX</Text>
                 </Text>
-            </View>
-            <TouchableOpacity
-                style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
-            >
-                <Bell size={22} color={Theme.colors.textDark} />
             </TouchableOpacity>
+            <NotificationBell navigation={navigation} />
         </View>
     );
 

@@ -60,9 +60,7 @@ const SavedAddressesScreen = () => {
                     <ArrowLeft size={24} color={Theme.colors.textDark} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Saved Addresses</Text>
-                <TouchableOpacity style={styles.addButton}>
-                    <Plus size={24} color={Theme.colors.brandOrange} />
-                </TouchableOpacity>
+                <View style={{ width: 34 }} />
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>

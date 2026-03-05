@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 
 // Basic Route
 app.get('/', (req, res) => {
-    res.send('Urban Elite API is running');
+    res.send('Olfix API is running');
 });
 
 const homeRoutes = require('./routes/homeRoutes');

@@ -34,7 +34,7 @@ const createOrder = async (req, res) => {
             customer_details: {
                 customer_id: String(userId || customerId || `GUEST_${Date.now()}`),
                 customer_phone: String(customerPhone || "9999999999"),
-                customer_name: String(customerName || "Urban Elite User"),
+                customer_name: String(customerName || "Olfix User"),
                 customer_email: String(customerEmail || "user@example.com")
             }
         };

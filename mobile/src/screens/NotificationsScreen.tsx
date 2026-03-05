@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { notificationsAPI } from '../services/api';
+import { CheckCheck } from 'lucide-react-native';
 
 interface Notification {
     id: string;
@@ -109,9 +110,28 @@ const NotificationsScreen = () => {
             </View>
             <View style={styles.cardFooter}>
                 <Text style={styles.time}>{item.time}</Text>
-                {item.actionLabel && (
-                    <Text style={styles.action}>{item.actionLabel}</Text>
-                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    {item.unread && (
+                        <TouchableOpacity
+                            style={styles.markOneReadBtn}
+                            onPress={async (e) => {
+                                e.stopPropagation?.();
+                                try {
+                                    await notificationsAPI.markRead([item.id]);
+                                    setNotifications(prev =>
+                                        prev.map(n => n.id === item.id ? { ...n, unread: false } : n)
+                                    );
+                                } catch { /* silent */ }
+                            }}
+                        >
+                            <CheckCheck size={13} color={Theme.colors.brandOrange} />
+                            <Text style={styles.markOneReadText}>Mark read</Text>
+                        </TouchableOpacity>
+                    )}
+                    {item.actionLabel && (
+                        <Text style={styles.action}>{item.actionLabel}</Text>
+                    )}
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -205,6 +225,15 @@ const styles = StyleSheet.create({
     footer: { padding: 20, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#F7FAFC' },
     markReadButton: { backgroundColor: '#F7FAFC', paddingVertical: 18, borderRadius: 20, alignItems: 'center' },
     markReadText: { color: '#718096', fontSize: 12, fontWeight: 'bold', letterSpacing: 2 },
+
+    // Per-item mark read
+    markOneReadBtn: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: '#FFF7ED',
+        borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+        borderWidth: 1, borderColor: '#FFEDD5',
+    },
+    markOneReadText: { color: Theme.colors.brandOrange, fontSize: 10, fontWeight: '700' },
 });
 
 export default NotificationsScreen;
