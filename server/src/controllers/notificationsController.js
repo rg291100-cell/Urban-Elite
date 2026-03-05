@@ -232,14 +232,14 @@ function getStatusNotificationContent(status, serviceName) {
             return {
                 icon: '✅', title: 'Booking Accepted!',
                 message: `Your ${serviceName} booking has been accepted. Your professional is getting ready.`,
-                actionLabel: 'TRACK →'
+                actionLabel: 'VIEW DETAILS →'
             };
         case 'ACTIVE':
         case 'IN_PROGRESS':
             return {
                 icon: '🔧', title: 'Service In Progress',
-                message: `Your ${serviceName} service has started. Track your professional in real-time.`,
-                actionLabel: 'TRACK NOW →'
+                message: `Your ${serviceName} service has started.`,
+                actionLabel: 'VIEW STATUS →'
             };
         case 'COMPLETED':
             return {

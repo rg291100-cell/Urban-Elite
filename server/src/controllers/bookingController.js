@@ -227,46 +227,6 @@ exports.getBooking = async (req, res) => {
     }
 };
 
-// Get booking tracking info
-exports.getBookingTracking = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const { data: booking, error } = await supabase
-            .from('bookings')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (error || !booking) {
-            return res.status(404).json({
-                success: false,
-                error: 'Booking not found'
-            });
-        }
-
-        // Simulate live tracking data
-        res.json({
-            success: true,
-            professional: {
-                name: booking.professional_name,
-                location: {
-                    lat: 19.0760 + (Math.random() - 0.5) * 0.01,
-                    lng: 72.8777 + (Math.random() - 0.5) * 0.01
-                }
-            },
-            status: booking.status.toUpperCase(),
-            estimatedTime: booking.estimated_time
-        });
-    } catch (error) {
-        console.error('Error fetching tracking:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch tracking data'
-        });
-    }
-};
-
 // Get all bookings for user
 exports.getUserBookings = async (req, res) => {
     try {

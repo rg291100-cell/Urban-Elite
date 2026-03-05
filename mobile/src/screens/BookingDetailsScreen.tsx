@@ -5,7 +5,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { bookingAPI } from '../services/api';
-import { MapPin, Calendar, Clock, MessageCircle, Navigation, XCircle } from 'lucide-react-native';
+import { MapPin, Calendar, Clock, MessageCircle, XCircle } from 'lucide-react-native';
 
 type BookingDetailsRouteProp = RouteProp<RootStackParamList, 'BookingDetails'>;
 
@@ -147,14 +147,6 @@ const BookingDetailsScreen = () => {
                 {/* Actions - Debugging: Force Show if Status Exists */}
                 {booking.status && (
                     <View style={styles.actions}>
-                        <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: Theme.colors.brandOrange }]}
-                            onPress={() => navigation.navigate('BookingTracking', { bookingId: bookingId })}
-                        >
-                            <Navigation size={20} color="white" />
-                            <Text style={styles.actionBtnText}>Track Order</Text>
-                        </TouchableOpacity>
-
                         <TouchableOpacity
                             style={[styles.actionBtn, { backgroundColor: '#FEE2E2', marginTop: 15 }]}
                             onPress={handleCancel}

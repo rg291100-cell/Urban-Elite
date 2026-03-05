@@ -10,7 +10,6 @@ router.post('/', authMiddleware, bookingController.createBooking);
 router.get('/vendor-availability', authMiddleware, bookingController.getVendorAvailability);
 
 router.get('/:id', authMiddleware, bookingController.getBooking);
-router.get('/:id/tracking', authMiddleware, bookingController.getBookingTracking);
 router.post('/:id/cancel', authMiddleware, bookingController.cancelBooking);
 router.get('/user/all', authMiddleware, bookingController.getUserBookings);
 

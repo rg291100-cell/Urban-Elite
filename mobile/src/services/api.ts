@@ -119,7 +119,6 @@ export const bookingAPI = {
         vendorId?: string | null;  // selected vendor/professional
     }) => api.post('/api/bookings', data),
     getBooking: (id: string) => api.get(`/api/bookings/${id}`),
-    getBookingTracking: (id: string) => api.get(`/api/bookings/${id}/tracking`),
     cancelBooking: (id: string) => api.post(`/api/bookings/${id}/cancel`, {}),
     // Returns booked time slots for a vendor on a given date
     getVendorAvailability: (vendorId: string, date: string) =>
