@@ -13,29 +13,65 @@ const supabase = require('../config/database');
  */
 exports.getVendorsForService = async (req, res) => {
     try {
-        const { categoryName, categorySlug, limit = 20 } = req.query;
+        const {
+            categoryName,
+            categorySlug,
+            categoryId,
+            subCategoryId,
+            serviceItemId,
+            limit = 20
+        } = req.query;
 
-        let query = supabase
-            .from('users')
-            .select(
-                'id, name, email, phone, profile_image, business_name, service_category, ' +
-                'experience_years, vendor_rating, total_jobs, total_reviews, specialty, approval_status'
-            )
-            .eq('role', 'VENDOR')
-            .eq('approval_status', 'APPROVED')
-            .order('vendor_rating', { ascending: false })
-            .limit(parseInt(limit));
+        let vendors = [];
+        let error = null;
 
-        // Filter by category name (case-insensitive match)
-        if (categoryName) {
-            query = query.ilike('service_category', `%${categoryName}%`);
-        } else if (categorySlug) {
-            // Convert slug to approximate name match
-            const nameFromSlug = categorySlug.replace(/-/g, ' ');
-            query = query.ilike('service_category', `%${nameFromSlug}%`);
+        // STRATEGY A: If serviceItemId is provided, filter by explicit service offering
+        if (serviceItemId) {
+            const { data, error: vsError } = await supabase
+                .from('vendor_services')
+                .select(`
+                    users (
+                        id, name, email, phone, profile_image, business_name, service_category, 
+                        experience_years, vendor_rating, total_jobs, total_reviews, specialty, approval_status
+                    )
+                `)
+                .eq('service_item_id', serviceItemId)
+                .eq('users.role', 'VENDOR')
+                .eq('users.approval_status', 'APPROVED');
+
+            error = vsError;
+            // Flatten the response because it's joined
+            vendors = (data || []).map(item => item.users).filter(u => u !== null);
         }
+        // STRATEGY B: Filter by IDs if provided (New registration format)
+        else {
+            let query = supabase
+                .from('users')
+                .select(
+                    'id, name, email, phone, profile_image, business_name, service_category, ' +
+                    'experience_years, vendor_rating, total_jobs, total_reviews, specialty, approval_status'
+                )
+                .eq('role', 'VENDOR')
+                .eq('approval_status', 'APPROVED')
+                .order('vendor_rating', { ascending: false })
+                .limit(parseInt(limit));
 
-        const { data: vendors, error } = await query;
+            if (subCategoryId) {
+                query = query.eq('sub_category_id', subCategoryId);
+            } else if (categoryId) {
+                query = query.eq('service_category_id', categoryId);
+            } else if (categoryName) {
+                // Legacy / Keyword fallback
+                query = query.ilike('service_category', `%${categoryName}%`);
+            } else if (categorySlug) {
+                const nameFromSlug = categorySlug.replace(/-/g, ' ');
+                query = query.ilike('service_category', `%${nameFromSlug}%`);
+            }
+
+            const { data, error: qError } = await query;
+            vendors = data || [];
+            error = qError;
+        }
 
         if (error) throw error;
 

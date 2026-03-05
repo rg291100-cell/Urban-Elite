@@ -51,9 +51,18 @@ const VendorSelectionScreen = () => {
         setError(null);
 
         try {
-            const response = await vendorListingAPI.getVendors(
-                categoryName ? { categoryName, limit: 30 } : { limit: 30 }
-            );
+            // Get accurate IDs from the service item
+            const serviceItemId = item?.id;
+            const categoryId = item?.category_id;
+            const subCategoryId = item?.subcategory_id;
+
+            const response = await vendorListingAPI.getVendors({
+                serviceItemId,
+                categoryId,
+                subCategoryId,
+                categoryName,
+                limit: 30
+            });
             const data = response.data;
             if (data?.success) {
                 setVendors(data.vendors || []);

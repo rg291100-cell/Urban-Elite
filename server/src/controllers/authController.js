@@ -59,11 +59,17 @@ exports.register = async (req, res) => {
         };
 
         if (userRole === 'VENDOR') {
-            // We store IDs now. Frontend should send IDs.
+            // Fetch category name for the legacy service_category field
+            const { data: catData } = await supabase
+                .from('service_categories')
+                .select('name')
+                .eq('id', serviceCategory)
+                .single();
+
             userData.service_category_id = serviceCategory;
             userData.sub_category_id = subCategory;
-            // Legacy field support (store ID as string or fetch name if needed, assuming ID for now)
-            userData.service_category = serviceCategory;
+            // Store Name instead of ID in the legacy text field for backward compatibility 
+            userData.service_category = catData ? catData.name : serviceCategory;
 
             userData.business_name = businessName;
             userData.business_address = businessAddress;

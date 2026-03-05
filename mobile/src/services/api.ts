@@ -144,7 +144,7 @@ export const vendorAPI = {
 };
 
 export const vendorListingAPI = {
-    getVendors: (params?: { categoryName?: string; categorySlug?: string; serviceItemId?: string; limit?: number }) =>
+    getVendors: (params?: { categoryName?: string; categorySlug?: string; categoryId?: string; subCategoryId?: string; serviceItemId?: string; limit?: number }) =>
         api.get('/api/home/vendors', { params }),
     getVendorProfile: (id: string) => api.get(`/api/home/vendors/${id}`),
 };
