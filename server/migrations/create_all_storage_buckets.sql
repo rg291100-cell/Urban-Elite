@@ -60,7 +60,7 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "kyc_authenticated_upload" ON storage.objects;
 CREATE POLICY "kyc_authenticated_upload"
 ON storage.objects FOR INSERT
-TO authenticated
+TO public
 WITH CHECK (bucket_id = 'kyc-documents');
 
 DROP POLICY IF EXISTS "kyc_owner_read" ON storage.objects;
@@ -68,6 +68,12 @@ CREATE POLICY "kyc_owner_read"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'kyc-documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+DROP POLICY IF EXISTS "kyc_public_update" ON storage.objects;
+CREATE POLICY "kyc_public_update"
+ON storage.objects FOR UPDATE
+TO public
+USING (bucket_id = 'kyc-documents');
 
 -- ─── profile-images ──────────────────────────────────────────
 DROP POLICY IF EXISTS "profile_images_public_read" ON storage.objects;
@@ -79,13 +85,13 @@ USING (bucket_id = 'profile-images');
 DROP POLICY IF EXISTS "profile_images_authenticated_upload" ON storage.objects;
 CREATE POLICY "profile_images_authenticated_upload"
 ON storage.objects FOR INSERT
-TO authenticated
+TO public
 WITH CHECK (bucket_id = 'profile-images');
 
 DROP POLICY IF EXISTS "profile_images_authenticated_update" ON storage.objects;
 CREATE POLICY "profile_images_authenticated_update"
 ON storage.objects FOR UPDATE
-TO authenticated
+TO public
 USING (bucket_id = 'profile-images');
 
 -- ─── offer-media ─────────────────────────────────────────────
