@@ -1,4 +1,4 @@
-package com.urbanelite
+package com.olfix
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -1,4 +1,4 @@
--- Compatible Seed Script for Urban Elite
+-- Compatible Seed Script for Olfix
 -- Cleaning
 INSERT INTO service_items (category_id, title, title_full, duration, price, rating, image, color) 
 SELECT id, 'Full House Cleaning', 'Deep Home Cleaning Service (1-2 BHK)', '4-5 hrs', '₹2,499', '4.9', 'https://img.freepik.com/free-photo/person-cleaning-house_23-2148181395.jpg', '#FFF5F5'

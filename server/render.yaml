@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: urban-elite-api
+    name: Olfix-api
     env: node
     region: singapore
     plan: free

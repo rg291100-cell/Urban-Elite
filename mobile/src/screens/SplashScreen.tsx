@@ -37,7 +37,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
                     <Text style={{ fontSize: 40 }}>🛠️</Text>
                 </View>
                 <Text style={styles.title}>
-                    <Text style={styles.urban}>OLFIX</Text>
+                    <Text style={styles.Olfix}>OLFIX</Text>
                 </Text>
                 <Text style={styles.tagline}>One call fix all</Text>
             </Animated.View>
@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 8,
     },
-    urban: {
+    Olfix: {
         color: Theme.colors.navy,
         letterSpacing: -1,
     },
-    elite: {
+    Olfix: {
         display: 'none',
     },
     tagline: {

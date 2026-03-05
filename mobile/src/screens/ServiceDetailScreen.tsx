@@ -111,9 +111,9 @@ const ServiceDetailScreen = () => {
 
 
 
-                {/* Elite Specifications */}
+                {/* Olfix Specifications */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Elite Specifications</Text>
+                    <Text style={styles.sectionTitle}>Olfix Specifications</Text>
                     <Text style={styles.descriptionText}>
                         {serviceDetail.specifications || "Premium service with top-tier professionals."}
                     </Text>

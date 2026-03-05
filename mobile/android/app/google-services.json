@@ -1,15 +1,15 @@
 {
   "project_info": {
     "project_number": "206297713985",
-    "project_id": "urban-elite-1f185",
-    "storage_bucket": "urban-elite-1f185.firebasestorage.app"
+    "project_id": "olfix-1f185",
+    "storage_bucket": "olfix-1f185.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:206297713985:android:7fc519ab5d86cd2e8be5c0",
         "android_client_info": {
-          "package_name": "com.urbanelite"
+          "package_name": "com.olfix"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "206297713985-u3lh4bfdhnhdcgt4sjctqttg3e08oang.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.urbanelite",
+            "package_name": "com.olfix",
             "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "206297713985-9271mgjs64u47ahvakr0njnb4jvqhfke.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.urbanelite",
+            "package_name": "com.olfix",
             "certificate_hash": "13d9868b5a7f76d15657655cd5d341045901bf282"
           }
         },

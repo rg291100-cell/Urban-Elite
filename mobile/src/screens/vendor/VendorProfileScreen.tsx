@@ -13,6 +13,7 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { storageService } from '../../services/storage';
 
 const MENU_ITEMS = [
+    { id: 'VendorServices', title: 'My Services', icon: '🛠️' },
     { id: 'VendorPersonalInformation', title: 'Business Information', icon: '🏢' },
     { id: 'VendorNotificationSettings', title: 'Notifications', icon: '🔔' },
     { id: 'VendorSupportHelp', title: 'Support & Help', icon: '🎧' },
@@ -137,7 +138,7 @@ const VendorProfileScreen = () => {
                             <Text style={styles.logoIconText}>⚡</Text>
                         </View>
                         <Text style={styles.headerTitle}>
-                            <Text style={styles.titleUrban}>Urban</Text> <Text style={styles.titleElite}>Elite</Text>
+                            <Text style={styles.titleOlfix}>OLFIX</Text>
                         </Text>
                     </View>
                 </View>
@@ -205,7 +206,7 @@ const VendorProfileScreen = () => {
                     <View style={{ height: 100 }} />
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 };
 
@@ -217,8 +218,8 @@ const styles = StyleSheet.create({
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.brandOrange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24, color: 'white' },
     headerTitle: { fontSize: 22, fontWeight: 'bold' },
-    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900' },
-    titleElite: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic' },
+    titleOlfix: { color: Theme.colors.brandOrange, fontWeight: '900' },
+    titleOlfix: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic' },
 
     contentContainer: { paddingHorizontal: 20 },
 

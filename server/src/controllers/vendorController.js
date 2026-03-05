@@ -268,9 +268,7 @@ exports.updateServiceItem = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Service Item ID is required' });
         }
 
-        const updates = {
-            updated_at: new Date().toISOString()
-        };
+        const updates = {};
         if (customPrice !== undefined) updates.custom_price = customPrice;
         if (isEnabled !== undefined) updates.is_enabled = isEnabled;
 
@@ -281,7 +279,10 @@ exports.updateServiceItem = async (req, res) => {
             .eq('service_item_id', serviceItemId)
             .select();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase update error:', error);
+            throw error;
+        }
 
         res.json({
             success: true,
@@ -289,8 +290,11 @@ exports.updateServiceItem = async (req, res) => {
             data: data?.[0]
         });
     } catch (error) {
-        console.error('Error updating vendor service:', error);
-        res.status(500).json({ success: false, error: 'Failed to update service' });
+        console.error('Error updating vendor service:', error.message || error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to update service'
+        });
     }
 };
 

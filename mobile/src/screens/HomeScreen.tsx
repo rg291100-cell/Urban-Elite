@@ -119,7 +119,7 @@ const HomeScreen = () => {
                             <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
-                            <Text style={styles.titleUrban}>OLFIX</Text>
+                            <Text style={styles.titleOlfix}>OLFIX</Text>
                         </Text>
                     </TouchableOpacity>
                 )}
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.primary, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24 },
     headerTitle: { fontSize: 24, fontWeight: Theme.typography.weights.bold },
-    titleUrban: { color: Theme.colors.navy, fontWeight: '900', letterSpacing: -0.5 },
+    titleOlfix: { color: Theme.colors.navy, fontWeight: '900', letterSpacing: -0.5 },
 
     headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     iconButton: {

@@ -150,7 +150,7 @@ const ServiceListingScreen = () => {
                             <Text style={styles.logoIconText}>🛠️</Text>
                         </View>
                         <Text style={styles.headerTitle}>
-                            <Text style={styles.titleUrban}>OLFIX</Text>
+                            <Text style={styles.titleOlfix}>OLFIX</Text>
                         </Text>
                     </TouchableOpacity>
                 )}
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.brandOrange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24, color: 'white' },
     headerTitle: { fontSize: 22, fontWeight: 'bold' },
-    titleUrban: { color: Theme.colors.brandOrange, fontWeight: '900' },
+    titleOlfix: { color: Theme.colors.brandOrange, fontWeight: '900' },
 
     headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     iconButton: {

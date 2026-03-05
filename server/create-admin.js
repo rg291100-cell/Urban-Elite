@@ -10,7 +10,7 @@ const supabase = createClient(
     const { data, error } = await supabase
         .from('users')
         .update({ role: 'ADMIN' })
-        .eq('email', 'admin@urbanelite.com')
+        .eq('email', 'admin@Olfix.com')
         .select();
 
     if (error) {

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TOKEN_KEY = '@urban_elite_token';
-const USER_KEY = '@urban_elite_user';
+const TOKEN_KEY = '@olfix_token';
+const USER_KEY = '@olfix_user';
 
 export const authService = {
     // Get JWT token from AsyncStorage (custom auth)

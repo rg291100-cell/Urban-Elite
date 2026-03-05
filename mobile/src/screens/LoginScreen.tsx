@@ -276,7 +276,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.testButton}
                         onPress={() => {
-                            setEmail('rishabh@example.com');
+                            setEmail('testvendor@example.com');
                             setPassword('password123');
                         }}
                     >

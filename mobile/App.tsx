@@ -121,6 +121,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="SubCategory" component={SubCategoryScreen} />
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <Stack.Screen name="VendorCreateOffer" component={VendorCreateOfferScreen} />
+      <Stack.Screen name="VendorServices" component={require('./src/screens/vendor/VendorServicesScreen').default} />
       <Stack.Screen name="VendorPersonalInformation" component={require('./src/screens/vendor/VendorPersonalInformationScreen').default} />
       <Stack.Screen name="VendorNotificationSettings" component={require('./src/screens/vendor/VendorNotificationSettingsScreen').default} />
       <Stack.Screen name="VendorSupportHelp" component={require('./src/screens/vendor/VendorSupportHelpScreen').default} />

@@ -170,16 +170,20 @@ exports.login = async (req, res) => {
             .single();
 
         if (error || !user) {
+            console.log('Login failed: User not found', email);
             return res.status(401).json({
                 success: false,
                 error: 'Invalid email or password'
             });
         }
 
+        console.log('Login DEBUG: Found user', user.email, 'Role:', user.role);
+
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
+            console.log('Login failed: PWD mismatch for', email);
             return res.status(401).json({
                 success: false,
                 error: 'Invalid email or password'
