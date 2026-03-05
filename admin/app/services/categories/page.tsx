@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { adminAPI } from '@/lib/api';
-import { Plus, Pencil, Trash2, Search, Loader2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, X, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-
+import ImageUpload from '@/components/ImageUpload';
 
 interface Category {
     id: string;
@@ -23,7 +23,8 @@ export default function ServicesPage() {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    const [formData, setFormData] = useState({ name: '' });
+    const [formData, setFormData] = useState({ name: '', image: '' });
+    const [saving, setSaving] = useState(false);
 
     const fetchCategories = async () => {
         try {
@@ -34,8 +35,6 @@ export default function ServicesPage() {
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            // Fallback mock data if API fails during dev/test
-            // setCategories([]); 
         } finally {
             setLoading(false);
         }
@@ -47,29 +46,31 @@ export default function ServicesPage() {
 
     const handleSave = async () => {
         try {
-            if (!formData.name) {
-                alert('Name is required');
-                return;
-            }
+            if (!formData.name) { alert('Name is required'); return; }
+            setSaving(true);
+
+            const payload = { name: formData.name, image: formData.image || null };
 
             if (editingCategory) {
-                await adminAPI.updateServiceCategory(editingCategory.id, formData);
+                await adminAPI.updateServiceCategory(editingCategory.id, payload);
             } else {
-                await adminAPI.createServiceCategory(formData);
+                await adminAPI.createServiceCategory(payload);
             }
 
             setIsDialogOpen(false);
-            setFormData({ name: '' });
+            setFormData({ name: '', image: '' });
             setEditingCategory(null);
             fetchCategories();
         } catch (error) {
             console.error('Error saving category:', error);
             alert('Failed to save category');
+        } finally {
+            setSaving(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this category?')) return;
+        if (!confirm('Delete this category?')) return;
         try {
             await adminAPI.deleteServiceCategory(id);
             fetchCategories();
@@ -81,7 +82,13 @@ export default function ServicesPage() {
 
     const openEdit = (category: Category) => {
         setEditingCategory(category);
-        setFormData({ name: category.name });
+        setFormData({ name: category.name, image: category.image || '' });
+        setIsDialogOpen(true);
+    };
+
+    const openAdd = () => {
+        setEditingCategory(null);
+        setFormData({ name: '', image: '' });
         setIsDialogOpen(true);
     };
 
@@ -95,10 +102,10 @@ export default function ServicesPage() {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Service Categories</h1>
-                        <p className="text-gray-500 mt-1">Manage service categories and icons.</p>
+                        <p className="text-gray-500 mt-1">Manage service categories and their icons.</p>
                     </div>
                     <button
-                        onClick={() => { setEditingCategory(null); setFormData({ name: '' }); setIsDialogOpen(true); }}
+                        onClick={openAdd}
                         className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         <Plus className="h-4 w-4" /> Add Category
@@ -122,10 +129,10 @@ export default function ServicesPage() {
                         <table className="w-full text-left text-sm">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-[100px]">Icon</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-[80px]">Icon</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700">Name</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700">Slug</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700">Services Count</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Services</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -147,20 +154,29 @@ export default function ServicesPage() {
                                 ) : (
                                     filteredCategories.map((category) => (
                                         <tr key={category.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-2xl">
-                                                {category.image || '📦'}
+                                            <td className="px-6 py-4">
+                                                {category.image ? (
+                                                    <img
+                                                        src={category.image}
+                                                        alt={category.name}
+                                                        className="w-12 h-12 object-contain rounded-lg bg-gray-100 p-1 border border-gray-200"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                                                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-gray-900">{category.name}</td>
-                                            <td className="px-6 py-4 text-gray-500">{category.slug}</td>
+                                            <td className="px-6 py-4 text-gray-500 font-mono text-xs">{category.slug}</td>
                                             <td className="px-6 py-4 text-gray-900">{category._count?.services || 0}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Link
                                                         href={`/services/${category.id}`}
                                                         className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
-                                                        title="Manage Sub-Services"
                                                     >
-                                                        <Plus className="h-4 w-4" /> Items
+                                                        <Plus className="h-4 w-4" /> Sub-Categories
                                                     </Link>
                                                     <button
                                                         onClick={() => openEdit(category)}
@@ -184,33 +200,40 @@ export default function ServicesPage() {
                     </div>
                 </div>
 
-                {/* Modal Overlay */}
+                {/* Modal */}
                 {isDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
-                            <div className="flex justify-between items-center mb-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                            <div className="flex justify-between items-center mb-5">
                                 <h2 className="text-xl font-bold text-gray-900">
                                     {editingCategory ? 'Edit Category' : 'Add New Category'}
                                 </h2>
-                                <button
-                                    onClick={() => setIsDialogOpen(false)}
-                                    className="text-gray-400 hover:text-gray-600"
-                                >
+                                <button onClick={() => setIsDialogOpen(false)} className="text-gray-400 hover:text-gray-600">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
+                                {/* Name */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
                                     <input
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="e.g. Electrician"
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Icons are automatically assigned based on category name.</p>
                                 </div>
+
+                                {/* Icon Image Upload */}
+                                <ImageUpload
+                                    label="Category Icon"
+                                    value={formData.image}
+                                    onChange={(url) => setFormData({ ...formData, image: url })}
+                                    bucket="service-icons"
+                                    folder="categories"
+                                    hint="PNG, JPG, WebP, SVG — max 2 MB. Shown as icon in app."
+                                />
                             </div>
 
                             <div className="flex justify-end gap-3 mt-6">
@@ -222,9 +245,11 @@ export default function ServicesPage() {
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-60 flex items-center gap-2"
                                 >
-                                    Save Category
+                                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {saving ? 'Saving…' : editingCategory ? 'Update Category' : 'Save Category'}
                                 </button>
                             </div>
                         </div>

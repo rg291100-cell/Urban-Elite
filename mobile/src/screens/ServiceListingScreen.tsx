@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, Animated, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, Animated, Keyboard, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { homeAPI } from '../services/api';
 import { Bell, Search, ArrowLeft, X } from 'lucide-react-native';
-import { AutoIcon } from '../utils/autoIcon';
 
 const ServiceListingScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -99,7 +98,11 @@ const ServiceListingScreen = () => {
                 onPress={handlePress}
             >
                 <View style={[styles.cardIconBox, { backgroundColor: item.color || (isOthers ? '#F5F0FF' : '#FFF5F0') }]}>
-                    <AutoIcon name={item.title} size={40} color={isOthers ? '#805AD5' : Theme.colors.brandOrange} />
+                    {item.image ? (
+                        <Image source={{ uri: item.image }} style={{ width: 60, height: 60, borderRadius: 16, resizeMode: 'contain' }} />
+                    ) : (
+                        <Text style={{ fontSize: 32 }}>🛠️</Text>
+                    )}
                 </View>
 
                 <View style={styles.cardContent}>

@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Animated, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Animated, Keyboard, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
 import { RootStackParamList } from '../types/navigation';
 import { homeAPI } from '../services/api';
 import { Bell, Search, ArrowLeft, X } from 'lucide-react-native';
-import { AutoIcon } from '../utils/autoIcon';
 
 type SubCategoryRouteProp = RouteProp<RootStackParamList, 'SubCategory'>;
 
@@ -78,10 +77,14 @@ const SubCategoryScreen = () => {
             onPress={() => navigation.navigate('ServiceListing', { slug: item.slug, name: item.name, isOthers })}
         >
             <View style={styles.iconContainer}>
-                <AutoIcon name={item.name} size={34} color={Theme.colors.brandOrange} />
+                {item.image ? (
+                    <Image source={{ uri: item.image }} style={{ width: 44, height: 44, borderRadius: 12, resizeMode: 'contain' }} />
+                ) : (
+                    <Text style={{ fontSize: 24 }}>🛠️</Text>
+                )}
             </View>
             <Text style={styles.serviceText}>{item.name}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity >
     ), [navigation, isOthers]);
 
     if (loading) {

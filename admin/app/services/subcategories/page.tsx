@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, X, ImageIcon } from 'lucide-reac
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useRouter } from 'next/navigation';
+import ImageUpload from '@/components/ImageUpload';
 
 interface SubCategory {
     id: string;
@@ -36,8 +37,10 @@ export default function SubCategoriesListPage() {
         name: '',
         slug: '',
         description: '',
-        categoryId: ''
+        categoryId: '',
+        image: ''
     });
+    const [saving, setSaving] = useState(false);
 
     const [editingItem, setEditingItem] = useState<SubCategory | null>(null);
 
@@ -78,18 +81,21 @@ export default function SubCategoriesListPage() {
                 alert('Name and Category are required');
                 return;
             }
+            setSaving(true);
 
             if (editingItem) {
                 await adminAPI.updateSubCategory(editingItem.id, {
                     name: formData.name,
                     description: formData.description,
+                    image: formData.image || null,
                 });
             } else {
                 await adminAPI.createSubCategory({
                     categoryId: formData.categoryId,
                     name: formData.name,
-                    slug: formData.slug || formData.name.toLowerCase().replace(/ /g, '-'),
+                    slug: formData.slug || formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
                     description: formData.description,
+                    image: formData.image || null,
                 });
             }
 
@@ -99,6 +105,8 @@ export default function SubCategoriesListPage() {
         } catch (error: any) {
             console.error('Error saving subcategory:', error);
             alert(`Failed to save subcategory: ${error.response?.data?.error || error.message}`);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -119,13 +127,14 @@ export default function SubCategoriesListPage() {
             name: item.name,
             slug: item.slug,
             description: item.description || '',
-            categoryId: item.category_id
+            categoryId: item.category_id,
+            image: item.image || ''
         });
         setIsDialogOpen(true);
     };
 
     const resetForm = () => {
-        setFormData({ name: '', slug: '', description: '', categoryId: '' });
+        setFormData({ name: '', slug: '', description: '', categoryId: '', image: '' });
         setEditingItem(null);
     };
 
@@ -292,12 +301,26 @@ export default function SubCategoriesListPage() {
                                         rows={2}
                                     />
                                 </div>
+
+                                <ImageUpload
+                                    label="Sub-Category Icon"
+                                    value={formData.image}
+                                    onChange={(url) => setFormData({ ...formData, image: url })}
+                                    bucket="service-icons"
+                                    folder="subcategories"
+                                    hint="PNG, JPG, WebP, SVG — max 2 MB"
+                                />
                             </div>
 
                             <div className="flex justify-end gap-3 mt-6">
                                 <button onClick={() => setIsDialogOpen(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium">Cancel</button>
-                                <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                    {editingItem ? 'Update Sub-Category' : 'Save Sub-Category'}
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-60 flex items-center gap-2"
+                                >
+                                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {saving ? 'Saving…' : editingItem ? 'Update Sub-Category' : 'Save Sub-Category'}
                                 </button>
                             </div>
                         </div>

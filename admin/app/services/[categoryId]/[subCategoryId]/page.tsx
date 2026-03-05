@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, ArrowLeft, X, ImageIcon } from '
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
+import ImageUpload from '@/components/ImageUpload';
 
 interface ServiceItem {
     id: string;
@@ -35,8 +36,10 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
         price: '',
         rating: '4.8',
         color: '#F7FAFC',
-        isImage: false
+        isImage: false,
+        image: ''
     });
+    const [saving, setSaving] = useState(false);
 
     const fetchItems = async () => {
         try {
@@ -58,13 +61,12 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
 
     const handleSave = async () => {
         try {
-            if (!formData.title) {
-                alert('Title is required');
-                return;
-            }
+            if (!formData.title) { alert('Title is required'); return; }
+            setSaving(true);
 
             const dataToSave = {
                 ...formData,
+                image: formData.image || null,
                 categoryId,
                 subCategoryId
             };
@@ -81,6 +83,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
         } catch (error) {
             console.error('Error saving item:', error);
             alert('Failed to save service item');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -103,7 +107,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
             price: '',
             rating: '4.8',
             color: '#F7FAFC',
-            isImage: false
+            isImage: false,
+            image: ''
         });
         setEditingItem(null);
     };
@@ -117,7 +122,8 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
             price: item.price,
             rating: item.rating,
             color: item.color || '#F7FAFC',
-            isImage: item.isImage
+            isImage: item.isImage,
+            image: item.image || ''
         });
         setIsDialogOpen(true);
     };
@@ -278,8 +284,15 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                                 />
                             </div>
 
-                            <div className="col-span-2">
-                                <p className="text-xs text-gray-500">💡 Icons are automatically assigned based on the service title.</p>
+                            <div className="col-span-2 mt-2">
+                                <ImageUpload
+                                    label="Service Icon/Image"
+                                    value={formData.image}
+                                    onChange={(url) => setFormData({ ...formData, image: url })}
+                                    bucket="service-icons"
+                                    folder="services"
+                                    hint="PNG, JPG, WebP, SVG — max 2 MB"
+                                />
                             </div>
                         </div>
 
@@ -292,9 +305,11 @@ export default function ServiceItemsPage({ params }: { params: Promise<{ categor
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                disabled={saving}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-60 flex items-center gap-2"
                             >
-                                Save Option
+                                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {saving ? 'Saving…' : 'Save Option'}
                             </button>
                         </div>
                     </div>

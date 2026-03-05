@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, ArrowLeft, X, ImageIcon } from '
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
+import ImageUpload from '@/components/ImageUpload';
 
 interface SubCategory {
     id: string;
@@ -28,7 +29,9 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
         name: '',
         slug: '',
         description: '',
+        image: '',
     });
+    const [saving, setSaving] = useState(false);
 
     const [editingItem, setEditingItem] = useState<SubCategory | null>(null);
 
@@ -52,16 +55,15 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
 
     const handleSave = async () => {
         try {
-            if (!formData.name) {
-                alert('Name is required');
-                return;
-            }
+            if (!formData.name) { alert('Name is required'); return; }
+            setSaving(true);
 
             const dataToSave = {
                 name: formData.name,
                 slug: formData.slug || formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
                 description: formData.description,
-                categoryId // Only needed for create, ignored by update in backend typically or not harmful
+                image: formData.image || null,
+                categoryId
             };
 
             if (editingItem) {
@@ -75,7 +77,9 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
             fetchItems();
         } catch (error: any) {
             console.error('Error saving subcategory:', error);
-            alert(`Failed to save subcategory: ${error.response?.data?.error || error.message}`);
+            alert(`Failed to save: ${error.response?.data?.error || error.message}`);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -91,11 +95,7 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
     };
 
     const resetForm = () => {
-        setFormData({
-            name: '',
-            slug: '',
-            description: '',
-        });
+        setFormData({ name: '', slug: '', description: '', image: '' });
         setEditingItem(null);
     };
 
@@ -105,6 +105,7 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
             name: item.name,
             slug: item.slug,
             description: item.description || '',
+            image: item.image || '',
         });
         setIsDialogOpen(true);
     };
@@ -242,7 +243,7 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
 
                         <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
                                 <input
                                     value={formData.name}
                                     onChange={handleNameChange}
@@ -256,7 +257,7 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                                 <input
                                     value={formData.slug}
                                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono text-sm"
                                 />
                             </div>
 
@@ -270,7 +271,16 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-3 mt-6">
+                            <ImageUpload
+                                label="Sub-Category Icon"
+                                value={formData.image}
+                                onChange={(url) => setFormData({ ...formData, image: url })}
+                                bucket="service-icons"
+                                folder="subcategories"
+                                hint="PNG, JPG, WebP, SVG — max 2 MB"
+                            />
+
+                            <div className="flex justify-end gap-3 pt-2">
                                 <button
                                     onClick={() => setIsDialogOpen(false)}
                                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
@@ -279,9 +289,11 @@ export default function SubCategoriesPage({ params }: { params: Promise<{ catego
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-60 flex items-center gap-2"
                                 >
-                                    {editingItem ? 'Update Sub-Category' : 'Save Sub-Category'}
+                                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {saving ? 'Saving…' : editingItem ? 'Update Sub-Category' : 'Save Sub-Category'}
                                 </button>
                             </div>
                         </div>

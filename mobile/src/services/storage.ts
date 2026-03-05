@@ -7,44 +7,16 @@ export interface UploadResult {
     error: string | null;
 }
 
-const ensureBucketExists = async (bucket: string): Promise<string | null> => {
-    try {
-        // Check if bucket exists by listing buckets
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        if (listError) {
-            console.warn('Could not list buckets:', listError.message);
-            // Continue anyway — maybe the bucket exists but we couldn't verify
-            return null;
-        }
-
-        const exists = buckets?.some((b) => b.name === bucket);
-        if (!exists) {
-            // Attempt to create the bucket (public so we can get public URLs)
-            const { error: createError } = await supabase.storage.createBucket(bucket, {
-                public: true,
-                allowedMimeTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
-                fileSizeLimit: 10485760, // 10MB
-            });
-
-            if (createError) {
-                // If creation fails (e.g. insufficient permissions), return the error message
-                return createError.message;
-            }
-        }
-        return null;
-    } catch (err: any) {
-        console.warn('ensureBucketExists error:', err);
-        return null; // Non-fatal – proceed with the upload attempt
-    }
-};
-
 export const storageService = {
     /**
-     * Upload an image to Supabase Storage
-     * @param bucket Bucket name (e.g. 'kyc-documents')
-     * @param path File path in bucket (e.g. 'aadhaar/user-uuid-123.jpg')
-     * @param base64 Base64 string of the image
-     * @param contentType Content type (e.g. 'image/jpeg')
+     * Upload a file to Supabase Storage.
+     * NOTE: Buckets must already exist (created via SQL migration in Supabase dashboard).
+     *       Do NOT try to auto-create buckets from the client — it will fail with RLS errors.
+     *
+     * @param bucket  Bucket name (e.g. 'kyc-documents', 'profile-images')
+     * @param path    File path within bucket (e.g. 'aadhaar/user-uuid-123.jpg')
+     * @param base64  Base64 string of the file content
+     * @param contentType  MIME type (e.g. 'image/jpeg', 'application/pdf')
      */
     uploadFile: async (
         bucket: string,
@@ -53,15 +25,6 @@ export const storageService = {
         contentType: string
     ): Promise<UploadResult> => {
         try {
-            // Ensure the bucket exists before uploading
-            const bucketError = await ensureBucketExists(bucket);
-            if (bucketError) {
-                return {
-                    url: null,
-                    error: `Storage bucket "${bucket}" could not be created: ${bucketError}. Please contact support.`,
-                };
-            }
-
             const { data, error } = await supabase.storage
                 .from(bucket)
                 .upload(path, decode(base64), {
@@ -70,7 +33,7 @@ export const storageService = {
                 });
 
             if (error) {
-                console.error('Upload error:', error);
+                console.error(`Upload error (bucket: ${bucket}):`, error);
                 return { url: null, error: error.message };
             }
 
@@ -80,8 +43,8 @@ export const storageService = {
 
             return { url: publicUrlData.publicUrl, error: null };
         } catch (error: any) {
-            console.error('Storage service catch error:', error);
+            console.error('Storage service error:', error);
             return { url: null, error: error.message };
         }
-    }
+    },
 };

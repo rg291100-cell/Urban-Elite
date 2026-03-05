@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList,
-    ActivityIndicator, Animated, Keyboard,
+    ActivityIndicator, Animated, Keyboard, Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
@@ -13,8 +13,6 @@ import { homeAPI, notificationsAPI } from '../services/api';
 import { authService } from '../services/authService';
 import { Bell, User, Search, X } from 'lucide-react-native';
 
-
-import { AutoIcon } from '../utils/autoIcon';
 
 const HomeScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -87,7 +85,11 @@ const HomeScreen = () => {
                 }}
             >
                 <View style={styles.iconContainer}>
-                    <AutoIcon name={item.name} size={34} color={Theme.colors.brandOrange} />
+                    {item.image ? (
+                        <Image source={{ uri: item.image }} style={{ width: 44, height: 44, borderRadius: 12, resizeMode: 'contain' }} />
+                    ) : (
+                        <Text style={{ fontSize: 24 }}>🛠️</Text>
+                    )}
                 </View>
                 <Text style={styles.serviceText}>{item.name}</Text>
             </TouchableOpacity>
@@ -163,7 +165,7 @@ const HomeScreen = () => {
             <View style={styles.heroBanner}>
                 <View style={styles.heroContent}>
                     <Text style={styles.heroTitle}>One call</Text>
-                    <Text style={styles.heroSubtitle}>Fixes all</Text>
+                    <Text style={styles.heroSubtitle}>Fix all</Text>
                     <TouchableOpacity style={styles.bookNowButton}>
                         <Text style={styles.bookNowText}>BOOK SERVICE</Text>
                     </TouchableOpacity>
