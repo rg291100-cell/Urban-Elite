@@ -19,5 +19,6 @@ router.put('/bookings/:bookingId/status', vendorController.updateBookingStatus);
 // Vendor services
 router.get('/services', vendorController.getServices);
 router.put('/services', vendorController.updateServices);
+router.put('/services/item', vendorController.updateServiceItem);
 
 module.exports = router;

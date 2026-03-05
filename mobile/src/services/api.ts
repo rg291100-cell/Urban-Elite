@@ -141,6 +141,8 @@ export const vendorAPI = {
         api.put(`/api/vendor/bookings/${bookingId}/status`, { status }),
     getServices: () => api.get('/api/vendor/services'),
     updateServices: (services: any) => api.put('/api/vendor/services', { services }),
+    updateServiceItem: (data: { serviceItemId: string; customPrice?: string; isEnabled?: boolean }) =>
+        api.put('/api/vendor/services/item', data),
 };
 
 export const vendorListingAPI = {

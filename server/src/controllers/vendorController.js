@@ -209,23 +209,45 @@ exports.updateBookingStatus = async (req, res) => {
     }
 };
 
-// Get vendor services
+// Get vendor services (Actual items they offer)
 exports.getServices = async (req, res) => {
     try {
         const vendorId = req.user.id;
 
-        // For now, return all service categories
-        // In production, you'd have a vendor_services table
+        // Fetch services offered by this vendor linked with actual service item details
         const { data: services, error } = await supabase
-            .from('service_categories')
-            .select('*')
-            .order('name');
+            .from('vendor_services')
+            .select(`
+                id,
+                service_item_id,
+                custom_price,
+                is_enabled,
+                service_items (
+                    id,
+                    title,
+                    price,
+                    image,
+                    subcategory_id
+                )
+            `)
+            .eq('vendor_id', vendorId);
 
         if (error) throw error;
 
+        // Transform for frontend
+        const formatted = (services || []).map(s => ({
+            id: s.service_item_id,
+            vendorServiceId: s.id,
+            name: s.service_items?.title || 'Unknown',
+            basePrice: s.service_items?.price,
+            customPrice: s.custom_price,
+            isEnabled: s.is_enabled,
+            image: s.service_items?.image
+        }));
+
         res.json({
             success: true,
-            data: services || []
+            data: formatted
         });
     } catch (error) {
         console.error('Error fetching vendor services:', error);
@@ -233,6 +255,42 @@ exports.getServices = async (req, res) => {
             success: false,
             error: 'Failed to fetch services'
         });
+    }
+};
+
+// Update a single vendor service price/status
+exports.updateServiceItem = async (req, res) => {
+    try {
+        const vendorId = req.user.id;
+        const { serviceItemId, customPrice, isEnabled } = req.body;
+
+        if (!serviceItemId) {
+            return res.status(400).json({ success: false, error: 'Service Item ID is required' });
+        }
+
+        const updates = {
+            updated_at: new Date().toISOString()
+        };
+        if (customPrice !== undefined) updates.custom_price = customPrice;
+        if (isEnabled !== undefined) updates.is_enabled = isEnabled;
+
+        const { data, error } = await supabase
+            .from('vendor_services')
+            .update(updates)
+            .eq('vendor_id', vendorId)
+            .eq('service_item_id', serviceItemId)
+            .select();
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            message: 'Service updated successfully',
+            data: data?.[0]
+        });
+    } catch (error) {
+        console.error('Error updating vendor service:', error);
+        res.status(500).json({ success: false, error: 'Failed to update service' });
     }
 };
 
