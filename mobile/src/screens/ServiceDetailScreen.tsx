@@ -101,10 +101,6 @@ const ServiceDetailScreen = () => {
                         <Text style={styles.statValue}>{serviceDetail.duration || '1 hour'}</Text>
                         <Text style={styles.statLabel}>TIME</Text>
                     </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValueCost}>{serviceDetail.price}</Text>
-                        <Text style={styles.statLabel}>ENTRY</Text>
-                    </View>
                 </View>
 
                 <View style={styles.divider} />

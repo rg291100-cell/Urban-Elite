@@ -108,13 +108,11 @@ const ServiceListingScreen = () => {
                 <View style={styles.cardContent}>
                     <Text style={styles.cardTitle}>{item.title}</Text>
                     <Text style={styles.cardDuration}>{isOthers ? 'ON DEMAND' : item.duration}</Text>
-                    {isOthers ? (
-                        <View style={styles.onDemandBadge}>
-                            <Text style={styles.onDemandText}>📋 Request Admin</Text>
-                        </View>
-                    ) : (
-                        <Text style={styles.cardPrice}>{item.price}</Text>
-                    )}
+                        {isOthers ? (
+                            <View style={styles.onDemandBadge}>
+                                <Text style={styles.onDemandText}>📋 Request Admin</Text>
+                            </View>
+                        ) : null}
                 </View>
 
                 {!isOthers && (

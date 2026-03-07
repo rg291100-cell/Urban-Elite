@@ -55,10 +55,6 @@ const BookingOverviewScreen = () => {
                             <Text style={styles.statLabel}>DURATION</Text>
                             <Text style={styles.statValue}>{item?.duration || '1 hour'}</Text>
                         </View>
-                        <View style={{ marginLeft: 40 }}>
-                            <Text style={styles.statLabel}>PRICING</Text>
-                            <Text style={styles.statValuePrice}>{item?.price || '₹0'}</Text>
-                        </View>
                     </View>
                 </View>
 

@@ -157,7 +157,7 @@ export default function ServiceItemsListPage() {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900">All Service Items</h1>
-                        <p className="text-gray-500 mt-1">Global list of all service options (Level 3).</p>
+                        <p className="text-gray-500 mt-1">Catalog of all service options (Level 3). Actual pricing per vendor is managed under the <strong>Vendors</strong> section.</p>
                     </div>
                     <button
                         onClick={() => setIsDialogOpen(true)}
@@ -213,7 +213,7 @@ export default function ServiceItemsListPage() {
                                     <th className="px-6 py-4 font-semibold text-gray-700">Image</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700">Service Title</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700">Sub-Category</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700">Price</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Catalog Price</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -246,7 +246,7 @@ export default function ServiceItemsListPage() {
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-gray-900">{item.title}</td>
                                             <td className="px-6 py-4 text-gray-500">{getSubCatName(item.subcategory_id)}</td>
-                                            <td className="px-6 py-4 text-green-600 font-bold">{item.price}</td>
+                                            <td className="px-6 py-4 text-gray-400 font-medium text-sm">{item.price || <span className="italic">Set per vendor</span>}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => {
@@ -319,7 +319,7 @@ export default function ServiceItemsListPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Catalog Price <span className="text-gray-400 font-normal">(reference only)</span></label>
                                     <input
                                         value={formData.price}
                                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
@@ -329,7 +329,7 @@ export default function ServiceItemsListPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Catalog Duration <span className="text-gray-400 font-normal">(reference only)</span></label>
                                     <input
                                         value={formData.duration}
                                         onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
