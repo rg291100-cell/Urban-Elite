@@ -63,7 +63,6 @@ exports.createBooking = async (req, res) => {
 
         // Optional columns that may or may not exist in schema
         const optionalData = {
-            professional_id: vendorId || null,
             professional_name: null,
             estimated_time: '12m',
         };
