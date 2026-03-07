@@ -30,18 +30,28 @@ exports.getVendorsForService = async (req, res) => {
             const { data, error: vsError } = await supabase
                 .from('vendor_services')
                 .select(`
+                    custom_price,
+                    custom_duration,
+                    is_enabled,
                     users (
-                        id, name, email, phone, profile_image, business_name, service_category, 
+                        id, name, email, phone, profile_image, business_name, service_category,
                         experience_years, vendor_rating, total_jobs, total_reviews, specialty, approval_status
                     )
                 `)
                 .eq('service_item_id', serviceItemId)
+                .eq('is_enabled', true)
                 .eq('users.role', 'VENDOR')
                 .eq('users.approval_status', 'APPROVED');
 
             error = vsError;
-            // Flatten the response because it's joined
-            vendors = (data || []).map(item => item.users).filter(u => u !== null);
+            // Flatten response — attach custom pricing to each vendor object
+            vendors = (data || [])
+                .filter(row => row.users !== null)
+                .map(row => ({
+                    ...row.users,
+                    _customPrice: row.custom_price,
+                    _customDuration: row.custom_duration,
+                }));
         }
         // STRATEGY B: Filter by IDs if provided (New registration format)
         else {
@@ -98,6 +108,9 @@ exports.getVendorsForService = async (req, res) => {
                 serviceCategory: v.service_category,
                 experienceYears: v.experience_years || 0,
                 phone: v.phone,
+                // Vendor-specific pricing for this service (only present when serviceItemId was used)
+                customPrice: v._customPrice || null,
+                customDuration: v._customDuration || null,
             };
         });
 

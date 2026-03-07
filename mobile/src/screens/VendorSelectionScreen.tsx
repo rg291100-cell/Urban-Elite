@@ -20,6 +20,8 @@ interface Vendor {
     businessName?: string;
     serviceCategory?: string;
     experienceYears?: number;
+    customPrice?: string | null;
+    customDuration?: number | null;
 }
 
 const SPECIALTY_CONFIG: Record<string, { color: string; bg: string }> = {
@@ -89,6 +91,9 @@ const VendorSelectionScreen = () => {
         }
         const bookingItem = {
             ...item,
+            // Override with vendor-specific pricing if available
+            price: vendor.customPrice || item.price,
+            duration: vendor.customDuration ? `${vendor.customDuration} mins` : item.duration,
             provider: {
                 name: vendor.name,
                 image: vendor.image,
@@ -133,6 +138,17 @@ const VendorSelectionScreen = () => {
                         <Text style={styles.dot}>·</Text>
                         <Text style={styles.statText}>{vendor.jobs} jobs</Text>
                     </View>
+
+                    {/* Vendor-specific price for this service */}
+                    {vendor.customPrice ? (
+                        <View style={styles.priceRow}>
+                            <Text style={styles.priceLabel}>Price for this service: </Text>
+                            <Text style={styles.priceValue}>{vendor.customPrice}</Text>
+                            {vendor.customDuration ? (
+                                <Text style={styles.durationValue}> · {vendor.customDuration} mins</Text>
+                            ) : null}
+                        </View>
+                    ) : null}
                 </View>
 
                 <TouchableOpacity
@@ -306,6 +322,11 @@ const styles = StyleSheet.create({
     emptySubtitle: { fontSize: 14, color: '#A0AEC0', textAlign: 'center', lineHeight: 20 },
     retryButton: { marginTop: 20, backgroundColor: Theme.colors.brandOrange, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
     retryText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+
+    priceRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, flexWrap: 'wrap' },
+    priceLabel: { fontSize: 11, color: '#718096', fontWeight: '500' },
+    priceValue: { fontSize: 13, fontWeight: '800', color: Theme.colors.brandOrange },
+    durationValue: { fontSize: 12, color: '#718096', fontWeight: '500' },
 });
 
 export default VendorSelectionScreen;
