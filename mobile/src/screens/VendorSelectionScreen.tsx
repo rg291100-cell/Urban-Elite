@@ -95,6 +95,7 @@ const VendorSelectionScreen = () => {
             price: vendor.customPrice || item.price,
             duration: vendor.customDuration ? `${vendor.customDuration} mins` : item.duration,
             provider: {
+                id: vendor.id,          // ← CRITICAL: needed for vendorId throughout booking flow
                 name: vendor.name,
                 image: vendor.image,
                 rating: vendor.rating,
