@@ -132,7 +132,11 @@ exports.getBookings = async (req, res) => {
             .order('created_at', { ascending: false });
 
         if (status) {
-            query = query.eq('status', status.toUpperCase());
+            if (status.toUpperCase() === 'ACTIVE') {
+                query = query.in('status', ['ACCEPTED', 'ACTIVE']);
+            } else {
+                query = query.eq('status', status.toUpperCase());
+            }
         }
 
         const { data: bookings, error } = await query;

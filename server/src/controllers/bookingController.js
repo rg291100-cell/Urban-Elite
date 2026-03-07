@@ -258,15 +258,23 @@ exports.getUserBookings = async (req, res) => {
 
         if (error) throw error;
 
+        const formattedBookings = bookings.map(b => ({
+            id: b.id,
+            service: b.service_name,
+            date: b.date,
+            status: b.status,
+            price: b.price
+        }));
+
+        const upcoming = formattedBookings.filter(b => ['PENDING', 'ACCEPTED', 'ACTIVE', 'IN_PROGRESS'].includes(b.status));
+        const completed = formattedBookings.filter(b => b.status === 'COMPLETED');
+        const cancelled = formattedBookings.filter(b => b.status === 'CANCELLED');
+
         res.json({
             success: true,
-            bookings: bookings.map(b => ({
-                id: b.id,
-                service: b.service_name,
-                date: b.date,
-                status: b.status,
-                price: b.price
-            }))
+            upcoming,
+            completed,
+            cancelled
         });
     } catch (error) {
         console.error('Error fetching bookings:', error);
