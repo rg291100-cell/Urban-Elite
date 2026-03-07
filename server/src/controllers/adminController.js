@@ -879,3 +879,111 @@ exports.assignServiceToVendor = async (req, res) => {
         res.status(500).json({ success: false, error: 'Failed to assign service to vendor' });
     }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VENDOR SERVICE PRICING MANAGEMENT (ADMIN)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /admin/vendors/:id/service-pricing
+ * Returns all service offerings for a given vendor with their custom price & duration.
+ * Admin can view and edit these.
+ */
+exports.getVendorServicePricing = async (req, res) => {
+    try {
+        const { id: vendorId } = req.params;
+
+        const { data: services, error } = await supabase
+            .from('vendor_services')
+            .select(`
+                id,
+                service_item_id,
+                custom_price,
+                custom_duration,
+                is_enabled,
+                price_updated_by,
+                duration_updated_by,
+                service_items (
+                    id,
+                    title,
+                    price,
+                    duration,
+                    image,
+                    subcategory_id
+                )
+            `)
+            .eq('vendor_id', vendorId);
+
+        if (error) throw error;
+
+        const formatted = (services || []).map(s => ({
+            id: s.service_item_id,
+            vendorServiceId: s.id,
+            name: s.service_items?.title || 'Unknown',
+            basePrice: s.service_items?.price,
+            baseDuration: s.service_items?.duration,
+            customPrice: s.custom_price,
+            customDuration: s.custom_duration,
+            isEnabled: s.is_enabled,
+            priceUpdatedBy: s.price_updated_by || 'VENDOR',
+            durationUpdatedBy: s.duration_updated_by || 'VENDOR',
+            image: s.service_items?.image,
+        }));
+
+        res.json({ success: true, data: formatted });
+    } catch (error) {
+        console.error('Error fetching vendor service pricing:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch vendor service pricing' });
+    }
+};
+
+/**
+ * PUT /admin/vendors/:id/service-pricing
+ * Admin overrides the price and/or duration for a specific service of a vendor.
+ * Body: { serviceItemId, customPrice, customDuration }
+ */
+exports.updateVendorServicePricing = async (req, res) => {
+    try {
+        const { id: vendorId } = req.params;
+        const { serviceItemId, customPrice, customDuration, isEnabled } = req.body;
+
+        if (!serviceItemId) {
+            return res.status(400).json({ success: false, error: 'serviceItemId is required' });
+        }
+
+        const updates = {};
+        if (customPrice !== undefined) {
+            updates.custom_price = customPrice;
+            updates.price_updated_by = 'ADMIN';
+        }
+        if (customDuration !== undefined) {
+            updates.custom_duration = customDuration !== null && customDuration !== '' ? parseInt(customDuration) : null;
+            updates.duration_updated_by = 'ADMIN';
+        }
+        if (isEnabled !== undefined) updates.is_enabled = isEnabled;
+
+        const { data, error } = await supabase
+            .from('vendor_services')
+            .update(updates)
+            .eq('vendor_id', vendorId)
+            .eq('service_item_id', serviceItemId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        if (!data) {
+            return res.status(404).json({ success: false, error: 'Vendor service entry not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Vendor service pricing updated by admin',
+            data
+        });
+    } catch (error) {
+        console.error('Error updating vendor service pricing (admin):', error);
+        res.status(500).json({ success: false, error: 'Failed to update vendor service pricing' });
+    }
+};
+

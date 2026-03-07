@@ -53,6 +53,10 @@ router.put('/vendors/:id/approve', adminController.approveVendor);
 router.put('/vendors/:id/reject', adminController.rejectVendor);
 router.post('/services/assign-vendor', adminController.assignServiceToVendor);
 
+// Vendor Service Pricing Management (Admin)
+router.get('/vendors/:id/service-pricing', adminController.getVendorServicePricing);
+router.put('/vendors/:id/service-pricing', adminController.updateVendorServicePricing);
+
 // Payment Management
 router.get('/payments', adminController.getAllPayments);
 

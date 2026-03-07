@@ -221,11 +221,15 @@ exports.getServices = async (req, res) => {
                 id,
                 service_item_id,
                 custom_price,
+                custom_duration,
                 is_enabled,
+                price_updated_by,
+                duration_updated_by,
                 service_items (
                     id,
                     title,
                     price,
+                    duration,
                     image,
                     subcategory_id
                 )
@@ -240,8 +244,12 @@ exports.getServices = async (req, res) => {
             vendorServiceId: s.id,
             name: s.service_items?.title || 'Unknown',
             basePrice: s.service_items?.price,
+            baseDuration: s.service_items?.duration,
             customPrice: s.custom_price,
+            customDuration: s.custom_duration,
             isEnabled: s.is_enabled,
+            priceUpdatedBy: s.price_updated_by || 'VENDOR',
+            durationUpdatedBy: s.duration_updated_by || 'VENDOR',
             image: s.service_items?.image
         }));
 
@@ -258,18 +266,25 @@ exports.getServices = async (req, res) => {
     }
 };
 
-// Update a single vendor service price/status
+// Update a single vendor service price/duration/status
 exports.updateServiceItem = async (req, res) => {
     try {
         const vendorId = req.user.id;
-        const { serviceItemId, customPrice, isEnabled } = req.body;
+        const { serviceItemId, customPrice, customDuration, isEnabled } = req.body;
 
         if (!serviceItemId) {
             return res.status(400).json({ success: false, error: 'Service Item ID is required' });
         }
 
         const updates = {};
-        if (customPrice !== undefined) updates.custom_price = customPrice;
+        if (customPrice !== undefined) {
+            updates.custom_price = customPrice;
+            updates.price_updated_by = 'VENDOR';
+        }
+        if (customDuration !== undefined) {
+            updates.custom_duration = customDuration ? parseInt(customDuration) : null;
+            updates.duration_updated_by = 'VENDOR';
+        }
         if (isEnabled !== undefined) updates.is_enabled = isEnabled;
 
         const { data, error } = await supabase

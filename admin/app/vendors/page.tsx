@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '@/lib/api';
 import DashboardLayout from '@/components/DashboardLayout';
-import { CheckCircle, XCircle, Clock, Building2, Briefcase, MapPin, Star, Phone, Mail, UserCheck, Plus } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Building2, Briefcase, MapPin, Star, Phone, Mail, UserCheck, Plus, DollarSign, Timer, ShieldCheck, User } from 'lucide-react';
 
 interface Vendor {
     id: string;
@@ -20,6 +20,20 @@ interface Vendor {
     created_at: string;
 }
 
+interface VendorService {
+    id: string;
+    vendorServiceId: string;
+    name: string;
+    basePrice: string | null;
+    baseDuration: string | null;
+    customPrice: string | null;
+    customDuration: number | null;
+    isEnabled: boolean;
+    priceUpdatedBy: 'VENDOR' | 'ADMIN';
+    durationUpdatedBy: 'VENDOR' | 'ADMIN';
+    image: string | null;
+}
+
 export default function VendorsPage() {
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +47,14 @@ export default function VendorsPage() {
     const [categoryItems, setCategoryItems] = useState<any[]>([]);
     const [selectedServiceId, setSelectedServiceId] = useState('');
     const [specPrice, setSpecPrice] = useState('');
+
+    // Pricing Management State
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+    const [pricingVendor, setPricingVendor] = useState<Vendor | null>(null);
+    const [vendorServices, setVendorServices] = useState<VendorService[]>([]);
+    const [pricingLoading, setPricingLoading] = useState(false);
+    const [updatingMap, setUpdatingMap] = useState<Record<string, boolean>>({});
+    const [editMap, setEditMap] = useState<Record<string, { customPrice: string; customDuration: string }>>({});
 
     useEffect(() => {
         fetchVendors();
@@ -72,6 +94,59 @@ export default function VendorsPage() {
         setSelectedCatId('');
         setSelectedServiceId('');
         setSpecPrice('');
+    };
+
+    const openPricingModal = async (vendor: Vendor) => {
+        setPricingVendor(vendor);
+        setIsPricingModalOpen(true);
+        setPricingLoading(true);
+        try {
+            const res = await adminAPI.getVendorServicePricing(vendor.id);
+            if (res.data.success) {
+                const services: VendorService[] = res.data.data;
+                setVendorServices(services);
+                // Initialize edit state
+                const initMap: Record<string, { customPrice: string; customDuration: string }> = {};
+                services.forEach(s => {
+                    initMap[s.id] = {
+                        customPrice: s.customPrice || '',
+                        customDuration: s.customDuration ? String(s.customDuration) : '',
+                    };
+                });
+                setEditMap(initMap);
+            }
+        } catch (error) {
+            console.error('Error fetching vendor service pricing:', error);
+        } finally {
+            setPricingLoading(false);
+        }
+    };
+
+    const handleSavePricing = async (service: VendorService) => {
+        if (!pricingVendor) return;
+        const edit = editMap[service.id];
+        setUpdatingMap(prev => ({ ...prev, [service.id]: true }));
+        try {
+            await adminAPI.updateVendorServicePricing(pricingVendor.id, {
+                serviceItemId: service.id,
+                customPrice: edit.customPrice || undefined,
+                customDuration: edit.customDuration ? parseInt(edit.customDuration) : null,
+            });
+            // Reflect changes in local state
+            setVendorServices(prev => prev.map(s => s.id === service.id ? {
+                ...s,
+                customPrice: edit.customPrice || s.customPrice,
+                customDuration: edit.customDuration ? parseInt(edit.customDuration) : s.customDuration,
+                priceUpdatedBy: 'ADMIN',
+                durationUpdatedBy: 'ADMIN',
+            } : s));
+            alert(`✅ Pricing updated for "${service.name}"`);
+        } catch (error) {
+            console.error('Error updating pricing:', error);
+            alert('Failed to update pricing');
+        } finally {
+            setUpdatingMap(prev => ({ ...prev, [service.id]: false }));
+        }
     };
 
     const handleAddSpecialization = async () => {
@@ -163,12 +238,22 @@ export default function VendorsPage() {
         }
     };
 
+    const UpdatedByBadge = ({ by }: { by: 'VENDOR' | 'ADMIN' }) => (
+        by === 'ADMIN'
+            ? <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                <ShieldCheck className="w-3 h-3" /> Admin set
+              </span>
+            : <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                <User className="w-3 h-3" /> Vendor set
+              </span>
+    );
+
     return (
         <DashboardLayout>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Service Providers (Vendors)</h1>
-                    <p className="text-gray-600 mt-2">Manage service provider registrations and approvals</p>
+                    <p className="text-gray-600 mt-2">Manage service provider registrations, approvals, and pricing</p>
                 </div>
 
                 {/* Stats Cards */}
@@ -373,13 +458,22 @@ export default function VendorsPage() {
                                                 ✅ This vendor is approved and can login to provide services
                                             </p>
                                         </div>
-                                        <button
-                                            onClick={() => openSpecializationModal(vendor)}
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors bg-white font-medium"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Manage Specializations
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => openSpecializationModal(vendor)}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors bg-white font-medium"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                Manage Specializations
+                                            </button>
+                                            <button
+                                                onClick={() => openPricingModal(vendor)}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-orange-500 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors bg-white font-medium"
+                                            >
+                                                <DollarSign className="w-4 h-4" />
+                                                Manage Service Pricing
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
@@ -398,7 +492,7 @@ export default function VendorsPage() {
                 {/* Specialization Modal */}
                 {isSpecModalOpen && selectedVendor && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold text-gray-900">
                                     Manage Specializations
@@ -469,6 +563,133 @@ export default function VendorsPage() {
                                 >
                                     Add Specialization
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Service Pricing Management Modal */}
+                {isPricingModalOpen && pricingVendor && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5 text-orange-500" />
+                                        Service Pricing — {pricingVendor.name}
+                                    </h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Override pricing and duration set by the vendor. Changes here take precedence.
+                                    </p>
+                                </div>
+                                <button onClick={() => setIsPricingModalOpen(false)} className="text-gray-400 hover:text-gray-600 ml-4">
+                                    <XCircle className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            {/* Legend */}
+                            <div className="px-6 pt-4 pb-2 flex gap-4 flex-shrink-0">
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium"><User className="w-3 h-3" /> Vendor set</span>
+                                    <span>= Price/duration set by the vendor</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium"><ShieldCheck className="w-3 h-3" /> Admin set</span>
+                                    <span>= Overridden by admin</span>
+                                </div>
+                            </div>
+
+                            {/* Services List */}
+                            <div className="overflow-y-auto flex-1 px-6 pb-6">
+                                {pricingLoading ? (
+                                    <div className="text-center py-12 text-gray-500">Loading services...</div>
+                                ) : vendorServices.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">
+                                        <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                                        <p className="font-medium">No services assigned to this vendor yet.</p>
+                                        <p className="text-sm mt-1">Use &quot;Manage Specializations&quot; to assign services first.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 mt-2">
+                                        {vendorServices.map(service => (
+                                            <div key={service.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    {service.image ? (
+                                                        <img src={service.image} alt={service.name} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                                                            <Briefcase className="w-5 h-5 text-orange-500" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{service.name}</p>
+                                                        <p className="text-xs text-gray-400">
+                                                            Catalog price: {service.basePrice || 'N/A'} · Catalog duration: {service.baseDuration || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="ml-auto">
+                                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${service.isEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                            {service.isEnabled ? 'Active' : 'Disabled'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {/* Price Field */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <label className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                                                                <DollarSign className="w-3 h-3" /> Custom Price
+                                                            </label>
+                                                            <UpdatedByBadge by={service.priceUpdatedBy} />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            placeholder={service.basePrice || 'e.g. ₹599'}
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                                            value={editMap[service.id]?.customPrice ?? ''}
+                                                            onChange={e => setEditMap(prev => ({
+                                                                ...prev,
+                                                                [service.id]: { ...prev[service.id], customPrice: e.target.value }
+                                                            }))}
+                                                        />
+                                                    </div>
+
+                                                    {/* Duration Field */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <label className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                                                                <Timer className="w-3 h-3" /> Duration (mins)
+                                                            </label>
+                                                            <UpdatedByBadge by={service.durationUpdatedBy} />
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            placeholder={service.baseDuration || 'e.g. 60'}
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                                            value={editMap[service.id]?.customDuration ?? ''}
+                                                            onChange={e => setEditMap(prev => ({
+                                                                ...prev,
+                                                                [service.id]: { ...prev[service.id], customDuration: e.target.value }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        onClick={() => handleSavePricing(service)}
+                                                        disabled={updatingMap[service.id]}
+                                                        className="px-4 py-1.5 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {updatingMap[service.id] ? 'Saving...' : 'Save Changes'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

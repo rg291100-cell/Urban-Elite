@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Theme } from '../theme';
@@ -11,7 +11,6 @@ const WalletScreen = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const [balance, setBalance] = useState('₹0');
     const [transactions, setTransactions] = useState<any[]>([]);
-    const [promos, setPromos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,7 +21,6 @@ const WalletScreen = () => {
                 const cleanBalance = response.data.balance ? response.data.balance.toString().replace(/₹/g, '').trim() : '0';
                 setBalance(`₹${cleanBalance}`);
                 setTransactions(response.data.transactions);
-                setPromos(response.data.promos || []);
             } catch (error) {
                 console.error('Failed to fetch wallet data', error);
             } finally {
@@ -53,19 +51,7 @@ const WalletScreen = () => {
     );
 
 
-    const renderPromoItem = ({ item }: { item: any }) => (
-        <View style={styles.promoCard}>
-            <Text style={styles.promoCode}>{item.code}</Text>
-            <Text style={styles.promoAmount}>{item.amount}</Text>
-            <Text style={styles.promoDesc}>{item.desc}</Text>
-            <View style={styles.promoFooter}>
-                <Text style={styles.promoExp}>{item.exp}</Text>
-                <TouchableOpacity>
-                    <Text style={styles.applyText}>APPLY NOW</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+
 
     if (loading) {
         return (
@@ -115,19 +101,7 @@ const WalletScreen = () => {
                         </View>
                     </View>
 
-                    {/* Quick Promos */}
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>QUICK PROMOS</Text>
-                        <Text style={styles.viewAll}>VIEW ALL</Text>
-                    </View>
-                    <FlatList
-                        data={promos}
-                        renderItem={renderPromoItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.promosList}
-                        keyExtractor={item => item.id}
-                    />
+
 
                     {/* Recent Activity */}
                     <View style={styles.sectionHeader}>
@@ -158,10 +132,6 @@ const WalletScreen = () => {
                         ))}
                     </View>
 
-                    <TouchableOpacity style={styles.seeAllButton}>
-                        <Text style={styles.seeAllText}>SEE ALL ACTIVITY</Text>
-                    </TouchableOpacity>
-
                     {/* Bottom Spacer */}
                     <View style={{ height: 100 }} />
                 </View>
@@ -179,7 +149,6 @@ const styles = StyleSheet.create({
     logoIcon: { width: 40, height: 40, backgroundColor: Theme.colors.brandOrange, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
     logoIconText: { fontSize: 24, color: 'white' },
     headerTitle: { fontSize: 22, fontWeight: 'bold' },
-    titleOlfix: { color: Theme.colors.brandOrange, fontWeight: '900' },
     titleOlfix: { color: Theme.colors.brandOrange, fontWeight: '900', fontStyle: 'italic' },
     notificationButton: { width: 40, height: 40, backgroundColor: Theme.colors.searchBg, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     notificationIcon: { width: 20, height: 20, tintColor: Theme.colors.textLight },
@@ -214,17 +183,8 @@ const styles = StyleSheet.create({
     // Sections
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, marginTop: 10 },
     sectionTitle: { fontSize: 12, fontWeight: '900', color: '#2D3748', letterSpacing: 1 },
-    viewAll: { fontSize: 11, fontWeight: 'bold', color: Theme.colors.brandOrange },
 
-    // Promos
-    promosList: { paddingRight: 20 },
-    promoCard: { backgroundColor: '#F7FAFC', width: 220, padding: 20, borderRadius: 20, marginRight: 15 },
-    promoCode: { color: Theme.colors.brandOrange, fontSize: 12, fontWeight: 'bold', marginBottom: 5 },
-    promoAmount: { fontSize: 24, fontWeight: '900', color: '#1A202C', marginBottom: 5 },
-    promoDesc: { color: '#718096', fontSize: 14, marginBottom: 15 },
-    promoFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingTop: 15 },
-    promoExp: { fontSize: 10, color: '#A0AEC0', fontWeight: 'bold' },
-    applyText: { fontSize: 11, color: Theme.colors.brandOrange, fontWeight: 'bold' },
+
 
     // Activity
     activityList: { marginTop: 10 },

@@ -91,6 +91,10 @@ export const adminAPI = {
     rejectVendor: (id: string) => api.put(`/admin/vendors/${id}/reject`),
     assignServiceToVendor: (data: { vendorId: string; serviceItemId: string; customPrice?: string }) =>
         api.post('/admin/services/assign-vendor', data),
+    // Vendor Service Pricing (Admin control)
+    getVendorServicePricing: (vendorId: string) => api.get(`/admin/vendors/${vendorId}/service-pricing`),
+    updateVendorServicePricing: (vendorId: string, data: { serviceItemId: string; customPrice?: string; customDuration?: number | null; isEnabled?: boolean }) =>
+        api.put(`/admin/vendors/${vendorId}/service-pricing`, data),
 
     // Payments
     getPayments: () => api.get('/admin/payments'),
