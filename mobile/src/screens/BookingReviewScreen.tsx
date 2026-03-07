@@ -88,13 +88,13 @@ const BookingReviewScreen = () => {
     const createBooking = async (mode: 'PREPAID' | 'POSTPAID') => {
         try {
             await bookingAPI.createBooking({
-                serviceId: item?.id || '',
+                serviceId: item?.id || null,
                 serviceName: item?.title || 'Service',
                 date: date || '',
                 timeSlot: slot || '',
                 location: location || { type: 'Home', address: '' },
                 instructions: instructions || '',
-                price: item?.price || '₹0',
+                price: String(item?.price || '0'),   // ensure string, works with ₹500 or 500
                 paymentMode: mode,
                 attachmentUrl: attachmentUrl,
                 vendorId: vendorId || null,
@@ -105,6 +105,8 @@ const BookingReviewScreen = () => {
         } catch (error: any) {
             console.error('Booking creation error:', error);
             const errCode = error?.response?.data?.errorCode;
+            const errMessage = error?.response?.data?.error || error?.message || 'Unknown error';
+            console.log('Server error details:', JSON.stringify(error?.response?.data));
             if (errCode === 'VENDOR_SLOT_TAKEN') {
                 Alert.alert(
                     '⚠️ Slot No Longer Available',
@@ -115,7 +117,7 @@ const BookingReviewScreen = () => {
                     ]
                 );
             } else {
-                Alert.alert('Error', 'Booking failed. Please contact support.');
+                Alert.alert('Booking Failed', `${errMessage}\n\nIf this persists, contact support.`);
             }
         } finally {
             setLoading(false);

@@ -46,7 +46,7 @@ exports.createBooking = async (req, res) => {
         // ─────────────────────────────────────────────────────────────────────
 
         const bookingData = {
-            service_id: serviceId,
+            service_id: serviceId || null,   // null-safe — empty string fails UUID FK
             service_name: serviceName,
             date,
             time_slot: timeSlot,
@@ -54,7 +54,7 @@ exports.createBooking = async (req, res) => {
             location_address: location?.address || '',
             instructions: instructions || '',
             status: 'PENDING',
-            price,
+            price: price || null,
             payment_mode: paymentMode || 'PREPAID',
             professional_id: vendorId || null,
             professional_name: null,
