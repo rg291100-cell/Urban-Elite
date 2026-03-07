@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../theme';
 import { vendorAPI } from '../../services/api';
@@ -31,8 +31,11 @@ const VendorBookingsScreen = () => {
         try {
             await vendorAPI.updateBookingStatus(bookingId, status);
             fetchBookings();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to update booking status:', error);
+            const errMessage = error?.response?.data?.error || error?.message || 'Unknown error';
+            const detail = error?.response?.data?.detail;
+            Alert.alert('Update Failed', `${errMessage}${detail ? `\n\nDetail: ${detail}` : ''}`);
         }
     };
 

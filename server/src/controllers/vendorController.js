@@ -204,7 +204,8 @@ exports.updateBookingStatus = async (req, res) => {
         console.error('Error updating booking status:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to update booking status'
+            error: error?.message || 'Failed to update booking status',
+            detail: error?.details || error?.hint || null,
         });
     }
 };

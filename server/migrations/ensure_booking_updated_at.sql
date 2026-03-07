@@ -1,0 +1,5 @@
+-- =============================================
+-- MIGRATION: Ensure updated_at exists in bookings
+-- =============================================
+
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
