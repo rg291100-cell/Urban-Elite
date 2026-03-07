@@ -45,8 +45,9 @@ exports.createBooking = async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        const bookingData = {
-            service_id: serviceId || null,   // null-safe — empty string fails UUID FK
+        // Core guaranteed columns
+        const coreData = {
+            service_id: serviceId || null,
             service_name: serviceName,
             date,
             time_slot: timeSlot,
@@ -56,31 +57,47 @@ exports.createBooking = async (req, res) => {
             status: 'PENDING',
             price: price || null,
             payment_mode: paymentMode || 'PREPAID',
-            professional_id: vendorId || null,
-            professional_name: null,
-            estimated_time: '12m',
             user_id: userId,
             vendor_id: vendorId || null,
         };
 
+        // Optional columns that may or may not exist in schema
+        const optionalData = {
+            professional_id: vendorId || null,
+            professional_name: null,
+            estimated_time: '12m',
+        };
+
         if (attachmentUrl) {
-            bookingData.attachment_url = attachmentUrl;
+            coreData.attachment_url = attachmentUrl;
         }
 
         let booking, error;
 
+        // Attempt 1: with all optional columns
         ({ data: booking, error } = await supabase
             .from('bookings')
-            .insert(bookingData)
+            .insert({ ...coreData, ...optionalData })
             .select()
             .single());
 
-        if (error && error.message && error.message.includes('attachment_url')) {
-            console.warn('attachment_url column not found, retrying without it...');
-            const { attachment_url, ...dataWithoutAttachment } = bookingData;
+        // Attempt 2: column doesn't exist — retry with core data only
+        if (error && (error.message?.includes('column') || error.message?.includes('schema cache'))) {
+            console.warn('Optional column missing, retrying with core data:', error.message);
             ({ data: booking, error } = await supabase
                 .from('bookings')
-                .insert(dataWithoutAttachment)
+                .insert(coreData)
+                .select()
+                .single());
+        }
+
+        // Attempt 3: attachment_url column missing — retry without it
+        if (error && error.message?.includes('attachment_url')) {
+            console.warn('attachment_url column not found, retrying without it...');
+            const { attachment_url, ...withoutAttachment } = coreData;
+            ({ data: booking, error } = await supabase
+                .from('bookings')
+                .insert(withoutAttachment)
                 .select()
                 .single());
         }
@@ -135,7 +152,8 @@ exports.createBooking = async (req, res) => {
         console.error('Error creating booking:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to create booking'
+            error: error?.message || 'Failed to create booking',
+            detail: error?.details || error?.hint || null,
         });
     }
 };
