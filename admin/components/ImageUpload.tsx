@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { Upload, X, Loader2 } from 'lucide-react';
 
 interface ImageUploadProps {
     value: string | null;            // Current image URL
@@ -24,7 +18,7 @@ export default function ImageUpload({
     bucket = 'service-icons',
     folder = 'icons',
     label = 'Icon Image',
-    hint = 'PNG, JPG, WebP, SVG — max 2 MB',
+    hint = 'PNG, JPG, WebP, SVG — max 2 MB. Shown as icon in app.',
 }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -42,20 +36,20 @@ export default function ImageUpload({
         setUploading(true);
 
         try {
-            const ext = file.name.split('.').pop();
-            const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const form = new FormData();
+            form.append('file', file);
+            form.append('bucket', bucket);
+            form.append('folder', folder);
 
-            const { data, error: uploadErr } = await supabase.storage
-                .from(bucket)
-                .upload(fileName, file, { upsert: true });
+            const res = await fetch('/api/upload', { method: 'POST', body: form });
+            const json = await res.json();
 
-            if (uploadErr) {
-                setError(uploadErr.message);
+            if (!res.ok || json.error) {
+                setError(json.error || 'Upload failed');
                 return;
             }
 
-            const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-            onChange(urlData.publicUrl);
+            onChange(json.url);
         } catch (err: any) {
             setError(err.message || 'Upload failed');
         } finally {
